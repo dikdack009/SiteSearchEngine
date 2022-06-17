@@ -1,69 +1,89 @@
 package crawling;
 
-import connection.MySQLConnection;
-import crawling.Lemma;
+import model.Index;
+import model.Lemma;
+import model.Page;
+import org.hibernate.Session;
+import repository.MySQLConnection;
 import lemmatizer.Lemmatizer;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import static model.Lemma.getLemmaByName;
 
 public class SearchSystem {
-
-    public static void request (String r) throws IOException {
-        MySQLConnection.setUpDB();
-        MySQLConnection.openConnection();
+    @SuppressWarnings("unchecked")
+    public static List<SearchResult> request(String r) throws IOException {
         Set<String> requestNormalForms = Lemmatizer.getNormalFormsList(r).keySet();
         Set<Lemma> requestLemmas = new TreeSet<>(Comparator.comparingInt(Lemma::getFrequency));
+        StringJoiner stringJoiner = new StringJoiner("' OR lemma = '","FROM " + Lemma.class.getSimpleName() + " WHERE lemma = '", "' ORDER   BY lemma");
+        requestNormalForms.forEach(stringJoiner::add);
+        Session session = MySQLConnection.openConnection();
+        List<Lemma> lemmaList = session.getSession().createQuery(stringJoiner.toString()).getResultList();
+        session.close();
+        Set<String> lemmaStringSet = lemmaList.stream().map(Lemma::getLemma)
+                .sorted().collect(Collectors.toCollection(LinkedHashSet::new));
 
-        String hqlLemma = "FROM " + Lemma.class.getSimpleName();
-        List<Lemma> lemmaList = MySQLConnection.getSession().createQuery(hqlLemma).getResultList();
-        List<String> lemmaStringList = new ArrayList<>();
-        lemmaList.forEach(l -> lemmaStringList.add(l.getLemma()));
-
-        double quantityPages = (double) getPagesSize();
-        for (String requestNormalForm : requestNormalForms) {
-            if (lemmaStringList.contains(requestNormalForm)) {
-                Lemma currentLemmaFromDB = Lemma.getLemmaByName(lemmaList, requestNormalForm);
-                if (currentLemmaFromDB.getFrequency() / quantityPages < 0.7) {
+        List<Page> pageList =  getPages();
+        double quantityPages = pageList.size();
+        for(String re : requestNormalForms) {
+            if (lemmaStringSet.contains(re)) {
+                Lemma currentLemmaFromDB = getLemmaByName(lemmaList, re);
+                assert currentLemmaFromDB != null;
+                if (currentLemmaFromDB.getFrequency() / quantityPages <= 1) {
                     requestLemmas.add(currentLemmaFromDB);
                 }
             }
+            else {
+                return new ArrayList<>();
+            }
         }
-        if (requestLemmas.isEmpty()){
-            return;
-        }
+        return requestLemmas.isEmpty() ? new ArrayList<>() : getSearchResults(requestLemmas, pageList);
+    }
 
-        Map<Page, Double> pageDoubleMap = getPages(requestLemmas);
+    private static List<SearchResult> getSearchResults(@NotNull Set<Lemma>requestLemmas, List<Page> t){
+        long s = System.currentTimeMillis();
+        Map<Page, Double> pageDoubleMap = getPages(requestLemmas, t);
+        System.out.println((double)System.currentTimeMillis() - s);
         Optional<Double> optionalDouble = pageDoubleMap.values().stream().max(Comparator.comparingDouble(o -> o));
         Double max = null;
         if (optionalDouble.isPresent()){
             max = optionalDouble.get();
-         }
-        System.out.println(max);
-        for (Page page : pageDoubleMap.keySet()) {
-            System.out.println(pageDoubleMap.get(page));
-            pageDoubleMap.put(page, pageDoubleMap.get(page) / max);
-            System.out.print(page.getPath() + "\t");
-            System.out.println(pageDoubleMap.get(page));
         }
-
+        List<SearchResult> searchResults = new ArrayList<>();
+        for (Page page : pageDoubleMap.keySet()) {
+            double tmpMapValue = pageDoubleMap.get(page);
+            pageDoubleMap.put(page, tmpMapValue / max);
+            Matcher m = Pattern.compile("<title>[^>]+</title>").matcher(page.getContent());
+            String title = null;
+            while(m.find()) {
+                title = page.getContent().substring(m.start() + "<title>".length(), m.end() - "</title>".length());
+            }
+            searchResults.add(new SearchResult(page.getPath(), title, "", pageDoubleMap.get(page)));
+        }
+        Collections.sort(searchResults);
+        return searchResults;
     }
-
-    private static long getPagesSize(){
-        String hqlLemma = "FROM " + Page.class.getSimpleName();
-        return MySQLConnection.getSession().createQuery(hqlLemma).getResultList().size();
+    @SuppressWarnings("unchecked")
+    private static List<Page> getPages(){
+        Session session = MySQLConnection.openConnection();
+        List<Page> res = session.createQuery("FROM " + Page.class.getSimpleName()).getResultList();
+        session.close();
+        return res;
     }
-
-    private static Map<Page, Double> getPages(Set<Lemma> lemmaSet){
-        List<Page> pageList = MySQLConnection.getSession()
-                .createQuery("FROM " + Page.class.getSimpleName())
-                .getResultList();
-
+    @SuppressWarnings("unchecked")
+    private static Map<Page, Double> getPages(Set<Lemma> lemmaSet, List<Page> pageList){
         for (Lemma lemma : lemmaSet) {
             int id = lemma.getId();
-            List<Index> indexList = MySQLConnection.getSession()
-                    .createQuery("FROM " + Index.class.getSimpleName() + " AS i WHERE i.lemmaId = '" + id + "'")
-                    .getResultList();
+            String selectQuery = "FROM " + Index.class.getSimpleName() + " AS i WHERE i.lemmaId = '" + id + "'";
+            Session session = MySQLConnection.openConnection();
+            List<Index> indexList = session.createQuery(selectQuery).getResultList();
+            session.close();
 
             List<Page> newPageList = new ArrayList<>();
             List<Page> finalPageList = pageList;
@@ -76,19 +96,20 @@ public class SearchSystem {
                     });
             pageList = newPageList;
         }
+
         Map<Page, Double> absRelPage = new HashMap<>();
         for (Page page : pageList) {
-            double totalRank = 0f;
-            for (Lemma lemma : lemmaSet) {
-                Index index = (Index) MySQLConnection.getSession()
-                        .createQuery("FROM " + Index.class.getSimpleName() + " AS i " +
-                                "WHERE i.lemmaId = '" + lemma.getId() + "' AND i.pageId = '" + page.getId() + "'")
-                        .getSingleResult();
-                totalRank += index.getRank();
-            }
-            absRelPage.put(page, totalRank);
-        }
 
+            StringJoiner stringJoiner = new StringJoiner("' OR i.lemmaId = '",
+                    "SELECT SUM(i.rank) FROM " + Index.class.getSimpleName() + " AS i WHERE i.pageId = '" + page.getId() + "' AND (i.lemmaId = '" ,
+                    "')");
+            lemmaSet.forEach(l -> stringJoiner.add(l.getId().toString()));
+            Session session = MySQLConnection.openConnection();
+            double total = (double) session.createQuery(stringJoiner.toString()).list().get(0);
+            session.close();
+
+            absRelPage.put(page, total);
+        }
         return absRelPage;
     }
 }

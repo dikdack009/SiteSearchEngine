@@ -10,11 +10,11 @@ public class Lemmatizer {
 
     public static Map<String, Integer> getNormalFormsList(String text) throws IOException {
 
-        Map<String, Integer> normalFormsMap = new HashMap<>();
+        Map<String, Integer> normalFormsMap = new TreeMap<>();
 
         LuceneMorphology luceneMorph = new RussianLuceneMorphology();
 
-        String[] words = text.replaceAll("[^[а-яА-ЯёЁ ]]", " ")
+        String[] words = text.replaceAll("[^[а-яА-Я ]]", " ")
                 .toLowerCase().split("\\s+");
 
         Arrays.stream(words).forEach(word -> {
@@ -44,8 +44,6 @@ public class Lemmatizer {
                 }
             }
         });
-//        normalFormsMap.keySet().forEach(w ->
-//                System.out.println(w + " - " + normalFormsMap.get(w)));
         return normalFormsMap;
     }
 }
