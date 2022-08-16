@@ -1,4 +1,0 @@
-connection:
-    url: jdbc:mysql://localhost:3306/search_engine?useSSL=false&amp;serverTimezone=UTC
-    user: root
-    password: 89257044306mV
