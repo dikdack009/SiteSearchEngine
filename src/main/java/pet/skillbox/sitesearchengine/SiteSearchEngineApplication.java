@@ -14,6 +14,7 @@ import java.io.InputStreamReader;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -21,18 +22,22 @@ import java.util.regex.Pattern;
 public class SiteSearchEngineApplication {
 
 	public static void main(String[] args) throws SQLException, IOException {
-//		SpringApplication.run(SiteSearchEngineApplication.class, args);
-		long mm = System.currentTimeMillis();
-		try {
-			CrawlingSystem crawlingSystem =  new CrawlingSystem(new Site(1, Status.INDEXING,
-					LocalDateTime.now(), null, "https://www.playback.ru/", "playback"));
-			crawlingSystem.start();
-		} catch (RuntimeException exception) {
-			exception.printStackTrace();
-		}
 
-		System.out.println("Закончили");
-		System.out.println((double)(System.currentTimeMillis() - mm) / 1000 + " sec.");
+		int[] mas = {1,7,3,6,5,6};
+		System.out.println(pivotIndex(mas));
+
+//		SpringApplication.run(SiteSearchEngineApplication.class, args);
+//		long mm = System.currentTimeMillis();
+//		try {
+//			CrawlingSystem crawlingSystem =  new CrawlingSystem(new Site(1, Status.INDEXING,
+//					LocalDateTime.now(), null, "https://www.playback.ru/", "playback"));
+//			crawlingSystem.start();
+//		} catch (RuntimeException exception) {
+//			exception.printStackTrace();
+//		}
+//
+//		System.out.println("Закончили");
+//		System.out.println((double)(System.currentTimeMillis() - mm) / 1000 + " sec.");
 
 //		BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 //		System.out.print("Request -> ");
@@ -74,5 +79,4 @@ public class SiteSearchEngineApplication {
 //		}
 //		System.out.println(title);
 	}
-
 }
