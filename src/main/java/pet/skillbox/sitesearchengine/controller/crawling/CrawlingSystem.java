@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 
 import pet.skillbox.sitesearchengine.model.Builder;
 import pet.skillbox.sitesearchengine.model.Field;
+import pet.skillbox.sitesearchengine.model.Page;
 import pet.skillbox.sitesearchengine.model.Site;
 import pet.skillbox.sitesearchengine.repositories.DBConnection;
 import pet.skillbox.sitesearchengine.services.MorphologyServiceImpl;
@@ -50,14 +51,12 @@ public class CrawlingSystem {
         DBConnection.insertSite(site.toString());
         System.out.println("Parsing ");
         new ForkJoinPool().invoke(new SiteLinksGenerator(site.getUrl(), site.getUrl()));
-        writeSitemapUrl();
+        writeSiteMapUrl();
     }
 
-    public void writeSitemapUrl() {
-
+    public void writeSiteMapUrl() {
         Collection<List<String>> chunked =
                 chunked(SiteLinksGenerator.allLinks.stream(), SiteLinksGenerator.allLinks.size()/ 100).values();
-
 
         System.out.println("Кол-во ссылок: " + SiteLinksGenerator.allLinks.size());
         List<Thread> threadList = new ArrayList<>();
@@ -68,7 +67,7 @@ public class CrawlingSystem {
             Builder builder = new Builder();
             for (String page : c) {
                 try {
-                    appendStringInDB(page, builder);
+                    appendPageInDB(page, builder);
                 } catch (IOException | InterruptedException | SQLException e) {
                     lastError = e.getMessage();
                     rootLogger.debug("Ошибка - " + page + " - " + e);
@@ -81,10 +80,11 @@ public class CrawlingSystem {
                 DBConnection.insert(builder);
             } catch (SQLException e) {
                 lastError = e.getMessage();
-                rootLogger.debug("Ошибка - " + e.getMessage());
+                rootLogger.debug("Ошибка вставки - " + lastError);
             }
             System.out.println(Thread.currentThread().getName() + " " + (double) (System.currentTimeMillis() - p)
                     + " " + LocalDateTime.now() + "\tДобавили" );
+            rootLogger.info("\nDone " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
         })));
         threadList.forEach(Thread::start);
     }
@@ -94,36 +94,43 @@ public class CrawlingSystem {
         return stream.collect(Collectors.groupingBy(x -> index.getAndIncrement() / chunkSize));
     }
 
-    public void appendStringInDB(String data, Builder builder) throws InterruptedException, IOException, SQLException {
+    public void appendPageInDB(String data, Builder builder) throws InterruptedException, IOException, SQLException {
         int idPathBegin = site.getUrl().indexOf(data) + site.getUrl().length();
         String path = site.getUrl().equals(data) ?  "/" : data.substring(idPathBegin);
         String content = "";
         Connection connection = connectPath(data);
-        int code = connection.execute().statusCode();
-        if (code == 200) {
+        int statusCode = connection.execute().statusCode();
+
+        boolean htmlTest = Objects.requireNonNull(connection.response().contentType()).startsWith("text/html");
+        if (statusCode == 200 && htmlTest) {
             content = connection.get().toString().replace("'", "\\'");
         }
         rootLogger.info("Ссылка - " + path);
-        if (builder.getPageBuilder().length() > 4000000) {
-            DBConnection.insertAllPages(builder.getPageBuilder().toString());
-            builder.setPageBuilder(new StringBuilder());
-        }
         int id = getPageId();
-        builder.setPageBuilder(builder.getPageBuilder().append(builder.getPageBuilder().length() == 0 ? "" : ",")
-                .append("(").append(id).append(",'").append(path).append("', ")
-                .append(code).append(", '").append(content)
-                .append("', ").append(site.getId()).append(")"));
-
-        if (code != 200) {
+        addPageInPageBuilder(builder, new Page(id, path, statusCode, content, 0));
+        if (statusCode != 200 && !htmlTest) {
             return;
         }
         appendTagInDB(connection.get(), id, builder);
     }
 
+    private void addPageInPageBuilder(Builder builder, Page page) throws SQLException {
+        if (builder.getPageBuilder().length() > 4000000) {
+            DBConnection.insertAllPages(builder.getPageBuilder().toString());
+            builder.setPageBuilder(new StringBuilder());
+        }
+        builder.setPageBuilder(builder.getPageBuilder().append(builder.getPageBuilder().length() == 0 ? "" : ",")
+                .append("(").append(page.getId()).append(",'").append(page.getPath()).append("', ")
+                .append(page.getCode()).append(", '").append(page.getContent())
+                .append("', ").append(site.getId()).append(")"));
+    }
+
     private Connection connectPath(String path) {
         return Jsoup.connect(path)
                 .userAgent("DuckSearchBot")
-                .referrer("https://www.google.com");
+                .referrer("https://www.google.com")
+                .ignoreContentType(true)
+                .ignoreHttpErrors(true);
     }
 
     private void appendTagInDB(Document document, Integer pageId, Builder builder) throws IOException, SQLException {
@@ -141,18 +148,22 @@ public class CrawlingSystem {
                  System.out.println(e.getMessage());
                  throw new RuntimeException(e.getMessage());
              }
-             if (builder.getIndexBuilder().length() > 4000000) {
-                 System.out.println("Index " + builder.getIndexBuilder().length());
-                 DBConnection.insertAllIndexes(builder.getIndexBuilder().toString());
-                 builder.setIndexBuilder(new StringBuilder());
-             }
-             t.keySet().forEach(s ->
-                    builder.setIndexBuilder(builder.getIndexBuilder().append(builder.getIndexBuilder().length() == 0 ? "" : ",")
-                            .append("(").append(pageId)
-                            .append(", '").append(s).append("', ").append(t.get(s) * field.getWeight()).append(")")));
+             addLemmaInLemmaBuilder(builder, field, t, pageId);
         }
 
         updateLemmaDB(new MorphologyServiceImpl().getNormalFormsList(tmp.toString()), builder);
+    }
+
+    private void addLemmaInLemmaBuilder(Builder builder, Field field, Map<String, Integer> normalFormsMap, int id) throws SQLException {
+        if (builder.getIndexBuilder().length() > 4000000) {
+            System.out.println("Index " + builder.getIndexBuilder().length());
+            DBConnection.insertAllIndexes(builder.getIndexBuilder().toString());
+            builder.setIndexBuilder(new StringBuilder());
+        }
+        normalFormsMap.keySet().forEach(s ->
+                builder.setIndexBuilder(builder.getIndexBuilder().append(builder.getIndexBuilder().length() == 0 ? "" : ",")
+                        .append("(").append(id) 
+                        .append(", '").append(s).append("', ").append(normalFormsMap.get(s) * field.getWeight()).append(")")));
     }
 
     private void updateLemmaDB(Map<String, Integer> normalFormsMap, Builder builder) throws SQLException {
@@ -162,6 +173,7 @@ public class CrawlingSystem {
             builder.setLemmaBuilder(new StringBuilder());
         }
         normalFormsMap.keySet().forEach(key ->
+
                 builder.setLemmaBuilder(builder.getLemmaBuilder().append(builder.getLemmaBuilder().length() == 0 ? "" : ",")
                 .append("('").append(key)
                 .append("', 1, ").append(site.getId()).append(")")));

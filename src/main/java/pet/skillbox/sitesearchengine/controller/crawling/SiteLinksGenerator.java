@@ -29,21 +29,24 @@ public class SiteLinksGenerator extends RecursiveAction {
         Set<SiteLinksGenerator> taskList = new HashSet<>();
         List<String> list = new ArrayList<>();
         try {
-            sleep(400);
+//            sleep(100); //#TODO проверить чиселкоё
             Connection connection = connectPath(url);
-            if(connection.execute().statusCode() != 200){
-                System.out.println(url);
-            }
-            Elements links = connection.get().select("a[href]");
-            for (Element link : links) {
-                String absUrl = link.attr("abs:href").replace("\\/", "/").trim();
-                if (isCorrected(absUrl)) {
-                    list.add(absUrl);
-                    allLinks.add(absUrl);
+            int statusCode = connection.execute().statusCode();
+            if(statusCode == 200){
+                Elements links = connection.get().select("a[href]");
+                for (Element link : links) {
+                    String absUrl = link.attr("abs:href").replace("\\/", "/").trim();
+                    if (isCorrected(absUrl)) {
+                        list.add(absUrl);
+                        allLinks.add(absUrl);
+                    }
                 }
             }
-        } catch (IOException | InterruptedException e) {
-            System.out.println(e.getMessage());
+            else {
+                System.out.println(url + " " + statusCode);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
         for (String link : list) {
@@ -57,7 +60,9 @@ public class SiteLinksGenerator extends RecursiveAction {
     private Connection connectPath(String path) {
         return Jsoup.connect(path)
                 .userAgent("DuckSearchBot")
-                .referrer("https://www.google.com");
+                .referrer("https://www.google.com")
+                .ignoreContentType(true)
+                .ignoreHttpErrors(true);
     }
 
     private boolean isCorrected(String url) {
