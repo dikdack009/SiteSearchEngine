@@ -1,6 +1,8 @@
 package pet.skillbox.sitesearchengine.controller.crawling;
 
 import org.jetbrains.annotations.NotNull;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import pet.skillbox.sitesearchengine.model.Lemma;
 import pet.skillbox.sitesearchengine.model.Page;
 import pet.skillbox.sitesearchengine.repositories.DBConnection;
@@ -92,12 +94,14 @@ public class SearchSystem {
         for (Page page : pageDoubleMap.keySet()) {
             double tmpMapValue = pageDoubleMap.get(page);
             pageDoubleMap.put(page, tmpMapValue / max);
-            Matcher m = Pattern.compile("<title>(\\s*)([\\S\\s]*)</title>").matcher(page.getContent());
-            String contentWithoutTags = page.getContent().replaceAll("<[^>]+>", "");
-            String title = null;
-            while(m.find()) {
-                title = page.getContent().substring(m.start() + "<title>".length(), m.end() - "</title>".length());
-            }
+//            Matcher m = Pattern.compile("<title>(\\s*)([\\S\\s]*)</title>").matcher(page.getContent());
+            Document d = Jsoup.parse(page.getContent());
+            String title = d.select("title").text();
+            String contentWithoutTags = d.select("body").text();
+//            String contentWithoutTags = page.getContent().replaceAll("<[^>]+>", "");
+//            while(m.find()) {
+//                title = page.getContent().substring(m.start() + "<title>".length(), m.end() - "</title>".length());
+//            }
             searchResults.add(new SearchResult(page.getPath(), title, getSnippet(requestLemmas, contentWithoutTags), pageDoubleMap.get(page)));
         }
 
@@ -107,9 +111,9 @@ public class SearchSystem {
     }
 
     private String getSnippet(Set<Lemma> lemmaSet, String content) throws IOException {
-        content = new MorphologyServiceImpl().getNormalText(content);
-        System.out.println("text");
-        System.out.println("<" + content + ">");
+        //content = new MorphologyServiceImpl().getNormalText(content);
+//        System.out.println("text");
+//        System.out.println("<" + content + ">");
 //        Map<String, List<In<teger>> stringListMap = new HashMap<>();
 //        for (Lemma lemma : lemmaSet) {
 //            List<Integer> lemmaIndexes = new ArrayList<>();

@@ -34,6 +34,7 @@ public class CrawlingSystem {
     private volatile int pageId;
     @Getter
     private String lastError;
+    private Map<String, Page> allLinks;
 
     public synchronized int getPageId() {
         return pageId++;
@@ -51,14 +52,15 @@ public class CrawlingSystem {
         DBConnection.insertSite(site.toString());
         System.out.println("Parsing ");
         new ForkJoinPool().invoke(new SiteLinksGenerator(site.getUrl(), site.getUrl()));
+        allLinks = new HashMap<>(SiteLinksGenerator.allLinksMap);
         writeSiteMapUrl();
     }
 
     public void writeSiteMapUrl() {
         Collection<List<String>> chunked =
-                chunked(SiteLinksGenerator.allLinks.stream(), SiteLinksGenerator.allLinks.size()/ 100).values();
+                chunked(allLinks.keySet().stream(), allLinks.size()/ 100).values();
 
-        System.out.println("Кол-во ссылок: " + SiteLinksGenerator.allLinks.size());
+        System.out.println("Кол-во ссылок: " + allLinks.size());
         List<Thread> threadList = new ArrayList<>();
         chunked.forEach(list -> System.out.println(list.size()));
         chunked.forEach(c -> threadList.add(new Thread(() -> {
@@ -94,24 +96,26 @@ public class CrawlingSystem {
         return stream.collect(Collectors.groupingBy(x -> index.getAndIncrement() / chunkSize));
     }
 
-    public void appendPageInDB(String data, Builder builder) throws InterruptedException, IOException, SQLException {
-        int idPathBegin = site.getUrl().indexOf(data) + site.getUrl().length();
-        String path = site.getUrl().equals(data) ?  "/" : data.substring(idPathBegin);
-        String content = "";
-        Connection connection = connectPath(data);
-        int statusCode = connection.execute().statusCode();
+    public void appendPageInDB(String path, Builder builder) throws InterruptedException, IOException, SQLException {
+//        int idPathBegin = site.getUrl().indexOf(data) + site.getUrl().length();
+//        String path = site.getUrl().equals(data) ?  "/" : data.substring(idPathBegin);
+//        String content = "";
+//        Connection connection = connectPath(data);
+//        int statusCode = connection.execute().statusCode();
 
-        boolean htmlTest = Objects.requireNonNull(connection.response().contentType()).startsWith("text/html");
-        if (statusCode == 200 && htmlTest) {
-            content = connection.get().toString().replace("'", "\\'");
-        }
+//        boolean htmlTest = Objects.requireNonNull(connection.response().contentType()).startsWith("text/html");
+//        if (statusCode == 200 && htmlTest) {
+//            content = connection.get().toString().replace("'", "\\'");
+//        }
         rootLogger.info("Ссылка - " + path);
         int id = getPageId();
-        addPageInPageBuilder(builder, new Page(id, path, statusCode, content, 0));
-        if (statusCode != 200 && !htmlTest) {
+        Page page = allLinks.get(path);
+        page.setId(id);
+        addPageInPageBuilder(builder, page);
+        if (allLinks.get(path).getCode() != 200) {
             return;
         }
-        appendTagInDB(connection.get(), id, builder);
+        appendTagInDB(page.getContent(), id, builder);
     }
 
     private void addPageInPageBuilder(Builder builder, Page page) throws SQLException {
@@ -133,37 +137,38 @@ public class CrawlingSystem {
                 .ignoreHttpErrors(true);
     }
 
-    private void appendTagInDB(Document document, Integer pageId, Builder builder) throws IOException, SQLException {
+    private void appendTagInDB(String content, Integer pageId, Builder builder) throws IOException, SQLException {
+        Document d = Jsoup.parse(content);
         StringBuilder tmp = new StringBuilder();
 
          for (Field field : fieldList) {
-             String tagContent = document.select(field.getName()).text();
+             String tagContent = d.select(field.getName()).text();
+             System.out.println(tagContent);
              tmp.append(tagContent);
-             Map<String, Integer> t;
+             Map<String, Integer> normalForms;
              try {
-                 t = new MorphologyServiceImpl().getNormalFormsList(tagContent);
+                 normalForms = new MorphologyServiceImpl().getNormalFormsList(tagContent);
              } catch (IOException e) {
                  rootLogger.debug("Ошибка лемантизатора - " + e.getMessage());
                  lastError = e.getMessage();
                  System.out.println(e.getMessage());
                  throw new RuntimeException(e.getMessage());
              }
-             addLemmaInLemmaBuilder(builder, field, t, pageId);
+             updateIndexDB(builder, field, normalForms, pageId);
         }
-
         updateLemmaDB(new MorphologyServiceImpl().getNormalFormsList(tmp.toString()), builder);
     }
 
-    private void addLemmaInLemmaBuilder(Builder builder, Field field, Map<String, Integer> normalFormsMap, int id) throws SQLException {
+    private void updateIndexDB(Builder builder, Field field, Map<String, Integer> normalFormsMap, int id) throws SQLException {
         if (builder.getIndexBuilder().length() > 4000000) {
             System.out.println("Index " + builder.getIndexBuilder().length());
             DBConnection.insertAllIndexes(builder.getIndexBuilder().toString());
             builder.setIndexBuilder(new StringBuilder());
         }
-        normalFormsMap.keySet().forEach(s ->
+        normalFormsMap.keySet().forEach(word ->
                 builder.setIndexBuilder(builder.getIndexBuilder().append(builder.getIndexBuilder().length() == 0 ? "" : ",")
-                        .append("(").append(id) 
-                        .append(", '").append(s).append("', ").append(normalFormsMap.get(s) * field.getWeight()).append(")")));
+                        .append("(").append(id)
+                        .append(", '").append(word).append("', ").append(normalFormsMap.get(word) * field.getWeight()).append(")")));
     }
 
     private void updateLemmaDB(Map<String, Integer> normalFormsMap, Builder builder) throws SQLException {
@@ -172,10 +177,9 @@ public class CrawlingSystem {
             DBConnection.insertAllLemmas(builder.getLemmaBuilder().toString());
             builder.setLemmaBuilder(new StringBuilder());
         }
-        normalFormsMap.keySet().forEach(key ->
-
+        normalFormsMap.keySet().forEach(word ->
                 builder.setLemmaBuilder(builder.getLemmaBuilder().append(builder.getLemmaBuilder().length() == 0 ? "" : ",")
-                .append("('").append(key)
+                .append("('").append(word)
                 .append("', 1, ").append(site.getId()).append(")")));
     }
 }

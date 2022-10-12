@@ -4,6 +4,7 @@ import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import pet.skillbox.sitesearchengine.model.Page;
 
 import java.io.IOException;
 import java.util.*;
@@ -17,6 +18,8 @@ public class SiteLinksGenerator extends RecursiveAction {
     private final String rootUrl;
     private final String url;
     public static final CopyOnWriteArraySet<String> allLinks = new CopyOnWriteArraySet<>();
+
+    public static final Map<String, Page> allLinksMap = Collections.synchronizedMap(new HashMap<>());
 
     public SiteLinksGenerator(String url, String rootUrl) {
         this.url = url;
@@ -32,7 +35,12 @@ public class SiteLinksGenerator extends RecursiveAction {
 //            sleep(100); //#TODO проверить чиселкоё
             Connection connection = connectPath(url);
             int statusCode = connection.execute().statusCode();
-            if(statusCode == 200){
+            int idPathBegin = rootUrl.indexOf(url) + rootUrl.length();
+            String path = rootUrl.equals(url) ?  "/" : url.substring(idPathBegin);
+            Page page;
+            boolean htmlTest = Objects.requireNonNull(connection.response().contentType()).startsWith("text/html");
+            if (statusCode == 200 && htmlTest) {
+                page = new Page(path, statusCode, connection.get().toString().replace("'", "\\'"));
                 Elements links = connection.get().select("a[href]");
                 for (Element link : links) {
                     String absUrl = link.attr("abs:href").replace("\\/", "/").trim();
@@ -43,8 +51,10 @@ public class SiteLinksGenerator extends RecursiveAction {
                 }
             }
             else {
+                page = new Page(path, statusCode, "");
                 System.out.println(url + " " + statusCode);
             }
+            allLinksMap.put(path, page);
         } catch (IOException e) {
             e.printStackTrace();
         }
