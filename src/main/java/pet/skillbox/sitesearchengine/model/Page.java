@@ -7,8 +7,6 @@ import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.*;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 
 @Getter
@@ -72,12 +70,5 @@ public class Page implements Comparable<Page>{
     @Override
     public int compareTo(@NotNull Page o) {
         return this.getPath().compareTo(o.getPath())*this.getSiteId().compareTo(o.getSiteId());
-    }
-
-    public static Page getPageById(List<Page> pageList, Page page){
-        Page[] array = pageList.toArray(new Page[0]);
-        Arrays.sort(array);
-        int t = Arrays.binarySearch(array, new Page(page.getId(), page.getPath(), page.getCode(), page.getContent(), page.getSiteId()));
-        return t >= 0 ? array[t] : null;
     }
 }

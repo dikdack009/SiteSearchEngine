@@ -36,8 +36,15 @@ public class CrawlingSystem {
     private String lastError;
     private Map<String, Page> allLinks;
 
-    public synchronized int getPageId() {
-        return pageId++;
+    private synchronized int getPageId() {
+        int tmp = pageId;
+        System.out.println("tmp " + tmp);
+        setPageId(pageId + 1);
+        return tmp;
+    }
+
+    private synchronized void setPageId(int pageId) {
+        this.pageId = pageId;
     }
 
     public CrawlingSystem(Site site) throws SQLException {
@@ -57,10 +64,14 @@ public class CrawlingSystem {
     }
 
     public void writeSiteMapUrl() {
-        Collection<List<String>> chunked =
-                chunked(allLinks.keySet().stream(), allLinks.size()/ 100).values();
 
-        System.out.println("Кол-во ссылок: " + allLinks.size());
+        if (allLinks.keySet().size() == 0) {
+            return;
+        }
+        Collection<List<String>> chunked =
+                chunked(allLinks.keySet().stream(), allLinks.keySet().size() / 100).values();
+
+        rootLogger.info("Кол-во ссылок: " + allLinks.keySet().size());
         List<Thread> threadList = new ArrayList<>();
         chunked.forEach(list -> System.out.println(list.size()));
         chunked.forEach(c -> threadList.add(new Thread(() -> {
@@ -72,20 +83,22 @@ public class CrawlingSystem {
                     appendPageInDB(page, builder);
                 } catch (IOException | InterruptedException | SQLException e) {
                     lastError = e.getMessage();
+                    System.out.println(lastError);
                     rootLogger.debug("Ошибка - " + page + " - " + e);
                 }
             }
             System.out.print(Thread.currentThread().getName() + "\t");
             System.out.println("total " + (double) (System.currentTimeMillis() - p) + " ");
             try {
-                System.out.println(Thread.currentThread().getName() + "\tДобавляем в бд" );
+                System.out.println(Thread.currentThread().getName() + "\tДобавляем в бд");
                 DBConnection.insert(builder);
             } catch (SQLException e) {
                 lastError = e.getMessage();
+                e.printStackTrace();
                 rootLogger.debug("Ошибка вставки - " + lastError);
             }
             System.out.println(Thread.currentThread().getName() + " " + (double) (System.currentTimeMillis() - p)
-                    + " " + LocalDateTime.now() + "\tДобавили" );
+                    + " " + LocalDateTime.now() + "\tДобавили");
             rootLogger.info("\nDone " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
         })));
         threadList.forEach(Thread::start);
@@ -98,35 +111,24 @@ public class CrawlingSystem {
 
     public void appendPageInDB(String path, Builder builder) throws InterruptedException, IOException, SQLException {
 //        int idPathBegin = site.getUrl().indexOf(data) + site.getUrl().length();
-//        String path = site.getUrl().equals(data) ?  "/" : data.substring(idPathBegin);
-//        String content = "";
+//        String path = site.getUrl().equals(data) ? "/" : data.substring(idPathBegin);
 //        Connection connection = connectPath(data);
 //        int statusCode = connection.execute().statusCode();
-
 //        boolean htmlTest = Objects.requireNonNull(connection.response().contentType()).startsWith("text/html");
-//        if (statusCode == 200 && htmlTest) {
-//            content = connection.get().toString().replace("'", "\\'");
-//        }
-        rootLogger.info("Ссылка - " + path);
+//        String content = (statusCode == 200 && htmlTest)
+//                ? connection.get().toString().replace("'", "\\'")
+//                : "";
+//        rootLogger.info("Ссылка - " + path);
         int id = getPageId();
+//        System.out.println(id + " - " + path);
+//        Page page = new Page(id, path, statusCode, content, 0);
         Page page = allLinks.get(path);
         page.setId(id);
-        addPageInPageBuilder(builder, page);
+        updatePageDB(builder, page);
         if (allLinks.get(path).getCode() != 200) {
             return;
         }
-        appendTagInDB(page.getContent(), id, builder);
-    }
-
-    private void addPageInPageBuilder(Builder builder, Page page) throws SQLException {
-        if (builder.getPageBuilder().length() > 4000000) {
-            DBConnection.insertAllPages(builder.getPageBuilder().toString());
-            builder.setPageBuilder(new StringBuilder());
-        }
-        builder.setPageBuilder(builder.getPageBuilder().append(builder.getPageBuilder().length() == 0 ? "" : ",")
-                .append("(").append(page.getId()).append(",'").append(page.getPath()).append("', ")
-                .append(page.getCode()).append(", '").append(page.getContent())
-                .append("', ").append(site.getId()).append(")"));
+        parseTagsContent(page.getContent(), id, builder);
     }
 
     private Connection connectPath(String path) {
@@ -137,31 +139,39 @@ public class CrawlingSystem {
                 .ignoreHttpErrors(true);
     }
 
-    private void appendTagInDB(String content, Integer pageId, Builder builder) throws IOException, SQLException {
+    private void parseTagsContent(String content, Integer pageId, Builder builder) throws SQLException {
         Document d = Jsoup.parse(content);
-        StringBuilder tmp = new StringBuilder();
+        Set<String> allWords = new HashSet<>();
 
-         for (Field field : fieldList) {
-             String tagContent = d.select(field.getName()).text();
-             System.out.println(tagContent);
-             tmp.append(tagContent);
-             Map<String, Integer> normalForms;
-             try {
-                 normalForms = new MorphologyServiceImpl().getNormalFormsList(tagContent);
-             } catch (IOException e) {
-                 rootLogger.debug("Ошибка лемантизатора - " + e.getMessage());
-                 lastError = e.getMessage();
-                 System.out.println(e.getMessage());
-                 throw new RuntimeException(e.getMessage());
-             }
-             updateIndexDB(builder, field, normalForms, pageId);
+        for (Field field : fieldList) {
+            String tagContent = d.select(field.getName()).text();
+            Map<String, Integer> tagNormalForms;
+            try {
+                tagNormalForms = new MorphologyServiceImpl().getNormalFormsList(tagContent);
+                allWords.addAll(tagNormalForms.keySet());
+            } catch (IOException e) {
+                rootLogger.debug("Ошибка лемантизатора - " + e.getMessage());
+                lastError = e.getMessage();
+                return;
+            }
+            updateIndexDB(builder, field, tagNormalForms, pageId);
         }
-        updateLemmaDB(new MorphologyServiceImpl().getNormalFormsList(tmp.toString()), builder);
+        updateLemmaDB(builder, allWords);
+    }
+
+    private void updatePageDB(Builder builder, Page page) throws SQLException {
+        if (builder.getPageBuilder().length() > 4000000) {
+            DBConnection.insertAllPages(builder.getPageBuilder().toString());
+            builder.setPageBuilder(new StringBuilder());
+        }
+        builder.setPageBuilder(builder.getPageBuilder().append(builder.getPageBuilder().length() == 0 ? "" : ",")
+                .append("(").append(page.getId()).append(",'").append(page.getPath()).append("', ")
+                .append(page.getCode()).append(", '").append(page.getContent())
+                .append("', ").append(site.getId()).append(")"));
     }
 
     private void updateIndexDB(Builder builder, Field field, Map<String, Integer> normalFormsMap, int id) throws SQLException {
         if (builder.getIndexBuilder().length() > 4000000) {
-            System.out.println("Index " + builder.getIndexBuilder().length());
             DBConnection.insertAllIndexes(builder.getIndexBuilder().toString());
             builder.setIndexBuilder(new StringBuilder());
         }
@@ -171,15 +181,14 @@ public class CrawlingSystem {
                         .append(", '").append(word).append("', ").append(normalFormsMap.get(word) * field.getWeight()).append(")")));
     }
 
-    private void updateLemmaDB(Map<String, Integer> normalFormsMap, Builder builder) throws SQLException {
+    private void updateLemmaDB(Builder builder, Set<String> normalFormsSet) throws SQLException {
         if (builder.getLemmaBuilder().length() > 4000000) {
-            System.out.println("Lemma " + builder.getLemmaBuilder().length());
             DBConnection.insertAllLemmas(builder.getLemmaBuilder().toString());
             builder.setLemmaBuilder(new StringBuilder());
         }
-        normalFormsMap.keySet().forEach(word ->
+        normalFormsSet.forEach(word ->
                 builder.setLemmaBuilder(builder.getLemmaBuilder().append(builder.getLemmaBuilder().length() == 0 ? "" : ",")
-                .append("('").append(word)
-                .append("', 1, ").append(site.getId()).append(")")));
+                        .append("('").append(word)
+                        .append("', 1, ").append(site.getId()).append(")")));
     }
 }

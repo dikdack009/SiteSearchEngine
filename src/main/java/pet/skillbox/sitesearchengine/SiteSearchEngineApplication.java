@@ -7,6 +7,7 @@ import pet.skillbox.sitesearchengine.controller.crawling.SearchSystem;
 import pet.skillbox.sitesearchengine.model.Site;
 import pet.skillbox.sitesearchengine.model.Status;
 import pet.skillbox.sitesearchengine.repositories.DBConnection;
+import pet.skillbox.sitesearchengine.services.MorphologyServiceImpl;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -24,27 +25,28 @@ public class SiteSearchEngineApplication {
 	public static void main(String[] args) throws SQLException, IOException {
 
 //		SpringApplication.run(SiteSearchEngineApplication.class, args);
-//		long mm = System.currentTimeMillis();
-//		try {
-//			CrawlingSystem crawlingSystem =  new CrawlingSystem(new Site(1, Status.INDEXING,
-//					LocalDateTime.now(), null, "https://www.playback.ru/", "playback"));
-//			crawlingSystem.start();
-//		} catch (RuntimeException exception) {
-//			exception.printStackTrace();
-//		}
-//
-//		System.out.println("Закончили");
-//		System.out.println((double)(System.currentTimeMillis() - mm) / 1000 + " sec.");
-
-
-		BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-		System.out.print("Request -> ");
-		String request = reader.readLine();
-		System.out.println("OK");
 		long mm = System.currentTimeMillis();
-		new SearchSystem(request, "https://www.playback.ru/").request().forEach(System.out::println);
+		try {
+			CrawlingSystem crawlingSystem =  new CrawlingSystem(new Site(1, Status.INDEXING,
+					LocalDateTime.now(), null, "https://esenin-museum.ru/", "Есенин"));
+			crawlingSystem.start();
+		} catch (RuntimeException exception) {
+			exception.printStackTrace();
+		}
+
 		System.out.println("Закончили");
 		System.out.println((double)(System.currentTimeMillis() - mm) / 1000 + " sec.");
+		//TODO: убрать индексацию поисковиков, подумать над максимальным кол-вом ссылок
+
+
+//		BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+//		System.out.print("Request -> ");
+//		String request = reader.readLine();
+//		System.out.println("OK");
+//		long mm = System.currentTimeMillis();
+//		new SearchSystem(request, "https://www.playback.ru/").request().forEach(System.out::println);
+//		System.out.println("Закончили");
+//		System.out.println((double)(System.currentTimeMillis() - mm) / 1000 + " sec.");
 
 
 //		String tagDeleteRegex = "<[^>]+>";

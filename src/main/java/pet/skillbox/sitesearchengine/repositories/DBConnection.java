@@ -20,11 +20,11 @@ public class DBConnection {
             try {
                 connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/" + name +
                         "?user=" + user + "&password=" + pass);
-//                createFieldTable();
-//                createPageTable();
-//                createLemmaTable();
-//                createIndexTable();
-//                createSiteTable();
+                createFieldTable();
+                createPageTable();
+                createLemmaTable();
+                createIndexTable();
+                createSiteTable();
 
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -240,7 +240,7 @@ public class DBConnection {
         while (rs.next()) {
             c = rs.getInt("c");
         }
-        return c;
+        return c + 1;
     }
 
     public static void insertAllLemmas(String lemmas) throws SQLException {
