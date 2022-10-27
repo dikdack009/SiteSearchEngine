@@ -12,8 +12,6 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveAction;
 
-import static java.lang.Thread.sleep;
-
 public class SiteLinksGenerator extends RecursiveAction {
     private final String rootUrl;
     private final String url;
@@ -29,16 +27,21 @@ public class SiteLinksGenerator extends RecursiveAction {
 
     @Override
     protected void compute() {
+        if (allLinks.size() > 40_000) {
+            return;
+        }
         Set<SiteLinksGenerator> taskList = new HashSet<>();
         List<String> list = new ArrayList<>();
         try {
-//            sleep(100); //#TODO проверить чиселкоё
             Connection connection = connectPath(url);
+//            System.out.println(url);
             int statusCode = connection.execute().statusCode();
             int idPathBegin = rootUrl.indexOf(url) + rootUrl.length();
             String path = rootUrl.equals(url) ?  "/" : url.substring(idPathBegin);
             Page page;
             boolean htmlTest = Objects.requireNonNull(connection.response().contentType()).startsWith("text/html");
+//            System.out.println(htmlTest + " " + isCorrected(url));
+//            System.out.println(url.matches("#([\\w\\-]+)?$"));
             if (statusCode == 200 && htmlTest) {
                 page = new Page(path, statusCode, connection.get().toString().replace("'", "\\'"));
                 Elements links = connection.get().select("a[href]");
@@ -82,6 +85,11 @@ public class SiteLinksGenerator extends RecursiveAction {
                 && !url.contains("#")
                 && !url.matches("(\\S+(\\.(?i)(jpg|png|gif|bmp|pdf|xml))$)")
                 && !url.matches("#([\\w\\-]+)?$")
-                && !url.contains("?method=");
+                && !url.contains("?method=")
+                && !url.startsWith("https://www.google.com/")
+                && !url.startsWith("https://dzen.ru/")
+                && !url.startsWith("https://go.mail.ru/")
+                && !url.startsWith("https://www.bing.com/")
+                && !url.startsWith("https://ya.ru/");
     }
 }

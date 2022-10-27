@@ -1,7 +1,6 @@
 package pet.skillbox.sitesearchengine.controller.crawling;
 
 import lombok.Getter;
-import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -23,6 +22,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -32,22 +32,21 @@ public class CrawlingSystem {
     private final Logger rootLogger;
     private final List<Field> fieldList;
     private volatile int pageId;
+    private volatile int lemmaId;
     @Getter
     private String lastError;
     private Map<String, Page> allLinks;
 
     private synchronized int getPageId() {
-        int tmp = pageId;
-        System.out.println("tmp " + tmp);
-        setPageId(pageId + 1);
-        return tmp;
+        return pageId++;
     }
 
-    private synchronized void setPageId(int pageId) {
-        this.pageId = pageId;
+    private synchronized int getLemmaId() {
+        return lemmaId++;
     }
 
     public CrawlingSystem(Site site) throws SQLException {
+        DBConnection.setCreateTables(true);
         rootLogger = LogManager.getRootLogger();
         this.site = site;
         pageId = DBConnection.getMaxPageId();
@@ -58,6 +57,7 @@ public class CrawlingSystem {
         rootLogger.info("\n\nNew launch - " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
         DBConnection.insertSite(site.toString());
         System.out.println("Parsing ");
+
         new ForkJoinPool().invoke(new SiteLinksGenerator(site.getUrl(), site.getUrl()));
         allLinks = new HashMap<>(SiteLinksGenerator.allLinksMap);
         writeSiteMapUrl();
@@ -65,11 +65,12 @@ public class CrawlingSystem {
 
     public void writeSiteMapUrl() {
 
-        if (allLinks.keySet().size() == 0) {
+        if (allLinks.size() == 0) {
             return;
         }
+        System.out.println(allLinks.size());
         Collection<List<String>> chunked =
-                chunked(allLinks.keySet().stream(), allLinks.keySet().size() / 100).values();
+                chunked(allLinks.keySet().stream(), allLinks.keySet().size() / 110).values();
 
         rootLogger.info("Кол-во ссылок: " + allLinks.keySet().size());
         List<Thread> threadList = new ArrayList<>();
@@ -89,6 +90,7 @@ public class CrawlingSystem {
             }
             System.out.print(Thread.currentThread().getName() + "\t");
             System.out.println("total " + (double) (System.currentTimeMillis() - p) + " ");
+
             try {
                 System.out.println(Thread.currentThread().getName() + "\tДобавляем в бд");
                 DBConnection.insert(builder);
@@ -110,18 +112,7 @@ public class CrawlingSystem {
     }
 
     public void appendPageInDB(String path, Builder builder) throws InterruptedException, IOException, SQLException {
-//        int idPathBegin = site.getUrl().indexOf(data) + site.getUrl().length();
-//        String path = site.getUrl().equals(data) ? "/" : data.substring(idPathBegin);
-//        Connection connection = connectPath(data);
-//        int statusCode = connection.execute().statusCode();
-//        boolean htmlTest = Objects.requireNonNull(connection.response().contentType()).startsWith("text/html");
-//        String content = (statusCode == 200 && htmlTest)
-//                ? connection.get().toString().replace("'", "\\'")
-//                : "";
-//        rootLogger.info("Ссылка - " + path);
         int id = getPageId();
-//        System.out.println(id + " - " + path);
-//        Page page = new Page(id, path, statusCode, content, 0);
         Page page = allLinks.get(path);
         page.setId(id);
         updatePageDB(builder, page);
@@ -129,14 +120,6 @@ public class CrawlingSystem {
             return;
         }
         parseTagsContent(page.getContent(), id, builder);
-    }
-
-    private Connection connectPath(String path) {
-        return Jsoup.connect(path)
-                .userAgent("DuckSearchBot")
-                .referrer("https://www.google.com")
-                .ignoreContentType(true)
-                .ignoreHttpErrors(true);
     }
 
     private void parseTagsContent(String content, Integer pageId, Builder builder) throws SQLException {
@@ -164,7 +147,8 @@ public class CrawlingSystem {
             DBConnection.insertAllPages(builder.getPageBuilder().toString());
             builder.setPageBuilder(new StringBuilder());
         }
-        builder.setPageBuilder(builder.getPageBuilder().append(builder.getPageBuilder().length() == 0 ? "" : ",")
+        builder.setPageBuilder(builder.getPageBuilder()
+                .append(builder.getPageBuilder().length() == 0 ? "" : ",")
                 .append("(").append(page.getId()).append(",'").append(page.getPath()).append("', ")
                 .append(page.getCode()).append(", '").append(page.getContent())
                 .append("', ").append(site.getId()).append(")"));
@@ -176,9 +160,12 @@ public class CrawlingSystem {
             builder.setIndexBuilder(new StringBuilder());
         }
         normalFormsMap.keySet().forEach(word ->
-                builder.setIndexBuilder(builder.getIndexBuilder().append(builder.getIndexBuilder().length() == 0 ? "" : ",")
+                builder.setIndexBuilder(builder.getIndexBuilder()
+                        .append(builder.getIndexBuilder().length() == 0 ? "" : ",")
                         .append("(").append(id)
-                        .append(", '").append(word).append("', ").append(normalFormsMap.get(word) * field.getWeight()).append(")")));
+                        .append(", '").append(word).append("', ")
+                        .append(normalFormsMap.get(word) * field.getWeight()).append(", ")
+                        .append(site.getId()).append(")")));
     }
 
     private void updateLemmaDB(Builder builder, Set<String> normalFormsSet) throws SQLException {
@@ -187,7 +174,8 @@ public class CrawlingSystem {
             builder.setLemmaBuilder(new StringBuilder());
         }
         normalFormsSet.forEach(word ->
-                builder.setLemmaBuilder(builder.getLemmaBuilder().append(builder.getLemmaBuilder().length() == 0 ? "" : ",")
+                builder.setLemmaBuilder(builder.getLemmaBuilder()
+                        .append(builder.getLemmaBuilder().length() == 0 ? "" : ",")
                         .append("('").append(word)
                         .append("', 1, ").append(site.getId()).append(")")));
     }

@@ -1,5 +1,6 @@
 package pet.skillbox.sitesearchengine.repositories;
 
+import lombok.Setter;
 import pet.skillbox.sitesearchengine.model.*;
 
 import java.sql.*;
@@ -14,17 +15,21 @@ public class DBConnection {
     private static String name = "search_engine";
     private static String user = "root";
     private static String pass = "89257044306mV";
+    @Setter
+    private static boolean createTables;
 
     public static Connection getConnection() {
         if (connection == null) {
             try {
                 connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/" + name +
                         "?user=" + user + "&password=" + pass);
-                createFieldTable();
-                createPageTable();
-                createLemmaTable();
-                createIndexTable();
-                createSiteTable();
+                if (createTables) {
+                    createFieldTable();
+                    createPageTable();
+                    createLemmaTable();
+                    createIndexTable();
+                    createSiteTable();
+                }
 
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -77,8 +82,9 @@ public class DBConnection {
                 "page_id INT NOT NULL, " +
                 "lemma VARCHAR(255) NOT NULL, " +
                 "`rank` FLOAT NOT NULL, " +
-                "PRIMARY KEY(id), " +
-                "UNIQUE KEY(page_id, lemma(50)))");
+                "site_id INT NOT NULL, " +
+                "PRIMARY KEY (id), " +
+                "UNIQUE KEY(page_id, lemma(50), site_id))");
     }
 
     private static void createSiteTable() throws SQLException {
@@ -90,7 +96,8 @@ public class DBConnection {
                 "last_error TEXT, " +
                 "url VARCHAR(255) NOT NULL, " +
                 "name VARCHAR(255) NOT NULL, " +
-                "PRIMARY KEY(id), KEY (url))");
+                "PRIMARY KEY(id), " +
+                "UNIQUE KEY(url))");
     }
 
     public static void insert(Builder builder) throws SQLException {
@@ -127,10 +134,11 @@ public class DBConnection {
     public static int getSiteIdByPath(String path) throws SQLException {
         ResultSet rs = null;
         try {
-            rs = getConnection().createStatement().executeQuery("SELECT id FROM site WHERE url = '" + path + "'");
+            rs = getConnection().createStatement().executeQuery("SELECT id FROM site WHERE site.url = '" + path + "'");
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        System.out.println("SELECT id FROM site WHERE site.url = '" + path + "'");
         int id = 0;
         while (true) {
             assert rs != null;
@@ -153,11 +161,11 @@ public class DBConnection {
         return pageList;
     }
 
-    public static double getPageRank(Set<Lemma> lemmaSet, int pageId) throws SQLException {
+    public static double getPageRank(List<Lemma> lemmaList, int pageId) throws SQLException {
         StringJoiner stringJoiner = new StringJoiner("' OR i.lemma = '",
                 "SELECT SUM(i.rank) AS q FROM `index` AS i WHERE i.page_id = '" + pageId + "' AND (i.lemma = '" ,
                 "')");
-        lemmaSet.forEach(l -> stringJoiner.add(l.getLemma()));
+        lemmaList.forEach(l -> stringJoiner.add(l.getLemma()));
         ResultSet rs = getConnection().createStatement().executeQuery(stringJoiner.toString());
         double rank = 0;
         while (true) {
@@ -194,13 +202,14 @@ public class DBConnection {
         return lemmaList;
     }
 
-    public static List<Page> getPagesFromRequest(Set<Lemma> lemmaSet, int siteId) throws SQLException {
+    public static List<Page> getPagesFromRequest(List<Lemma> lemmaSet, int siteId) throws SQLException {
         StringJoiner lemmas = new StringJoiner("') IN (SELECT lemma FROM `index` AS i where page.id = i.page_id) and ('",
                 "SELECT * FROM page where ('", "') IN (SELECT lemma FROM `index` AS i where page.id = i.page_id) and site_id = ");
         for (Lemma lemma : lemmaSet) {
             lemmas.add(lemma.getLemma());
         }
         String sql = lemmas.toString() + siteId;
+        System.out.println(sql);
         ResultSet rs = null;
         try {
             rs = getConnection().createStatement().executeQuery(sql);
@@ -257,9 +266,18 @@ public class DBConnection {
     }
 
     public static void insertAllIndexes(String indexes) throws SQLException {
-        String sql = "INSERT INTO `index`(page_id, lemma, `rank`) " +
+        String sql = "INSERT INTO `index`(page_id, lemma, `rank`, site_id) " +
                 "VALUES" + indexes +
                 "AS new ON DUPLICATE KEY UPDATE `index`.`rank`=`index`.`rank` + new.`rank`";
         getConnection().createStatement().execute(sql);
     }
+//    public static void insertFromCSV() throws SQLException {
+//        String sql = "LOAD DATA INFILE 'c:/Users/vadim/OneDrive/Desktop/SiteSearchEngine/lemma.csv'" +
+//                "INTO TABLE lemma" +
+//                "FIELDS TERMINATED BY ','" +
+//                "ENCLOSED BY '\"'" +
+//                "LINES TERMINATED BY 'n'" +
+//                "ON DUPLICATE KEY UPDATE frequency=frequency + 1;";
+//        getConnection().createStatement().execute(sql);
+//    }
 }
