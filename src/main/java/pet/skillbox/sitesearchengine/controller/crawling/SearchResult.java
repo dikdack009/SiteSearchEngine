@@ -14,9 +14,9 @@ public class SearchResult implements Comparable<SearchResult>{
 
     @Override
     public String toString() {
-        return  "\n\n" + uri + "\n" +
-                title + "\n" +
-                snippet + "\n" +
+        return  "\n" + uri + " <" +
+                title + ">\n" +
+                snippet + "" +
                 relevance ;
     }
 

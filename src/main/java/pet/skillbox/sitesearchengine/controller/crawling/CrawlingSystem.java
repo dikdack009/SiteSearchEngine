@@ -1,16 +1,14 @@
 package pet.skillbox.sitesearchengine.controller.crawling;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import pet.skillbox.sitesearchengine.model.Builder;
-import pet.skillbox.sitesearchengine.model.Field;
-import pet.skillbox.sitesearchengine.model.Page;
-import pet.skillbox.sitesearchengine.model.Site;
+import pet.skillbox.sitesearchengine.model.*;
 import pet.skillbox.sitesearchengine.repositories.DBConnection;
 import pet.skillbox.sitesearchengine.services.MorphologyServiceImpl;
 
@@ -29,20 +27,17 @@ import java.util.stream.Stream;
 public class CrawlingSystem {
 
     public Site site;
+    @Getter
     private final Logger rootLogger;
     private final List<Field> fieldList;
     private volatile int pageId;
-    private volatile int lemmaId;
     @Getter
+    @Setter
     private String lastError;
     private Map<String, Page> allLinks;
 
     private synchronized int getPageId() {
         return pageId++;
-    }
-
-    private synchronized int getLemmaId() {
-        return lemmaId++;
     }
 
     public CrawlingSystem(Site site) throws SQLException {
@@ -53,17 +48,32 @@ public class CrawlingSystem {
         fieldList = DBConnection.getAllFields();
     }
 
-    public void start() throws SQLException {
+    public void start() throws SQLException, InterruptedException {
         rootLogger.info("\n\nNew launch - " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
         DBConnection.insertSite(site.toString());
         System.out.println("Parsing ");
 
         new ForkJoinPool().invoke(new SiteLinksGenerator(site.getUrl(), site.getUrl()));
         allLinks = new HashMap<>(SiteLinksGenerator.allLinksMap);
-        writeSiteMapUrl();
+        Collection<List<String>> chunked =
+                chunked(allLinks.keySet().stream(), allLinks.keySet().size() / 100).values();
+
+        rootLogger.info("Кол-во ссылок: " + allLinks.keySet().size());
+        List<CrawlingThread> threadList = new ArrayList<>();
+        chunked.forEach(c -> threadList.add(new CrawlingThread(c, this)));
+        threadList.forEach(Thread::start);
+        threadList.forEach(t -> {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+//        writeSiteMapUrl();
     }
 
-    public void writeSiteMapUrl() {
+    public void writeSiteMapUrl() throws InterruptedException {
 
         if (allLinks.size() == 0) {
             return;
@@ -102,8 +112,16 @@ public class CrawlingSystem {
             System.out.println(Thread.currentThread().getName() + " " + (double) (System.currentTimeMillis() - p)
                     + " " + LocalDateTime.now() + "\tДобавили");
             rootLogger.info("\nDone " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
+
         })));
         threadList.forEach(Thread::start);
+        threadList.forEach(t -> {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     public <T> Map<Object, List<T>> chunked(Stream<T> stream, int chunkSize) {
@@ -179,4 +197,6 @@ public class CrawlingSystem {
                         .append("('").append(word)
                         .append("', 1, ").append(site.getId()).append(")")));
     }
+
+
 }

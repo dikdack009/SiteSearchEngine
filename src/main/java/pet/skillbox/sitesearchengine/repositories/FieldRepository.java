@@ -1,7 +1,7 @@
-//package pet.skillbox.sitesearchengine.repositories;
-//
-//import model.Field;
-//import org.springframework.data.jpa.repository.JpaRepository;
-//
-//public interface FieldRepository extends JpaRepository<Field, Integer> {
-//}
+package pet.skillbox.sitesearchengine.repositories;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import pet.skillbox.sitesearchengine.model.Field;
+
+public interface FieldRepository extends JpaRepository<Field, Integer> {
+}

@@ -3,6 +3,8 @@ package pet.skillbox.sitesearchengine;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import pet.skillbox.sitesearchengine.controller.crawling.CrawlingSystem;
 import pet.skillbox.sitesearchengine.controller.crawling.SearchSystem;
 import pet.skillbox.sitesearchengine.model.Site;
@@ -18,14 +20,12 @@ import java.time.LocalDateTime;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@SpringBootApplication
 public class SiteSearchEngineApplication {
 
 	public static void main(String[] args) throws SQLException, IOException {
 //		SpringApplication.run(SiteSearchEngineApplication.class, args);
-		String content = "Купить кольцо-держатель для телефона RING HOLDER Magnetic PlayBack.ru 5 минут от метро ВДНХ 8(495)143-77-71 пн-пт: c 11 до 20 сб-вс: с 11 до 18 Возникла проблема? Напишите нам!";
-		System.out.println(content);
-		String normalText = new MorphologyServiceImpl().getNormalText(content).toLowerCase();
-		System.out.println(normalText);
+
 		BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 		System.out.print("(1 - index; 0 - search) -> ");
 		if (reader.readLine().equals("1")) {
@@ -42,7 +42,7 @@ public class SiteSearchEngineApplication {
 			CrawlingSystem crawlingSystem =  new CrawlingSystem(new Site(1, Status.INDEXING,
 					LocalDateTime.now(), null, "https://www.playback.ru/", "PlayBack"));
 			crawlingSystem.start();
-		} catch (RuntimeException | SQLException e ) {
+		} catch (RuntimeException | SQLException | InterruptedException e ) {
 			e.printStackTrace();
 		}
 

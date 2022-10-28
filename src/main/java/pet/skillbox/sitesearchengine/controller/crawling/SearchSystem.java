@@ -84,6 +84,7 @@ public class SearchSystem {
         }
 
         List<SearchResult> searchResults = new ArrayList<>();
+        System.out.println("Размер - " + pageDoubleMap.size());
         for (Page page : pageDoubleMap.keySet()) {
             double tmpMapValue = pageDoubleMap.get(page);
             pageDoubleMap.put(page, tmpMapValue / max);
@@ -108,25 +109,23 @@ public class SearchSystem {
         for (Lemma lemma : lemmaList) {
             int spaces = searchSpacesBefore(normalText, lemma.getLemma());
 
-//            System.out.println(lemma.getLemma());
-//            System.out.println(normalText.indexOf(lemma.getLemma()));
             Pair<Integer, Integer> pair = searchSpacesAfter(content, spaces);
             int i = pair.getValue();
             char[] array = content.replaceAll("[^[a-zA-Zа-яА-Я0-9]]", "-").toLowerCase().toCharArray();
             int tmp = new String(array).indexOf("-", i + 1);
+            System.out.println("i" + i);
+            System.out.println("cs " + content.length());
+            System.out.println("ns " + normalText.length());
             content = content.substring(0, i + 1) + "<b>" + content.substring(i + 1, tmp) + "</b>" + content.substring(tmp);
             indexes.add(pair.getKey());
         }
         StringBuilder snippet = new StringBuilder("...");
+        char[] array = normalText.replaceAll("[^[a-zA-Zа-яА-Я0-9]]", "-").toLowerCase().toCharArray();
         for (int i : indexes) {
-//            System.out.println(i);
-            int tmp = normalText.indexOf(" ", i);
-//            if (i >= content.length()){
-//                snippet.append("...");
-//            }
-//            else {
-                snippet.append(content, i, Math.min(tmp + 80, content.length()));
-//            }
+            int tmp = new String(array).indexOf("-", i - 7);
+            System.out.println(i + "\n" + new String(array));
+            snippet.append(content, i, Math.min(tmp + 80, content.length() + 7));
+
             snippet.append("...");
             if (snippet.length() > 80) {
                 snippet.append("\n");
@@ -141,24 +140,12 @@ public class SearchSystem {
         int count = 0;
         char[] textArray = text.toCharArray();
         int i = 0;
-        StringBuilder w = new StringBuilder();
-        int j = 0;
         for ( ; i < tmp; ++i ) {
             if (textArray[i] == ' ') {
                 count++;
             }
-//            if (word.toCharArray()[j] == textArray[i]){
-//                w.append(word.toCharArray()[j]);
-//                ++j;
-//            }
-//            else {
-//                j = 0;
-//                w = new StringBuilder();
-//            }
-//            if (w.toString().equals(word)){
-//                break;
-//            }
         }
+        System.out.println(word + " - пробелы - " + count + 1);
         return count + 1;
     }
 
@@ -176,6 +163,7 @@ public class SearchSystem {
                 break;
             }
         }
+        System.out.println("spaceId " + spaceId);
         return new Pair<>(spaceId, i);
     }
 
