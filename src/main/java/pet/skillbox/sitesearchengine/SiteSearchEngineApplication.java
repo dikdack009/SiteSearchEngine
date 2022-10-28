@@ -35,7 +35,6 @@ public class SiteSearchEngineApplication {
 		}
 		//TODO: убрать индексацию поисковиков, подумать над максимальным кол-вом ссылок
 	}
-
 	public static void indexing() {
 		long mm = System.currentTimeMillis();
 		try {
