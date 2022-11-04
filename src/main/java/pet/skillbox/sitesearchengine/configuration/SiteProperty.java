@@ -1,4 +1,4 @@
-package pet.skillbox.sitesearchengine.services;
+package pet.skillbox.sitesearchengine.configuration;
 
 import lombok.Data;
 

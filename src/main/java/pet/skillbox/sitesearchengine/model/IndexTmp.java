@@ -10,11 +10,11 @@ import javax.persistence.*;
 @Setter
 @AllArgsConstructor
 @Entity
-@Table(name = "`index`")
+@Table(name = "index_tmp")
 @PrimaryKeyJoinColumns({
         @PrimaryKeyJoinColumn(name="page_id"),
         @PrimaryKeyJoinColumn(name="lemma")})
-public class Index {
+public class IndexTmp {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -31,11 +31,11 @@ public class Index {
     @Column(name = "site_id")
     private int siteId;
 
-    public Index() {
+    public IndexTmp() {
 
     }
 
-    public Index(int pageId, String lemma, float rank) {
+    public IndexTmp(int pageId, String lemma, float rank) {
         this.pageId = pageId;
         this.lemma = lemma;
         this.rank = rank;

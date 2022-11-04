@@ -20,14 +20,24 @@
             <PatternLayout pattern="%d{dd-MM-yyyy HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
             <LevelRangeFilter minLevel="debug" maxLevel="debug" onMatch="ACCEPT" onMismatch="DENY"/>
         </File>
+
+        <File name="IndexFile" fileName="logs/index.log">
+            <PatternLayout pattern="%d{dd-MM-yyyy HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+            <LevelRangeFilter minLevel="info" maxLevel="info" onMatch="ACCEPT" onMismatch="DENY"/>
+        </File>
+
+
     </appenders>
 
     <loggers>
         <root level="info">
             <appender-ref ref="WarningsFile" level="warn"/>
             <appender-ref ref="ErrorsFile" level="debug"/>
-            <appender-ref ref="SearchFile" level="info"/>
+            <appender-ref ref="IndexFile" level="info"/>
             <appender-ref ref="ExceptionsFile" level="error"/>
         </root>
+        <logger name="search" level="info">
+            <appender-ref ref="SearchFile" level="info"/>
+        </logger>
     </loggers>
 </configuration>

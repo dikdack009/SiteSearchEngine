@@ -1,0 +1,31 @@
+{
+  "result": true,
+  "statistics": {
+    "total": {
+      "sites": 2,
+      "pages": 0,
+      "lemmas": 0,
+      "indexing": true
+    },
+    "detailed": [
+      {
+        "url": "https://lenta.ru",
+        "name": "Лента.ру",
+        "status": "INDEXING",
+        "statusTime": 1667377328000,
+        "error": "null",
+        "pages": 0,
+        "lemmas": 0
+      },
+      {
+        "url": "https://www.playback.ru",
+        "name": "PlayBack",
+        "status": "INDEXING",
+        "statusTime": 1667377328000,
+        "error": "null",
+        "pages": 0,
+        "lemmas": 0
+      }
+    ]
+  }
+}

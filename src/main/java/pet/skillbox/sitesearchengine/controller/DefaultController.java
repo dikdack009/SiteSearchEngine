@@ -12,7 +12,7 @@ public class DefaultController {
     public DefaultController() {
     }
 
-    @RequestMapping("/")
+    @RequestMapping("/admin")
     public String index(Model model) {
         return "index";
     }

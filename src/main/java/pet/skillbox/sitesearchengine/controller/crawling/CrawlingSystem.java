@@ -8,117 +8,122 @@ import org.jsoup.nodes.Document;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import pet.skillbox.sitesearchengine.configuration.Config;
 import pet.skillbox.sitesearchengine.model.*;
 import pet.skillbox.sitesearchengine.repositories.DBConnection;
+import pet.skillbox.sitesearchengine.services.CrawlingService;
 import pet.skillbox.sitesearchengine.services.MorphologyServiceImpl;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Component
 public class CrawlingSystem {
 
     public Site site;
     @Getter
     private final Logger rootLogger;
-    private final List<Field> fieldList;
+    private List<Field> fieldList;
     private volatile int pageId;
     @Getter
     @Setter
     private String lastError;
     private Map<String, Page> allLinks;
+    private final Config config;
+    private final CrawlingService crawlingService;
 
     private synchronized int getPageId() {
         return pageId++;
     }
 
-    public CrawlingSystem(Site site) throws SQLException {
-        DBConnection.setCreateTables(true);
+    @Autowired
+    public CrawlingSystem(Config config, CrawlingService crawlingService) {
+        this.config = config;
+        this.crawlingService = crawlingService;
         rootLogger = LogManager.getRootLogger();
-        this.site = site;
-        pageId = DBConnection.getMaxPageId();
-        fieldList = DBConnection.getAllFields();
     }
 
-    public void start() throws SQLException, InterruptedException {
-        rootLogger.info("\n\nNew launch - " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
-        DBConnection.insertSite(site.toString());
-        System.out.println("Parsing ");
+    public void start(Config config, String url, String name) throws SQLException, InterruptedException {
+        Site site = new Site(Status.INDEXING, LocalDateTime.now(), null, url, name);
+        this.site = site;
+        if (config.isStopIndexing()) {
+            System.out.println(config.isStopIndexing());
+            return;
+        }
+//        int siteId = DBConnection.getSiteIdByPath(site.getUrl());
+        int siteId = crawlingService.getSiteIdByUrl(url);
+        System.out.println(siteId);
+        if (siteId > 0) {
+            rootLogger.info("Переиндексация - " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")));
+            DBConnection.updateSite(site.getUrl(), Status.INDEXING.toString(), null);
+//            crawlingService.updateStatus(site.getUrl(), Status.INDEXING.toString(), null);
 
-        new ForkJoinPool().invoke(new SiteLinksGenerator(site.getUrl(), site.getUrl()));
-        allLinks = new HashMap<>(SiteLinksGenerator.allLinksMap);
+        } else {
+            System.out.println("AWESOME");
+//            crawlingService.addSite(site);
+            DBConnection.insertSite(site.toString());
+        }
+        site.setId(siteId);
+        System.out.println("hell12");
+        pageId = DBConnection.getMaxPageId() + 1;
+//        fieldList = DBConnection.getAllFields();
+        System.out.println("hell");
+        fieldList = crawlingService.gelAllFields();
+        System.out.println(pageId + " " + fieldList);
+        rootLogger.info("New launch - " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")));
+        System.out.println("Parsing...");
+        long mm = System.currentTimeMillis();
+
+        CopyOnWriteArraySet<String> links = new CopyOnWriteArraySet<>();
+        Map<String, Page> allLinksMap = Collections.synchronizedMap(new HashMap<>());
+        SiteLinksGenerator linksGenerator = new SiteLinksGenerator(site.getUrl(), site.getUrl(), links, allLinksMap, config);
+
+        try {
+            new ForkJoinPool().invoke(linksGenerator);
+        } catch (RuntimeException e) {
+            System.out.println(e.getMessage());
+            lastError = e.getMessage().substring(e.getMessage().indexOf(":") + 2);
+            throw new RuntimeException(e.getMessage());
+        }
+        if (config.isStopIndexing()) {
+            System.out.println(config.isStopIndexing());
+            return;
+        }
+        allLinks = new HashMap<>(linksGenerator.getAllLinksMap());
+        allLinks.keySet().forEach(System.out::println);
+        if (allLinks.isEmpty()) {
+            System.out.println("пусто");
+            setLastError("Главная странница сайта недоступна");
+            return;
+        }
+        System.out.println((double)(System.currentTimeMillis() - mm) / 1000 + " sec.");
+        System.out.println((double)(System.currentTimeMillis() - mm) / 60000 + " min.");
+        System.out.println("Indexing...");
         Collection<List<String>> chunked =
-                chunked(allLinks.keySet().stream(), allLinks.keySet().size() / 100).values();
+                chunked(allLinks.keySet().stream(), allLinks.keySet().size() / 40).values();
 
         rootLogger.info("Кол-во ссылок: " + allLinks.keySet().size());
         List<CrawlingThread> threadList = new ArrayList<>();
-        chunked.forEach(c -> threadList.add(new CrawlingThread(c, this)));
+        chunked.forEach(c -> threadList.add(new CrawlingThread(c, this, siteId, crawlingService)));
         threadList.forEach(Thread::start);
         threadList.forEach(t -> {
             try {
                 t.join();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        });
-
-//        writeSiteMapUrl();
-    }
-
-    public void writeSiteMapUrl() throws InterruptedException {
-
-        if (allLinks.size() == 0) {
-            return;
-        }
-        System.out.println(allLinks.size());
-        Collection<List<String>> chunked =
-                chunked(allLinks.keySet().stream(), allLinks.keySet().size() / 110).values();
-
-        rootLogger.info("Кол-во ссылок: " + allLinks.keySet().size());
-        List<Thread> threadList = new ArrayList<>();
-        chunked.forEach(list -> System.out.println(list.size()));
-        chunked.forEach(c -> threadList.add(new Thread(() -> {
-            System.out.println("Размер в потоке " + Thread.currentThread().getName() + ": " + c.size());
-            long p = System.currentTimeMillis();
-            Builder builder = new Builder();
-            for (String page : c) {
-                try {
-                    appendPageInDB(page, builder);
-                } catch (IOException | InterruptedException | SQLException e) {
-                    lastError = e.getMessage();
-                    System.out.println(lastError);
-                    rootLogger.debug("Ошибка - " + page + " - " + e);
+                if (config.isStopIndexing()) {
+                    t.interrupt();
                 }
-            }
-            System.out.print(Thread.currentThread().getName() + "\t");
-            System.out.println("total " + (double) (System.currentTimeMillis() - p) + " ");
-
-            try {
-                System.out.println(Thread.currentThread().getName() + "\tДобавляем в бд");
-                DBConnection.insert(builder);
-            } catch (SQLException e) {
-                lastError = e.getMessage();
-                e.printStackTrace();
-                rootLogger.debug("Ошибка вставки - " + lastError);
-            }
-            System.out.println(Thread.currentThread().getName() + " " + (double) (System.currentTimeMillis() - p)
-                    + " " + LocalDateTime.now() + "\tДобавили");
-            rootLogger.info("\nDone " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
-
-        })));
-        threadList.forEach(Thread::start);
-        threadList.forEach(t -> {
-            try {
-                t.join();
             } catch (InterruptedException e) {
+                lastError= e.getMessage();
                 throw new RuntimeException(e);
             }
         });
@@ -129,15 +134,19 @@ public class CrawlingSystem {
         return stream.collect(Collectors.groupingBy(x -> index.getAndIncrement() / chunkSize));
     }
 
-    public void appendPageInDB(String path, Builder builder) throws InterruptedException, IOException, SQLException {
+    public void appendPageInDB(String path, Builder builder){
         int id = getPageId();
         Page page = allLinks.get(path);
         page.setId(id);
-        updatePageDB(builder, page);
-        if (allLinks.get(path).getCode() != 200) {
-            return;
+        try {
+            updatePageDB(builder, page);
+            if (allLinks.get(path).getCode() != 200) {
+                return;
+            }
+            parseTagsContent(page.getContent(), id, builder);
+        } catch (SQLException e) {
+            rootLogger.error(e.getMessage());
         }
-        parseTagsContent(page.getContent(), id, builder);
     }
 
     private void parseTagsContent(String content, Integer pageId, Builder builder) throws SQLException {
@@ -161,7 +170,7 @@ public class CrawlingSystem {
     }
 
     private void updatePageDB(Builder builder, Page page) throws SQLException {
-        if (builder.getPageBuilder().length() > 4000000) {
+        if (builder.getPageBuilder().length() > 3000000) {
             DBConnection.insertAllPages(builder.getPageBuilder().toString());
             builder.setPageBuilder(new StringBuilder());
         }
@@ -173,7 +182,7 @@ public class CrawlingSystem {
     }
 
     private void updateIndexDB(Builder builder, Field field, Map<String, Integer> normalFormsMap, int id) throws SQLException {
-        if (builder.getIndexBuilder().length() > 4000000) {
+        if (builder.getIndexBuilder().length() > 3000000) {
             DBConnection.insertAllIndexes(builder.getIndexBuilder().toString());
             builder.setIndexBuilder(new StringBuilder());
         }
@@ -187,7 +196,7 @@ public class CrawlingSystem {
     }
 
     private void updateLemmaDB(Builder builder, Set<String> normalFormsSet) throws SQLException {
-        if (builder.getLemmaBuilder().length() > 4000000) {
+        if (builder.getLemmaBuilder().length() > 3000000) {
             DBConnection.insertAllLemmas(builder.getLemmaBuilder().toString());
             builder.setLemmaBuilder(new StringBuilder());
         }

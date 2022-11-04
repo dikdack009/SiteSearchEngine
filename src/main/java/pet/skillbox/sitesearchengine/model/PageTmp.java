@@ -15,8 +15,8 @@ import java.util.Objects;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "page")
-public class Page implements Comparable<Page>{
+@Table(name = "page_tmp")
+public class PageTmp implements Comparable<Page>{
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id", updatable = false, nullable = false, unique=true)
@@ -34,14 +34,14 @@ public class Page implements Comparable<Page>{
     @Column(name = "site_id", nullable = false)
     private Integer siteId;
 
-    public Page(String path, int code, String content, Integer siteId) {
+    public PageTmp(String path, int code, String content, Integer siteId) {
         this.path = path;
         this.code = code;
         this.content = content;
         this.siteId = siteId;
     }
 
-    public Page(String path, int code, String content) {
+    public PageTmp(String path, int code, String content) {
         this.path = path;
         this.code = code;
         this.content = content;

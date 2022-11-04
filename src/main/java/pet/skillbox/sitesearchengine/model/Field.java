@@ -30,6 +30,10 @@ public class Field {
         this.weight = weight;
     }
 
+    public Field() {
+
+    }
+
     @Override
     public String toString() {
         return "Field{" +

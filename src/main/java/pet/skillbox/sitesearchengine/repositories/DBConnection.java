@@ -2,12 +2,13 @@ package pet.skillbox.sitesearchengine.repositories;
 
 import lombok.Setter;
 import pet.skillbox.sitesearchengine.model.*;
+import pet.skillbox.sitesearchengine.model.response.DetailedSite;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.StringJoiner;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.Date;
 
 public class DBConnection {
     private static Connection connection;
@@ -23,13 +24,13 @@ public class DBConnection {
             try {
                 connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/" + name +
                         "?user=" + user + "&password=" + pass);
-                if (createTables) {
-                    createFieldTable();
-                    createPageTable();
-                    createLemmaTable();
-                    createIndexTable();
-                    createSiteTable();
-                }
+//                if (createTables) {
+//                    createFieldTable();
+//                    createPageTable();
+//                    createLemmaTable();
+//                    createIndexTable();
+//                    createSiteTable();
+//                }
 
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -38,8 +39,8 @@ public class DBConnection {
         return connection;
     }
 
-    private static void createFieldTable() throws SQLException {
-        connection.createStatement().execute("DROP TABLE IF EXISTS field");
+    public static void createFieldTable() throws SQLException {
+        connection.createStatement().execute("DROP TABLE IF EXISTS field ");
         connection.createStatement().execute("create table field (" +
                 "id INT NOT NULL AUTO_INCREMENT, " +
                 "name VARCHAR(255) NOT NULL, " +
@@ -47,12 +48,12 @@ public class DBConnection {
                 "weight FLOAT NOT NULL, " +
                 "PRIMARY KEY(id))");
         connection.createStatement().execute("INSERT INTO field(name, selector, weight) " +
-                "VALUES( 'title', 'title', 1.0)");
+                "VALUES( 'title', 'title', 1.5)");
         connection.createStatement().execute("INSERT INTO field(name, selector, weight) " +
                 "VALUES( 'body', 'body', 0.8)");
     }
 
-    private static void createPageTable() throws SQLException {
+    public static void createPageTable() throws SQLException {
         connection.createStatement().execute("DROP TABLE IF EXISTS page");
         connection.createStatement().execute("create table page (" +
                 "id INT NOT NULL AUTO_INCREMENT, " +
@@ -64,7 +65,7 @@ public class DBConnection {
                 "UNIQUE KEY pair_id (path(50), site_id))");
     }
 
-    private static void createLemmaTable() throws SQLException {
+    public static void createLemmaTable() throws SQLException {
         connection.createStatement().execute("DROP TABLE IF EXISTS lemma");
         connection.createStatement().execute("create table lemma (" +
                 "id INT NOT NULL AUTO_INCREMENT, " +
@@ -72,10 +73,11 @@ public class DBConnection {
                 "frequency INT NOT NULL, " +
                 "site_id INT NOT NULL, " +
                 "PRIMARY KEY(id), " +
-                "UNIQUE KEY(lemma(50), site_id))");
+                "UNIQUE KEY(lemma(50), site_id));");
+//        connection.createStatement().execute("CREATE INDEX lemma ON lemma(lemma);");
     }
 
-    private static void createIndexTable() throws SQLException {
+    public static void createIndexTable() throws SQLException {
         connection.createStatement().execute("DROP TABLE IF EXISTS `index`");
         connection.createStatement().execute("create table `index` (" +
                 "id INT NOT NULL AUTO_INCREMENT, " +
@@ -85,9 +87,11 @@ public class DBConnection {
                 "site_id INT NOT NULL, " +
                 "PRIMARY KEY (id), " +
                 "UNIQUE KEY(page_id, lemma(50), site_id))");
+//        connection.createStatement().execute("CREATE INDEX lemma ON `index`(lemma);");
+//        connection.createStatement().execute("CREATE INDEX page_id ON `index`(page_id);");
     }
 
-    private static void createSiteTable() throws SQLException {
+    public static void createSiteTable() throws SQLException {
         connection.createStatement().execute("DROP TABLE IF EXISTS site");
         connection.createStatement().execute("create table site (" +
                 "id INT NOT NULL AUTO_INCREMENT, " +
@@ -106,9 +110,21 @@ public class DBConnection {
         insertAllIndexes(builder.getIndexBuilder().toString());
     }
 
+    public static void tmpInsert(Builder builder) throws SQLException {
+        tmpInsertAllPages(builder.getPageBuilder().toString());
+        tmpInsertAllLemmas(builder.getLemmaBuilder().toString());
+        tmpInsertAllIndexes(builder.getIndexBuilder().toString());
+    }
+
     public static void insertSite(String site) throws SQLException {
         String sql = "INSERT INTO site(id, status, status_time, last_error, url, name) " +
                 "VALUES" + site;
+        getConnection().createStatement().execute(sql);
+    }
+
+    public static void updateSite(String url, String status, String error) throws SQLException {
+        String sql = "UPDATE site SET status = '" + status + "', status_time = '" + LocalDateTime.now() +
+                "', last_error = '" + error + "' WHERE url = '" + url + "'";
         getConnection().createStatement().execute(sql);
     }
 
@@ -133,13 +149,15 @@ public class DBConnection {
 
     public static int getSiteIdByPath(String path) throws SQLException {
         ResultSet rs = null;
+        String sql = "SELECT id FROM site WHERE site.url = '" + path + "'";
+//        System.out.println(sql);
         try {
-            rs = getConnection().createStatement().executeQuery("SELECT id FROM site WHERE site.url = '" + path + "'");
+            rs = getConnection().createStatement().executeQuery(sql);
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        System.out.println("SELECT id FROM site WHERE site.url = '" + path + "'");
-        int id = 0;
+//        System.out.println("SELECT id FROM site WHERE site.url = '" + path + "'");
+        int id = -1;
         while (true) {
             assert rs != null;
             if (!rs.next()) break;
@@ -180,13 +198,20 @@ public class DBConnection {
         StringJoiner stringJoiner = new StringJoiner(
                 "' OR lemma = '",
                 "SELECT * FROM lemma WHERE lemma = '",
-                "' AND site_id = " + siteId + " ORDER BY lemma");
+                "'");
         lemmas.forEach(stringJoiner::add);
+        String sql = stringJoiner.toString();
+        if (siteId > 0){
+            sql += " AND site_id = " + siteId + " ORDER BY lemma";
+        } else {
+            sql += " ORDER BY lemma";
+        }
+//        System.out.println(sql);
         ResultSet rs = null;
         List<Lemma> lemmaList = new ArrayList<>();
         try {
-            System.out.println(stringJoiner.toString());
-            rs = getConnection().createStatement().executeQuery(stringJoiner.toString());
+//            System.out.println(stringJoiner.toString());
+            rs = getConnection().createStatement().executeQuery(sql);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -203,16 +228,20 @@ public class DBConnection {
     }
 
     public static List<Page> getPagesFromRequest(List<Lemma> lemmaSet, int siteId) throws SQLException {
-        StringJoiner lemmas = new StringJoiner("') IN (SELECT lemma FROM `index` AS i where page.id = i.page_id) and ('",
-                "SELECT * FROM page where ('", "') IN (SELECT lemma FROM `index` AS i where page.id = i.page_id) and site_id = ");
+        StringBuilder result = new StringBuilder("SELECT * FROM page where ('");
         for (Lemma lemma : lemmaSet) {
-            lemmas.add(lemma.getLemma());
+            result.append(lemma.getLemma()).append("') IN (SELECT lemma FROM `index` AS i where page.id = i.page_id and i.lemma = '")
+                    .append(lemma.getLemma()).append("') and ('");
         }
-        String sql = lemmas.toString() + siteId;
-        System.out.println(sql);
+        result.delete(result.length() - 9, result.length() - 1);
+        if (siteId > 0){
+            result.append(") and site_id = ").append(siteId);
+        } else {
+            result.append(")");
+        }
         ResultSet rs = null;
         try {
-            rs = getConnection().createStatement().executeQuery(sql);
+            rs = getConnection().createStatement().executeQuery(result.toString());
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -236,32 +265,33 @@ public class DBConnection {
         return c;
     }
 
-    public static int getMaxPageId() throws SQLException {
-        ResultSet rs = null;
-        try {
-            String sql = "SELECT MAX(id) AS c FROM page ";
-            rs = getConnection().createStatement().executeQuery(sql);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        assert rs != null;
-        int c = 1;
-        while (rs.next()) {
-            c = rs.getInt("c");
-        }
-        return c + 1;
-    }
-
     public static void insertAllLemmas(String lemmas) throws SQLException {
         String sql = "INSERT INTO lemma(lemma, frequency, site_id) " +
                 "VALUES" + lemmas +
                 "ON DUPLICATE KEY UPDATE frequency=frequency + 1";
+//        System.out.println(sql);
+        getConnection().createStatement().execute(sql);
+    }
+
+    public static void tmpInsertAllLemmas(String lemmas) throws SQLException {
+        String sql = "INSERT INTO lemma_tmp(lemma, frequency, site_id) " +
+                "VALUES" + lemmas +
+                "ON DUPLICATE KEY UPDATE frequency=frequency + 1";
+//        System.out.println(sql);
         getConnection().createStatement().execute(sql);
     }
 
     public static void insertAllPages(String pages) throws SQLException {
         String sql = "INSERT INTO page(id, path, code, content, site_id)  " +
                 "VALUES" + pages;
+//        System.out.println(sql);
+        getConnection().createStatement().execute(sql);
+    }
+
+    public static void tmpInsertAllPages(String pages) throws SQLException {
+        String sql = "INSERT INTO page_tmp(id, path, code, content, site_id)  " +
+                "VALUES" + pages;
+//        System.out.println(sql);
         getConnection().createStatement().execute(sql);
     }
 
@@ -269,15 +299,147 @@ public class DBConnection {
         String sql = "INSERT INTO `index`(page_id, lemma, `rank`, site_id) " +
                 "VALUES" + indexes +
                 "AS new ON DUPLICATE KEY UPDATE `index`.`rank`=`index`.`rank` + new.`rank`";
+//        System.out.println(sql);
         getConnection().createStatement().execute(sql);
     }
-//    public static void insertFromCSV() throws SQLException {
-//        String sql = "LOAD DATA INFILE 'c:/Users/vadim/OneDrive/Desktop/SiteSearchEngine/lemma.csv'" +
-//                "INTO TABLE lemma" +
-//                "FIELDS TERMINATED BY ','" +
-//                "ENCLOSED BY '\"'" +
-//                "LINES TERMINATED BY 'n'" +
-//                "ON DUPLICATE KEY UPDATE frequency=frequency + 1;";
-//        getConnection().createStatement().execute(sql);
-//    }
+
+    public static void tmpInsertAllIndexes(String indexes) throws SQLException {
+        String sql = "INSERT INTO index_tmp(page_id, lemma, `rank`, site_id) " +
+                "VALUES" + indexes +
+                "AS new ON DUPLICATE KEY UPDATE `index`.`rank`=`index`.`rank` + new.`rank`";
+//        System.out.println(sql);
+        getConnection().createStatement().execute(sql);
+    }
+    public static int countSites(int siteId) throws SQLException {
+        String sql = "SELECT COUNT(distinct id) AS c FROM site ";
+        return sqlRequest(siteId, sql);
+    }
+
+    public static int countLemmas(int siteId) throws SQLException {
+        String sql = "SELECT COUNT(distinct id) AS c FROM lemma ";
+        return sqlRequest(siteId, sql);
+    }
+
+    public static int countPages(int siteId) throws SQLException {
+        String sql = "SELECT COUNT(distinct id) AS c FROM page ";
+        return sqlRequest(siteId, sql);
+    }
+
+    public static int getMaxPageId() throws SQLException {
+        String sql = "SELECT MAX(id) AS c FROM page ";
+        return sqlRequest(0, sql);
+    }
+
+    private static int sqlRequest(int siteId, String sql) throws SQLException {
+//        System.out.println(sql);
+        ResultSet rs = null;
+        if (siteId > 0){
+            sql += "WHERE site_id = " + siteId;
+        }
+//        System.out.println(sql);
+        try {
+            rs = getConnection().createStatement().executeQuery(sql);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        assert rs != null;
+        int c = 0;
+        while (rs.next()) {
+            c = rs.getInt("c");
+        }
+        return c;
+    }
+
+    public static Site getSiteById(int id) throws SQLException {
+        ResultSet rs = null;
+        try {
+            rs = getConnection().createStatement().executeQuery("SELECT * FROM site WHERE id = " + id);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        Site site = new Site();
+        while (true) {
+            assert rs != null;
+            if (!rs.next()) break;
+            String url = rs.getString("url");
+            String name = rs.getString("name");
+            site.setUrl(url);
+            site.setName(name);
+
+        }
+        return site;
+    }
+
+    public static List<DetailedSite> getDBStatistic() throws SQLException {
+        List<DetailedSite> stat = new ArrayList<>();
+        ResultSet rs = null;
+        try {
+            rs = getConnection().createStatement().executeQuery("SELECT * FROM site");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+//        System.out.println("SELECT id FROM site WHERE site.url = '" + path + "'");
+        while (true) {
+            assert rs != null;
+            if (!rs.next()) break;
+            int id = rs.getInt("id");
+            String url = rs.getString("url");
+            String dateTime = rs.getString("status_time");
+            SimpleDateFormat simpleDateFormat =
+                    new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//            simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+            Date date = new Date();
+            try {
+                date =  simpleDateFormat.parse(dateTime);
+            } catch (java.text.ParseException e) {
+                e.printStackTrace();
+            }
+            Long time = date.getTime();
+
+            String status = rs.getString("status");
+            String name = rs.getString("name");
+            String error = rs.getString("last_error");
+            stat.add(new DetailedSite(url, name, status, time,
+                    error, countPages(id),  countLemmas(id)));
+        }
+        return stat;
+    }
+
+    public static void deleteSiteInfo(int id) {
+        try {
+            String sql = "DELETE FROM page WHERE site_id = " + id + " ;\n" +
+                    "DELETE FROM lemma WHERE site_id = " + id + " ; \n" +
+                    "DELETE FROM `index` WHERE site_id = " + id + " ; \n";
+            System.out.println(sql);
+            getConnection().createStatement().execute(sql);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void deleteTmpSiteInfo(int id) {
+        try {
+            String sql = "DELETE FROM page_tmp WHERE site_id = " + id + " ;\n" +
+                    "DELETE FROM lemma_tmp WHERE site_id = " + id + " ; \n" +
+                    "DELETE FROM index_tmp WHERE site_id = " + id + " ; \n";
+            System.out.println(sql);
+            getConnection().createStatement().execute(sql);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void fromTmpToActualUpdate(int id) throws SQLException {
+//        deleteSiteInfo(id);
+        String sql = "INSERT INTO `index`(page_id, lemma, `rank`, site_id)" +
+                "SELECT page_id, lemma, `rank`, site_id FROM index_tmp WHERE site_id = " + id;
+        getConnection().createStatement().execute(sql);
+        sql = "INSERT INTO lemma(lemma, frequency, site_id)" +
+                "SELECT lemma, frequency, site_id FROM lemma_tmp WHERE site_id = " + id;
+        getConnection().createStatement().execute(sql);
+        sql = "INSERT INTO page(id, path, code, content, site_id)" +
+                "SELECT id, path, code, content, site_id FROM page_tmp WHERE site_id = " + id;
+        getConnection().createStatement().execute(sql);
+//        deleteTmpSiteInfo(id);
+    }
 }

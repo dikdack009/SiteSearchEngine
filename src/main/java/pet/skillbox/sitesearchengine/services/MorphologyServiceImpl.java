@@ -99,16 +99,16 @@ public class MorphologyServiceImpl {
 
     public String russianReplace(String text) throws IOException {
         LuceneMorphology russianMorphology = new RussianLuceneMorphology();
-        String[] russianWords = text.replaceAll("[^[а-яА-Я]]", "-").toLowerCase().split("-");
+        String[] russianWords = text.replaceAll("[^[а-яА-Я\\-]]", "^").toLowerCase().split("\\^");
 
         int j;
         int razn = 0;
-        char[] textArray = text.replaceAll("[^[а-яА-Я]]", "-").toLowerCase().toCharArray();
+        char[] textArray = text.replaceAll("[^[а-яА-Я]]", "^").toLowerCase().toCharArray();
 //        System.out.println(textArray);
 
         for (int i = 0; i < textArray.length; ++i){
-            if (textArray[i] != '-') {
-                int tmp = new String(textArray).indexOf('-', i);
+            if (textArray[i] != '^') {
+                int tmp = new String(textArray).indexOf('^', i);
                 if (tmp == -1) {
                     String word = new String(textArray).substring(i);
                     if (Arrays.asList(russianWords).contains(word)) {
@@ -154,15 +154,15 @@ public class MorphologyServiceImpl {
 
     public String englishReplace(String text) throws IOException {
         LuceneMorphology englishMorphology = new EnglishLuceneMorphology();
-        String[] englishWords = text.replaceAll("[^[a-zA-Z]]", "-")
-                .toLowerCase().split("-");
+        String[] englishWords = text.replaceAll("[^[a-zA-Z\\-]]", "^")
+                .toLowerCase().split("\\^");
         int j = 0;
-        char[] textArray = text.replaceAll("[^[a-zA-Z]]", "-").toLowerCase().toCharArray();
+        char[] textArray = text.replaceAll("[^[a-zA-Z\\-]]", "^").toLowerCase().toCharArray();
         int razn = 0;
 
         for (int i = 0; i < textArray.length; ++i){
-            if (textArray[i] != '-') {
-                int tmp = new String(textArray).indexOf('-', i);
+            if (textArray[i] != '^') {
+                int tmp = new String(textArray).indexOf('^', i);
 
                 if (tmp == -1) {
                     String word = new String(textArray).substring(i);

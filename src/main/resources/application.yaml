@@ -10,17 +10,19 @@ spring:
     show-sql: false
     generate-ddl: false
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
   thymeleaf:
     cache: false
 #    prefix: classpath:/templates
 
+local:
+  path: /admin
+  user-agent: DuckSearchBot
+  sites:
+#      - url:  https://www.playback.ru
+#        name: PlayBack
+      - url: https://lenta.ru
+        name: Лента.ру
 
-sites:
-  - url: https://www.lenta.ru
-    name: Лента.ру
 
-user-agent: DuckSearchBot
-
-path: /admin
 
