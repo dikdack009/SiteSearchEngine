@@ -27,6 +27,7 @@ public class CrawlingThread extends Thread{
     public void run() {
         Builder builder = new Builder();
         try {
+            crawlingService.deleteSiteInfo(siteId);
             for (String page : urlPool) { crawlingSystem.appendPageInDB(page, builder); }
             DBConnection.insert(builder);
             crawlingService.deleteTmpSiteInfo(siteId);
@@ -34,7 +35,8 @@ public class CrawlingThread extends Thread{
             crawlingSystem.setLastError(e.getMessage());
             System.out.println("Ошибка - ");
             e.printStackTrace();
-            crawlingSystem.getRootLogger().debug("Ошибка - " + e.getMessage().substring(0, e.getMessage().indexOf(" :") + 2));
+            crawlingSystem.getRootLogger().debug("Ошибка - " + e.getMessage().substring(e.getMessage().indexOf(":") + 2));
+            throw new RuntimeException(e.getMessage().substring(e.getMessage().indexOf(":") + 2));
         }
         crawlingSystem.getRootLogger().info("\nDone " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
     }

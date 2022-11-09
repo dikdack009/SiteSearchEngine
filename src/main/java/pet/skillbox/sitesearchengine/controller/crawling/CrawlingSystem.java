@@ -34,7 +34,7 @@ public class CrawlingSystem {
     @Getter
     private final Logger rootLogger;
     private List<Field> fieldList;
-    private volatile int pageId;
+    private static volatile int pageId;
     @Getter
     @Setter
     private String lastError;
@@ -42,7 +42,7 @@ public class CrawlingSystem {
     private final Config config;
     private final CrawlingService crawlingService;
 
-    private synchronized int getPageId() {
+    private static synchronized int getPageId() {
         return pageId++;
     }
 
@@ -58,6 +58,7 @@ public class CrawlingSystem {
         this.site = site;
         if (config.isStopIndexing()) {
             System.out.println(config.isStopIndexing());
+            DBConnection.updateSite(url, "INDEXED", "Индексация остановлена");
             return;
         }
 //        int siteId = DBConnection.getSiteIdByPath(site.getUrl());
@@ -70,8 +71,9 @@ public class CrawlingSystem {
 
         } else {
             System.out.println("AWESOME");
-//            crawlingService.addSite(site);
-            DBConnection.insertSite(site.toString());
+            crawlingService.addSite(site);
+            siteId = crawlingService.getSiteIdByUrl(url);
+//            DBConnection.insertSite(site.toString());
         }
         site.setId(siteId);
         System.out.println("hell12");
@@ -87,7 +89,6 @@ public class CrawlingSystem {
         CopyOnWriteArraySet<String> links = new CopyOnWriteArraySet<>();
         Map<String, Page> allLinksMap = Collections.synchronizedMap(new HashMap<>());
         SiteLinksGenerator linksGenerator = new SiteLinksGenerator(site.getUrl(), site.getUrl(), links, allLinksMap, config);
-
         try {
             new ForkJoinPool().invoke(linksGenerator);
         } catch (RuntimeException e) {
@@ -110,20 +111,24 @@ public class CrawlingSystem {
         System.out.println((double)(System.currentTimeMillis() - mm) / 60000 + " min.");
         System.out.println("Indexing...");
         Collection<List<String>> chunked =
-                chunked(allLinks.keySet().stream(), allLinks.keySet().size() / 40).values();
+                chunked(allLinks.keySet().stream(), allLinks.keySet().size() / 20).values();
 
         rootLogger.info("Кол-во ссылок: " + allLinks.keySet().size());
         List<CrawlingThread> threadList = new ArrayList<>();
-        chunked.forEach(c -> threadList.add(new CrawlingThread(c, this, siteId, crawlingService)));
+        int finalSiteId = siteId;
+        chunked.forEach(c -> threadList.add(new CrawlingThread(c, this, finalSiteId, crawlingService)));
         threadList.forEach(Thread::start);
         threadList.forEach(t -> {
             try {
                 t.join();
                 if (config.isStopIndexing()) {
+                    DBConnection.updateSite(url, "INDEXED", "Индексация остановлена");
                     t.interrupt();
                 }
             } catch (InterruptedException e) {
                 lastError= e.getMessage();
+                throw new RuntimeException(e);
+            } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
         });
@@ -135,6 +140,10 @@ public class CrawlingSystem {
     }
 
     public void appendPageInDB(String path, Builder builder){
+        if (config.isStopIndexing()) {
+            System.out.println(config.isStopIndexing());
+            return;
+        }
         int id = getPageId();
         Page page = allLinks.get(path);
         page.setId(id);
@@ -150,6 +159,10 @@ public class CrawlingSystem {
     }
 
     private void parseTagsContent(String content, Integer pageId, Builder builder) throws SQLException {
+        if (config.isStopIndexing()) {
+            System.out.println(config.isStopIndexing());
+            return;
+        }
         Document d = Jsoup.parse(content);
         Set<String> allWords = new HashSet<>();
 
@@ -170,7 +183,7 @@ public class CrawlingSystem {
     }
 
     private void updatePageDB(Builder builder, Page page) throws SQLException {
-        if (builder.getPageBuilder().length() > 3000000) {
+        if (builder.getPageBuilder().length() > 2000000) {
             DBConnection.insertAllPages(builder.getPageBuilder().toString());
             builder.setPageBuilder(new StringBuilder());
         }
@@ -182,7 +195,7 @@ public class CrawlingSystem {
     }
 
     private void updateIndexDB(Builder builder, Field field, Map<String, Integer> normalFormsMap, int id) throws SQLException {
-        if (builder.getIndexBuilder().length() > 3000000) {
+        if (builder.getIndexBuilder().length() > 2000000) {
             DBConnection.insertAllIndexes(builder.getIndexBuilder().toString());
             builder.setIndexBuilder(new StringBuilder());
         }
@@ -196,7 +209,7 @@ public class CrawlingSystem {
     }
 
     private void updateLemmaDB(Builder builder, Set<String> normalFormsSet) throws SQLException {
-        if (builder.getLemmaBuilder().length() > 3000000) {
+        if (builder.getLemmaBuilder().length() > 2000000) {
             DBConnection.insertAllLemmas(builder.getLemmaBuilder().toString());
             builder.setLemmaBuilder(new StringBuilder());
         }
@@ -206,6 +219,4 @@ public class CrawlingSystem {
                         .append("('").append(word)
                         .append("', 1, ").append(site.getId()).append(")")));
     }
-
-
 }

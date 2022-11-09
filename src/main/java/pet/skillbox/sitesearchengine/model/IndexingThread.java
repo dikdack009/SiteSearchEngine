@@ -31,13 +31,15 @@ public class IndexingThread implements Callable<IndexingResponse> {
         CrawlingSystem crawlingSystem =  new CrawlingSystem(config, crawlingService);
         try {
             indexingController.setIndexing(true);
+            DBConnection.updateSite(url, "INDEXING", null);
             if (config.isStopIndexing()){
                 indexingController.setIndexing(false);
-                return new IndexingResponse(false, crawlingSystem.getLastError());
+                return new IndexingResponse(false, "Индексация остановлена");
             }
             crawlingSystem.start(config, url, name);
 //            crawlingService.updateStatus(url, Status.INDEXED.toString(), null);
-            DBConnection.updateSite(url, "INDEXED", null);
+
+            DBConnection.updateSite(url, "INDEXED", config.isStopIndexing() ? "Индексация остановлена" : null);
             return new IndexingResponse(true, null);
         } catch (Exception e) {
             DBConnection.updateSite(url, "FAILED", crawlingSystem.getLastError());

@@ -1,3 +1,4 @@
+
 spring:
   datasource:
     url: jdbc:mysql://localhost:3306/search_engine
@@ -13,6 +14,10 @@ spring:
       ddl-auto: update
   thymeleaf:
     cache: false
+  jta:
+    atomikos:
+      properties:
+        enable-logging: true
 #    prefix: classpath:/templates
 
 local:
@@ -21,8 +26,10 @@ local:
   sites:
 #      - url:  https://www.playback.ru
 #        name: PlayBack
-      - url: https://lenta.ru
-        name: Лента.ру
+#      - url: https://lenta.ru
+#        name: Лента.ру
+      - url: https://volochek.life
+        name: Волчёк
 
 
 

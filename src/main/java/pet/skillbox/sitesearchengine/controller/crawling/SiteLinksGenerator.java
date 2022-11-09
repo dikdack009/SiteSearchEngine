@@ -7,7 +7,9 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import pet.skillbox.sitesearchengine.configuration.Config;
 import pet.skillbox.sitesearchengine.model.Page;
+import pet.skillbox.sitesearchengine.repositories.DBConnection;
 
+import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ForkJoinTask;

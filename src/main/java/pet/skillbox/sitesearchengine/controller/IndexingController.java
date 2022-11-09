@@ -42,6 +42,12 @@ public class IndexingController {
     @GetMapping(path="/api/startIndexing", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
 //    @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
     public ResponseEntity<IndexingResponse> startIndexing() {
+//        try {
+//            crawlingService.deleteSiteInfo(4);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+
         AtomicReference<IndexingResponse> response = new AtomicReference<>();
         if (isIndexing){
             response.set(new IndexingResponse(false, "Индексация уже запущена"));
@@ -76,6 +82,8 @@ public class IndexingController {
         return new ResponseEntity<>(new IndexingResponse(true, null), HttpStatus.OK);
     }
 
+
+    //TODO: сделать установкку флага стопа индексации после сайт линк генератора
     @GetMapping(path="/api/stopIndexing", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
 //    @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
     public ResponseEntity<IndexingResponse> stopIndexing() {
