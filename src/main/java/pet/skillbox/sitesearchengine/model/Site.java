@@ -4,9 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.security.core.GrantedAuthority;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -14,7 +16,7 @@ import java.time.LocalDateTime;
 @Setter
 @Entity
 @Table(name = "site")
-public class Site {
+public class Site implements GrantedAuthority {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,12 +38,20 @@ public class Site {
     @Column(length = 65535, columnDefinition = "VARCHAR(255)", nullable = false, unique = true)
     private String name;
 
+    @ManyToMany(mappedBy = "sites")
+    private Set<User> users;
+
     public Site(Status status, LocalDateTime statusTime, String lastError, String url, String name) {
         this.status = status;
         this.statusTime = statusTime;
         this.lastError = lastError;
         this.url = url;
         this.name = name;
+    }
+
+    @Override
+    public String getAuthority() {
+        return getUrl();
     }
 
     @Override

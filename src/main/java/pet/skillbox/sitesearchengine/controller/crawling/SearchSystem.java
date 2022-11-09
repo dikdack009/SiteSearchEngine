@@ -157,6 +157,8 @@ public class SearchSystem {
         return getSnippetSecondStep(indexes, content);
     }
 
+    //TODO проверить сдвиг чтобы не был больше размера
+
     public String getSnippetSecondStep(List<Integer> indexes, String content) throws IOException {
         StringBuilder snippet = new StringBuilder("...");
         Collections.sort(indexes);
