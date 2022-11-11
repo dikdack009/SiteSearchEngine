@@ -43,23 +43,19 @@ public class SiteLinksGenerator extends RecursiveAction {
         Set<SiteLinksGenerator> taskList = new HashSet<>();
         List<String> list = new ArrayList<>();
         try {
-//            System.out.println(rootUrl + " - " + url);
             Connection connection = connectPath(url);
             int statusCode = connection.execute().statusCode();
             int idPathBegin = rootUrl.length();
             String path = rootUrl.equals(url)  ?  "/" : url.substring(idPathBegin);
             Page page;
             boolean htmlTest = Objects.requireNonNull(connection.response().contentType()).startsWith("text/html");
-//            System.out.println(htmlTest + " " + isCorrected(url));
-//            System.out.println(url.matches("#([\\w\\-]+)?$"));
             if (statusCode == 200 && htmlTest) {
-                page = new Page(path, statusCode, connection.get().toString().replace("'", "\\'"));
+                page = new Page(path, statusCode, connection.get().toString().replace("'", "\""));
                 Elements links = connection.get().select("a[href]");
                 for (Element link : links) {
                     String absUrl = link.attr("abs:href").trim();
                     absUrl = absUrl.startsWith("/") ? rootUrl + absUrl : absUrl;
                     absUrl = absUrl.endsWith("/") ? absUrl.substring(0, absUrl.length() - 1) : absUrl;
-//                    System.out.println(absUrl + " " + isCorrected(absUrl));
                     if (isCorrected(absUrl)) {
                         list.add(absUrl);
                         allLinks.add(absUrl);
@@ -71,10 +67,7 @@ public class SiteLinksGenerator extends RecursiveAction {
             }
             allLinksMap.put(path, page);
         } catch (Exception e) {
-            if(allLinksMap.isEmpty()) {
-                throw new RuntimeException("Главная странница сайта недоступна");
-//                error = "Главная странница сайта недоступна";
-            }
+            return;
         }
 
         for (String link : list) {

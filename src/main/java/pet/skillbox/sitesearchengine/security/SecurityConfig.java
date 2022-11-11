@@ -31,15 +31,20 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter implements WebM
                 .csrf()
                 .disable()
                 .authorizeRequests()
+                .antMatchers("/**").permitAll()
                 //Доступ только для не зарегистрированных пользователей
                 .antMatchers("/api/registration").not().fullyAuthenticated()
+                .antMatchers("/api/statistic").not().fullyAuthenticated()
+                .antMatchers("/api/stopIndexing").not().fullyAuthenticated()
+                .antMatchers("/api/startIndexing").not().fullyAuthenticated()
+                .antMatchers("/api/search").not().fullyAuthenticated()
                 //Доступ только для пользователей с ролью Администратор
                 .antMatchers("/api/admin/**").hasRole("ADMIN")
                 .antMatchers("/news").hasRole("USER")
                 //Доступ разрешен всем пользователей
                 .antMatchers("/", "/resources/**").permitAll()
                 //Все остальные страницы требуют аутентификации
-                .anyRequest().authenticated()
+                .anyRequest().not().authenticated()
                 .and()
                 //Настройка для входа в систему
                 .formLogin()

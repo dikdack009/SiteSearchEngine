@@ -5,13 +5,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.HttpMediaTypeNotAcceptableException;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 import pet.skillbox.sitesearchengine.configuration.Config;
 import pet.skillbox.sitesearchengine.configuration.SiteProperty;
+import pet.skillbox.sitesearchengine.controller.crawling.CrawlingSystem;
 import pet.skillbox.sitesearchengine.model.*;
 import pet.skillbox.sitesearchengine.model.response.IndexingResponse;
 import pet.skillbox.sitesearchengine.model.response.Statistic;
@@ -40,25 +39,17 @@ public class IndexingController {
     }
 
     @GetMapping(path="/api/startIndexing", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
-//    @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
     public ResponseEntity<IndexingResponse> startIndexing() {
-//        try {
-//            crawlingService.deleteSiteInfo(4);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-
         AtomicReference<IndexingResponse> response = new AtomicReference<>();
         if (isIndexing){
             response.set(new IndexingResponse(false, "Индексация уже запущена"));
             return new ResponseEntity<>(response.get(), HttpStatus.BAD_REQUEST);
         }
-        ExecutorService es = Executors.newFixedThreadPool(10);
+        ExecutorService es = Executors.newFixedThreadPool(50);
         List<IndexingThread> tasks = new ArrayList<>();
+        int id = crawlingService.getMaxPageId() + 1;
         for (SiteProperty site : config.getSites()) {
-            System.out.println(site.getUrl());
-            tasks.add(new IndexingThread(this, site.getUrl(), site.getName(),
-                    config, crawlingService));
+            tasks.add(new IndexingThread(this, site, config, crawlingService, id));
         }
         List<Future<IndexingResponse>> futures;
         try {
@@ -77,15 +68,11 @@ public class IndexingController {
     }
 
     @PostMapping(path="/api/startSiteIndexing", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
-//    @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
     public ResponseEntity<IndexingResponse> startSiteIndexing() {
         return new ResponseEntity<>(new IndexingResponse(true, null), HttpStatus.OK);
     }
 
-
-    //TODO: сделать установкку флага стопа индексации после сайт линк генератора
     @GetMapping(path="/api/stopIndexing", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
-//    @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
     public ResponseEntity<IndexingResponse> stopIndexing() {
         IndexingResponse response;
         if (!isIndexing){
@@ -97,9 +84,8 @@ public class IndexingController {
         response = new IndexingResponse(true, null);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
-
+    //TODO подумать над монго
     @GetMapping(path="/api/statistics", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
-//    @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
     public ResponseEntity<Statistic> statistics() throws SQLException {
         return new ResponseEntity<>(new Statistic(isIndexing), HttpStatus.OK);
     }

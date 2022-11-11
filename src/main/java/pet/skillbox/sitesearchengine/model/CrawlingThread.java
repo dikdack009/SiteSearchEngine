@@ -27,10 +27,11 @@ public class CrawlingThread extends Thread{
     public void run() {
         Builder builder = new Builder();
         try {
-            crawlingService.deleteSiteInfo(siteId);
             for (String page : urlPool) { crawlingSystem.appendPageInDB(page, builder); }
-            DBConnection.insert(builder);
-            crawlingService.deleteTmpSiteInfo(siteId);
+            if (!builder.getLemmaBuilder().toString().equals("")) {
+                DBConnection.insert(builder);
+            }
+//            crawlingService.deleteTmpSiteInfo(siteId);
         } catch (SQLException e) {
             crawlingSystem.setLastError(e.getMessage());
             System.out.println("Ошибка - ");
@@ -38,6 +39,6 @@ public class CrawlingThread extends Thread{
             crawlingSystem.getRootLogger().debug("Ошибка - " + e.getMessage().substring(e.getMessage().indexOf(":") + 2));
             throw new RuntimeException(e.getMessage().substring(e.getMessage().indexOf(":") + 2));
         }
-        crawlingSystem.getRootLogger().info("\nDone " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
+        crawlingSystem.getRootLogger().info(siteId + " Done " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
     }
 }

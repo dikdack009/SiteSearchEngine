@@ -90,19 +90,22 @@ public class CrawlingService {
     }
 
     @Transactional
-    public void addSite(Site site){
+    public int addSite(Site site) {
         siteRepository.save(site);
+        return getSiteIdByUrl(site.getUrl());
     }
 
     @Transactional
-    public void updateStatus(String url, String status, String error){
-//        Site siteFromDB = siteRepository.getByUrl(url);
-//        Site newSite = siteFromDB;
-//        siteRepository.delete(siteFromDB);
-//        newSite.setStatus(status);
-//        newSite.setLastError(error);
-//        siteRepository.save(newSite);
-        siteRepository.updateSiteStatus(status, LocalDateTime.now(), error, url);
+    public int updateStatus(Site site) {
+        int siteId = getSiteIdByUrl(site.getUrl());
+        System.out.println(site);
+        if (siteId > 0) {
+            siteRepository.updateSiteStatus(site.getStatus(), site.getStatusTime(), site.getLastError(), siteId);
+
+        } else {
+            siteId = addSite(site);
+        }
+        return siteId;
     }
 
 //    @Transactional(readOnly = true)
@@ -116,6 +119,12 @@ public class CrawlingService {
     }
 
     @Transactional(readOnly = true)
+    public int getMaxPageId() {
+        Integer id = pageRepository.getMaxPageId();
+        return id == null ? 0 : id;
+    }
+
+    @Transactional(readOnly = true)
     public int getSiteIdByUrl(String url) {
         Site site = siteRepository.getByUrl(url);
         return site == null ? -1 : site.getId() ;
@@ -123,15 +132,35 @@ public class CrawlingService {
 
     @Transactional
     public void deleteSiteInfo(int id) {
-        lemmaRepository.deleteBySiteId(id);
-        pageRepository.deleteBySiteId(id);
-        indexRepository.deleteBySiteId(id);
+        System.out.println("Удаление сайта с id = " + id);
+        if (lemmaRepository.getFirstBySiteId(id) != null) {
+            lemmaRepository.deleteBySiteId(id);
+        }
+        System.out.println("Удалили леммы");
+        if (pageRepository.getFirstBySiteId(id) != null) {
+            pageRepository.deleteBySiteId(id);
+        }
+        System.out.println("Удалили странницы");
+        if (indexRepository.getFirstBySiteId(id) != null) {
+            indexRepository.deleteBySiteId(id);
+        }
+        System.out.println("Удалили индексы");
     }
 
     @Transactional
     public void deleteTmpSiteInfo(int id) {
-        lemmaTmpRepository.deleteBySiteId(id);
-        pageTmpRepository.deleteBySiteId(id);
-        indexTmpRepository.deleteBySiteId(id);
+        System.out.println("Удаление временного сайта с id = " + id);
+        if (lemmaTmpRepository.getFirstBySiteId(id) != null) {
+            lemmaTmpRepository.deleteBySiteId(id);
+        }
+        System.out.println("Удалили леммы");
+        if (pageTmpRepository.getFirstBySiteId(id) != null) {
+            pageTmpRepository.deleteBySiteId(id);
+        }
+        System.out.println("Удалили странницы");
+        if (indexTmpRepository.getFirstBySiteId(id) != null) {
+            indexTmpRepository.deleteBySiteId(id);
+        }
+        System.out.println("Удалили индексы");
     }
 }

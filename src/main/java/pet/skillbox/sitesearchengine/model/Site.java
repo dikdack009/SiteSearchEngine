@@ -49,6 +49,15 @@ public class Site implements GrantedAuthority {
         this.name = name;
     }
 
+    public Site(int id, Status status, LocalDateTime statusTime, String lastError, String url, String name) {
+        this.id = id;
+        this.status = status;
+        this.statusTime = statusTime;
+        this.lastError = lastError;
+        this.url = url;
+        this.name = name;
+    }
+
     @Override
     public String getAuthority() {
         return getUrl();

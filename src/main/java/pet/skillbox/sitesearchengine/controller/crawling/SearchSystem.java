@@ -125,6 +125,7 @@ public class SearchSystem {
         List<Page> subPageList = new ArrayList<>(pageDoubleMap.keySet())
                 .subList(offset, Math.min(offset + limit, pageDoubleMap.size()));
         for (Page page : subPageList) {
+            System.out.println(page.getId() + " - " + page.getPath());
             SearchThread searchThread = new SearchThread(page, pageDoubleMap.get(page), this, max, requestLemmas);
             tasks.add(searchThread);
         }

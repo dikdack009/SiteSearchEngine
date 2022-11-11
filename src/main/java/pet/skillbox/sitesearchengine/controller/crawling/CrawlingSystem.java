@@ -30,7 +30,7 @@ import java.util.stream.Stream;
 @Component
 public class CrawlingSystem {
 
-    public Site site;
+    private Site site;
     @Getter
     private final Logger rootLogger;
     private List<Field> fieldList;
@@ -53,82 +53,63 @@ public class CrawlingSystem {
         rootLogger = LogManager.getRootLogger();
     }
 
-    public void start(Config config, String url, String name) throws SQLException, InterruptedException {
-        Site site = new Site(Status.INDEXING, LocalDateTime.now(), null, url, name);
-        this.site = site;
-        if (config.isStopIndexing()) {
-            System.out.println(config.isStopIndexing());
-            DBConnection.updateSite(url, "INDEXED", "Индексация остановлена");
-            return;
-        }
-//        int siteId = DBConnection.getSiteIdByPath(site.getUrl());
-        int siteId = crawlingService.getSiteIdByUrl(url);
-        System.out.println(siteId);
-        if (siteId > 0) {
-            rootLogger.info("Переиндексация - " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")));
-            DBConnection.updateSite(site.getUrl(), Status.INDEXING.toString(), null);
-//            crawlingService.updateStatus(site.getUrl(), Status.INDEXING.toString(), null);
-
-        } else {
-            System.out.println("AWESOME");
-            crawlingService.addSite(site);
-            siteId = crawlingService.getSiteIdByUrl(url);
-//            DBConnection.insertSite(site.toString());
-        }
-        site.setId(siteId);
-        System.out.println("hell12");
-        pageId = DBConnection.getMaxPageId() + 1;
-//        fieldList = DBConnection.getAllFields();
-        System.out.println("hell");
+    public CrawlingSystem(Config config, CrawlingService crawlingService, Site site) {
+        this.config = config;
+        this.crawlingService = crawlingService;
+        rootLogger = LogManager.getRootLogger();
         fieldList = crawlingService.gelAllFields();
-        System.out.println(pageId + " " + fieldList);
-        rootLogger.info("New launch - " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")));
-        System.out.println("Parsing...");
-        long mm = System.currentTimeMillis();
+        site.setId(crawlingService.updateStatus(site));
+        this.site = site;
+    }
 
+    private Collection<List<String>> parsing() {
+        long mm = System.currentTimeMillis();
         CopyOnWriteArraySet<String> links = new CopyOnWriteArraySet<>();
         Map<String, Page> allLinksMap = Collections.synchronizedMap(new HashMap<>());
         SiteLinksGenerator linksGenerator = new SiteLinksGenerator(site.getUrl(), site.getUrl(), links, allLinksMap, config);
-        try {
-            new ForkJoinPool().invoke(linksGenerator);
-        } catch (RuntimeException e) {
-            System.out.println(e.getMessage());
-            lastError = e.getMessage().substring(e.getMessage().indexOf(":") + 2);
-            throw new RuntimeException(e.getMessage());
-        }
+        new ForkJoinPool().invoke(linksGenerator);
+
         if (config.isStopIndexing()) {
-            System.out.println(config.isStopIndexing());
-            return;
+            rootLogger.info("Остановили - " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")));
+            return null;
         }
         allLinks = new HashMap<>(linksGenerator.getAllLinksMap());
-        allLinks.keySet().forEach(System.out::println);
         if (allLinks.isEmpty()) {
-            System.out.println("пусто");
-            setLastError("Главная странница сайта недоступна");
+            lastError = "Главная странница сайта недоступна";
+            return null;
+        }
+        System.out.println((double)(System.currentTimeMillis() - mm) / 60000 + " min.");
+        System.out.println("Индексация...");
+        return chunked(allLinks.keySet().stream(), allLinks.keySet().size() / 50).values();
+    }
+
+    public void start(Config config, int id) {
+        if (config.isStopIndexing()) {
             return;
         }
-        System.out.println((double)(System.currentTimeMillis() - mm) / 1000 + " sec.");
-        System.out.println((double)(System.currentTimeMillis() - mm) / 60000 + " min.");
-        System.out.println("Indexing...");
-        Collection<List<String>> chunked =
-                chunked(allLinks.keySet().stream(), allLinks.keySet().size() / 20).values();
+        pageId = id;
+        System.out.println(site.getUrl() + " pageId = " + pageId);
+        rootLogger.info("Новый запуск - " + site.getUrl());
+        System.out.println("Парсинг...");
+        Collection<List<String>> chunked = parsing();
+        if (chunked == null || chunked.isEmpty()) {
+            lastError = "Главная странница сайта недоступна";
+            return;
+        }
 
-        rootLogger.info("Кол-во ссылок: " + allLinks.keySet().size());
+        rootLogger.info("На сайте " + site.getUrl() + " Кол-во ссылок: " + allLinks.keySet().size());
         List<CrawlingThread> threadList = new ArrayList<>();
-        int finalSiteId = siteId;
+        int finalSiteId = site.getId();
         chunked.forEach(c -> threadList.add(new CrawlingThread(c, this, finalSiteId, crawlingService)));
         threadList.forEach(Thread::start);
         threadList.forEach(t -> {
             try {
                 t.join();
                 if (config.isStopIndexing()) {
-                    DBConnection.updateSite(url, "INDEXED", "Индексация остановлена");
                     t.interrupt();
                 }
             } catch (InterruptedException e) {
-                lastError= e.getMessage();
-                throw new RuntimeException(e);
-            } catch (SQLException e) {
+                lastError = e.getMessage();
                 throw new RuntimeException(e);
             }
         });
@@ -141,7 +122,6 @@ public class CrawlingSystem {
 
     public void appendPageInDB(String path, Builder builder){
         if (config.isStopIndexing()) {
-            System.out.println(config.isStopIndexing());
             return;
         }
         int id = getPageId();
@@ -149,10 +129,10 @@ public class CrawlingSystem {
         page.setId(id);
         try {
             updatePageDB(builder, page);
-            if (allLinks.get(path).getCode() != 200) {
+            if (page.getCode() != 200) {
                 return;
             }
-            parseTagsContent(page.getContent(), id, builder);
+            parseTagsContent(page.getContent(), page.getId(), builder);
         } catch (SQLException e) {
             rootLogger.error(e.getMessage());
         }
@@ -160,7 +140,6 @@ public class CrawlingSystem {
 
     private void parseTagsContent(String content, Integer pageId, Builder builder) throws SQLException {
         if (config.isStopIndexing()) {
-            System.out.println(config.isStopIndexing());
             return;
         }
         Document d = Jsoup.parse(content);
@@ -177,9 +156,13 @@ public class CrawlingSystem {
                 lastError = e.getMessage();
                 return;
             }
-            updateIndexDB(builder, field, tagNormalForms, pageId);
+            if (!tagNormalForms.isEmpty()) {
+                updateIndexDB(builder, field, tagNormalForms, pageId);
+            }
         }
-        updateLemmaDB(builder, allWords);
+        if (!allWords.isEmpty()) {
+            updateLemmaDB(builder, allWords);
+        }
     }
 
     private void updatePageDB(Builder builder, Page page) throws SQLException {

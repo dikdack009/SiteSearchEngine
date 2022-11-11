@@ -306,7 +306,7 @@ public class DBConnection {
     public static void tmpInsertAllIndexes(String indexes) throws SQLException {
         String sql = "INSERT INTO index_tmp(page_id, lemma, `rank`, site_id) " +
                 "VALUES" + indexes +
-                "AS new ON DUPLICATE KEY UPDATE `index`.`rank`=`index`.`rank` + new.`rank`";
+                "AS new ON DUPLICATE KEY UPDATE index_tmp.`rank`=index_tmp.`rank` + new.`rank`";
 //        System.out.println(sql);
         getConnection().createStatement().execute(sql);
     }
@@ -403,30 +403,6 @@ public class DBConnection {
                     error, countPages(id),  countLemmas(id)));
         }
         return stat;
-    }
-
-    public static void deleteSiteInfo(int id) {
-        try {
-            String sql = "DELETE FROM page WHERE site_id = " + id + " ;\n" +
-                    "DELETE FROM lemma WHERE site_id = " + id + " ; \n" +
-                    "DELETE FROM `index` WHERE site_id = " + id + " ; \n";
-            System.out.println(sql);
-            getConnection().createStatement().execute(sql);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void deleteTmpSiteInfo(int id) {
-        try {
-            String sql = "DELETE FROM page_tmp WHERE site_id = " + id + " ;\n" +
-                    "DELETE FROM lemma_tmp WHERE site_id = " + id + " ; \n" +
-                    "DELETE FROM index_tmp WHERE site_id = " + id + " ; \n";
-            System.out.println(sql);
-            getConnection().createStatement().execute(sql);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
     }
 
     public static void fromTmpToActualUpdate(int id) throws SQLException {

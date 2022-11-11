@@ -9,4 +9,5 @@ public interface LemmaRepository extends JpaRepository<Lemma, Integer> {
     Lemma getLemmaByLemmaAndSiteId(String lemma, Integer siteId);
     Lemma getLemmaByLemma(String lemma);
     void deleteBySiteId(Integer siteId);
+    Lemma getFirstBySiteId(Integer siteId);
 }
