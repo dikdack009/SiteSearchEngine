@@ -131,20 +131,29 @@ public class CrawlingService {
     }
 
     @Transactional
+    public synchronized int savePage(Page page) {
+        pageRepository.save(page);
+        return page.getId();
+    }
+
+    @Transactional
     public void deleteSiteInfo(int id) {
         System.out.println("Удаление сайта с id = " + id);
+        System.out.println(lemmaRepository.getFirstBySiteId(id));
         if (lemmaRepository.getFirstBySiteId(id) != null) {
             lemmaRepository.deleteBySiteId(id);
+            System.out.println("Удалили леммы с id = " + id);
         }
-        System.out.println("Удалили леммы");
+
         if (pageRepository.getFirstBySiteId(id) != null) {
             pageRepository.deleteBySiteId(id);
+            System.out.println("Удалили странницы с id = " + id);
         }
-        System.out.println("Удалили странницы");
+
         if (indexRepository.getFirstBySiteId(id) != null) {
             indexRepository.deleteBySiteId(id);
+            System.out.println("Удалили индексы с id = " + id);
         }
-        System.out.println("Удалили индексы");
     }
 
     @Transactional
@@ -162,5 +171,12 @@ public class CrawlingService {
             indexTmpRepository.deleteBySiteId(id);
         }
         System.out.println("Удалили индексы");
+    }
+
+    @Transactional
+    public void deleteSite(int id) {
+        if (siteRepository.getSiteById(id) != null) {
+            siteRepository.deleteById(id);
+        }
     }
 }

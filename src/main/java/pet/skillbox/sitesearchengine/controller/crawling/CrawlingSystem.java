@@ -124,11 +124,13 @@ public class CrawlingSystem {
         if (config.isStopIndexing()) {
             return;
         }
-        int id = getPageId();
-        Page page = allLinks.get(path);
+        Page tmpPage = allLinks.get(path);
+        Page page = new Page(tmpPage.getPath(), tmpPage.getCode(), tmpPage.getContent(), site.getId());
+        int id = crawlingService.savePage(page);
         page.setId(id);
+        System.out.println(site.getUrl() + path + " id = " + id);
         try {
-            updatePageDB(builder, page);
+//            updatePageDB(builder, page);
             if (page.getCode() != 200) {
                 return;
             }
@@ -165,17 +167,17 @@ public class CrawlingSystem {
         }
     }
 
-    private void updatePageDB(Builder builder, Page page) throws SQLException {
-        if (builder.getPageBuilder().length() > 2000000) {
-            DBConnection.insertAllPages(builder.getPageBuilder().toString());
-            builder.setPageBuilder(new StringBuilder());
-        }
-        builder.setPageBuilder(builder.getPageBuilder()
-                .append(builder.getPageBuilder().length() == 0 ? "" : ",")
-                .append("(").append(page.getId()).append(",'").append(page.getPath()).append("', ")
-                .append(page.getCode()).append(", '").append(page.getContent())
-                .append("', ").append(site.getId()).append(")"));
-    }
+//    private void updatePageDB(Builder builder, Page page) throws SQLException {
+//        if (builder.getPageBuilder().length() > 2000000) {
+//            DBConnection.insertAllPages(builder.getPageBuilder().toString());
+//            builder.setPageBuilder(new StringBuilder());
+//        }
+//        builder.setPageBuilder(builder.getPageBuilder()
+//                .append(builder.getPageBuilder().length() == 0 ? "" : ",")
+//                .append("(").append(page.getId()).append(",'").append(page.getPath()).append("', ")
+//                .append(page.getCode()).append(", '").append(page.getContent())
+//                .append("', ").append(site.getId()).append(")"));
+//    }
 
     private void updateIndexDB(Builder builder, Field field, Map<String, Integer> normalFormsMap, int id) throws SQLException {
         if (builder.getIndexBuilder().length() > 2000000) {

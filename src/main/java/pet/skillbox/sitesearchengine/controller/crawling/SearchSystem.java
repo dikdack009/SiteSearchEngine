@@ -160,7 +160,7 @@ public class SearchSystem {
 
     //TODO проверить сдвиг чтобы не был больше размера
 
-    public String getSnippetSecondStep(List<Integer> indexes, String content) throws IOException {
+    public String getSnippetSecondStep(List<Integer> indexes, String content) {
         StringBuilder snippet = new StringBuilder("...");
         Collections.sort(indexes);
         for (int j = 0; j < indexes.size(); ++j) {
@@ -179,7 +179,7 @@ public class SearchSystem {
 
     private int searchSpacesBefore(String text, String word) {
         char[] array = text.replaceAll("[^[a-zA-Zа-яА-Я0-9]]", "-").toLowerCase().toCharArray();
-        int tmp = new String(array).indexOf("-" + word + "-");
+        int tmp = new String(array).indexOf("-" + word + "-") - 1;
         int count = 0;
         char[] textArray = text.toCharArray();
         int i = 0;
@@ -205,13 +205,16 @@ public class SearchSystem {
                 break;
             }
         }
-        return new Pair<>(spaceId, i);
+//        if (!Character.isLetterOrDigit(textArray[i + 1])) {
+//            i++;
+//        }
+        return new Pair<>(spaceId, !Character.isLetterOrDigit(textArray[i + 1]) ? ++i : i);
     }
 
     private Map<Page, Double> getPages(List<Lemma> lemmaList) throws SQLException {
         long m = System.currentTimeMillis();
         List<Page> pageList = DBConnection.getPagesFromRequest(lemmaList, siteId);
-
+        System.out.println("Время получения странниц по запросу: " + (double) (System.currentTimeMillis() - m) / 1000 + " sec.");
         Map<Page, Double> absRelPage = new HashMap<>();
         for (Page page : pageList) {
             absRelPage.put(page, DBConnection.getPageRank(lemmaList, page.getId()));

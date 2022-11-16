@@ -35,7 +35,7 @@ public class IndexingThread implements Callable<IndexingResponse> {
         try {
             indexingController.setIndexing(true);
             crawlingService.updateStatus(site);
-            crawlingService.deleteTmpSiteInfo(site.getId());
+            crawlingService.deleteSiteInfo(site.getId());
             crawlingSystem.start(config, id);
             if (config.isStopIndexing()){
                 site = new Site(Status.INDEXED, LocalDateTime.now(), "Индексация остановлена", url, name);
@@ -53,6 +53,7 @@ public class IndexingThread implements Callable<IndexingResponse> {
             return new IndexingResponse(true, null);
         } catch (Exception e) {
 //            DBConnection.updateSite(url, "FAILED", crawlingSystem.getLastError());
+            System.out.println(site.getUrl());
             e.printStackTrace();
             String error = crawlingSystem.getLastError() == null ? "Неизвестная ошибка" : crawlingSystem.getLastError();
             site = new Site(Status.FAILED, LocalDateTime.now(), error, url, name);

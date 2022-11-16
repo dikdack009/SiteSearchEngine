@@ -5,9 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import pet.skillbox.sitesearchengine.configuration.Config;
 import pet.skillbox.sitesearchengine.configuration.SiteProperty;
 import pet.skillbox.sitesearchengine.controller.crawling.CrawlingSystem;
@@ -45,7 +43,7 @@ public class IndexingController {
             response.set(new IndexingResponse(false, "Индексация уже запущена"));
             return new ResponseEntity<>(response.get(), HttpStatus.BAD_REQUEST);
         }
-        ExecutorService es = Executors.newFixedThreadPool(50);
+        ExecutorService es = Executors.newFixedThreadPool(100);
         List<IndexingThread> tasks = new ArrayList<>();
         int id = crawlingService.getMaxPageId() + 1;
         for (SiteProperty site : config.getSites()) {
@@ -88,5 +86,12 @@ public class IndexingController {
     @GetMapping(path="/api/statistics", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
     public ResponseEntity<Statistic> statistics() throws SQLException {
         return new ResponseEntity<>(new Statistic(isIndexing), HttpStatus.OK);
+    }
+
+    @DeleteMapping(path="/api/deleteSite", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
+    public ResponseEntity<IndexingResponse> deleteSite(@RequestParam int id) {
+        crawlingService.deleteSiteInfo(id);
+        crawlingService.deleteSite(id);
+        return new ResponseEntity<>(new IndexingResponse(true, null), HttpStatus.OK);
     }
 }

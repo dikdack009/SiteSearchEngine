@@ -15,4 +15,5 @@ public interface PageRepository extends JpaRepository<Page, Integer> {
     @Query("SELECT MAX(id) FROM Page")
     Integer getMaxPageId();
     Page getFirstBySiteId(Integer siteId);
+
 }

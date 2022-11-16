@@ -5,6 +5,8 @@ spring:
     username: root
     password: 89257044306mV
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 100
   jpa:
     database-platform: org.hibernate.dialect.MySQL5Dialect
     database: MYSQL
@@ -24,14 +26,16 @@ local:
   path: /admin
   user-agent: DuckSearchBot
   sites:
-#      - url:  https://www.playback.ru
-#        name: PlayBack
+      - url:  https://www.playback.ru
+        name: PlayBack
       - url: https://lentgga.ru
         name: Ленggта.ру
       - url: https://www.svetlovka.ru/
         name: Библиотека Светловка
       - url: https://www.lutherancathedral.ru/
         name: Собор Петра и Павла
+      - url: https://volochek.life
+        name: Волчёк
 
 
 

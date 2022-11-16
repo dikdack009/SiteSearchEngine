@@ -19,8 +19,7 @@ import java.util.Objects;
 public class Page implements Comparable<Page>{
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "id", updatable = false, nullable = false, unique=true)
-    private int id;
+    private Integer id;
 
     @Column(length = 65535, columnDefinition = "TEXT", unique = true)
     private String path;
@@ -53,6 +52,7 @@ public class Page implements Comparable<Page>{
                 "\tid=" + id + "" +
                 "\tpath='" + path + '\'' + "" +
                 "\tcode=" + code + "" +
+                "\tsiteId=" + siteId + "" +
                 '}';
     }
 

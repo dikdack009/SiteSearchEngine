@@ -105,7 +105,7 @@ public class DBConnection {
     }
 
     public static void insert(Builder builder) throws SQLException {
-        insertAllPages(builder.getPageBuilder().toString());
+//        insertAllPages(builder.getPageBuilder().toString());
         insertAllLemmas(builder.getLemmaBuilder().toString());
         insertAllIndexes(builder.getIndexBuilder().toString());
     }
