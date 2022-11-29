@@ -47,12 +47,14 @@ public class IndexingController {
         List<IndexingThread> tasks = new ArrayList<>();
 
         int id = crawlingService.getMaxPageId() + 1;
+        List<SiteProperty> newSiteList = new ArrayList<>();
         for (String url : body.keySet()) {
-            SiteProperty site = new SiteProperty();
+            SiteProperty site = new SiteProperty(url, body.get(url));
             site.setUrl(url);
-            site.setName(body.get(url));
+            newSiteList.add(site);
             tasks.add(new IndexingThread(this, site, config, crawlingService, id));
         }
+        config.setSites(newSiteList);
         List<Future<IndexingResponse>> futures;
         try {
             futures = es.invokeAll(tasks);
