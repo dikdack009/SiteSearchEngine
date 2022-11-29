@@ -1,6 +1,7 @@
-package pet.skillbox.sitesearchengine.model;
+package pet.skillbox.sitesearchengine.model.thread;
 
 import pet.skillbox.sitesearchengine.controller.crawling.CrawlingSystem;
+import pet.skillbox.sitesearchengine.model.Builder;
 import pet.skillbox.sitesearchengine.repositories.DBConnection;
 import pet.skillbox.sitesearchengine.services.CrawlingService;
 

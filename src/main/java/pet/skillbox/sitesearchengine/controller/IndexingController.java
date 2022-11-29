@@ -8,15 +8,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pet.skillbox.sitesearchengine.configuration.Config;
 import pet.skillbox.sitesearchengine.configuration.SiteProperty;
-import pet.skillbox.sitesearchengine.controller.crawling.CrawlingSystem;
-import pet.skillbox.sitesearchengine.model.*;
 import pet.skillbox.sitesearchengine.model.response.IndexingResponse;
 import pet.skillbox.sitesearchengine.model.response.Statistic;
+import pet.skillbox.sitesearchengine.model.thread.IndexingThread;
 import pet.skillbox.sitesearchengine.services.CrawlingService;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -37,7 +37,7 @@ public class IndexingController {
     }
 
     @GetMapping(path="/api/startIndexing", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
-    public ResponseEntity<IndexingResponse> startIndexing() {
+    public ResponseEntity<IndexingResponse> startIndexing(@RequestBody Map<String, String> body) {
         AtomicReference<IndexingResponse> response = new AtomicReference<>();
         if (isIndexing){
             response.set(new IndexingResponse(false, "Индексация уже запущена"));
@@ -45,8 +45,12 @@ public class IndexingController {
         }
         ExecutorService es = Executors.newFixedThreadPool(100);
         List<IndexingThread> tasks = new ArrayList<>();
+
         int id = crawlingService.getMaxPageId() + 1;
-        for (SiteProperty site : config.getSites()) {
+        for (String url : body.keySet()) {
+            SiteProperty site = new SiteProperty();
+            site.setUrl(url);
+            site.setName(body.get(url));
             tasks.add(new IndexingThread(this, site, config, crawlingService, id));
         }
         List<Future<IndexingResponse>> futures;
@@ -54,6 +58,9 @@ public class IndexingController {
             futures = es.invokeAll(tasks);
             for(Future<IndexingResponse> f : futures) {
                 response.set(f.get());
+                if (response.get().getError() != null) {
+                    break;
+                }
             }
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
@@ -62,6 +69,7 @@ public class IndexingController {
         es.shutdown();
         isIndexing = false;
         config.setStopIndexing(false);
+        System.out.println("Закончили индексацию !!!");
         return new ResponseEntity<>(response.get(), HttpStatus.OK);
     }
 
@@ -82,16 +90,30 @@ public class IndexingController {
         response = new IndexingResponse(true, null);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
-    //TODO подумать над монго
+
     @GetMapping(path="/api/statistics", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
     public ResponseEntity<Statistic> statistics() throws SQLException {
         return new ResponseEntity<>(new Statistic(isIndexing), HttpStatus.OK);
     }
 
     @DeleteMapping(path="/api/deleteSite", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
-    public ResponseEntity<IndexingResponse> deleteSite(@RequestParam int id) {
-        crawlingService.deleteSiteInfo(id);
-        crawlingService.deleteSite(id);
-        return new ResponseEntity<>(new IndexingResponse(true, null), HttpStatus.OK);
+    public ResponseEntity<IndexingResponse> deleteSite(@RequestParam String url) {
+        int res = crawlingService.deleteSiteInfo(url);
+        crawlingService.deleteSite(url);
+        IndexingResponse indexingResponse = res == 1 ? new IndexingResponse(true, null)
+                : new IndexingResponse(false, "Сайт " + url + " не проиндексирован");
+        return new ResponseEntity<>(indexingResponse, res == 1 ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
+    }
+
+    @DeleteMapping(path="/api/deleteAll", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
+    public ResponseEntity<IndexingResponse> deleteAll() {
+        IndexingResponse indexingResponse = new IndexingResponse(false, "Сайты не проиндексированы");
+        int res = -1;
+        for (SiteProperty site : config.getSites()) {
+            String url = site.getUrl();
+            res = crawlingService.deleteSiteInfo(url);
+            crawlingService.deleteSite(url);
+        }
+        return new ResponseEntity<>(indexingResponse, res == 1 ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
     }
 }

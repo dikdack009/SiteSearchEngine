@@ -39,12 +39,12 @@ public class MorphologyServiceImpl {
         Arrays.stream(englishWords).forEach(word -> {
             if (!word.trim().isEmpty()) {
                 List<String> normalWordL = englishMorphology.getNormalForms(word);
-//                for (String s : normalWordL) {
-//                    if (!s.equals(word)) {
-//                        word = s;
-//                        break;
-//                    }
-//                }
+                for (String s : normalWordL) {
+                    if (!s.equals(word)) {
+                        word = s;
+                        break;
+                    }
+                }
                 String normalWord = englishMorphology.getNormalForms(word).size() <= 1
                         ? word : englishMorphology.getNormalForms(word).get(0);
                 if (normalFormsMap.containsKey(normalWord)) {
@@ -76,12 +76,12 @@ public class MorphologyServiceImpl {
 
     public Pair<String, Boolean> check(LuceneMorphology russianMorphology, String word){
         List<String> normalWordList = russianMorphology.getNormalForms(word);
-//        for (String s : normalWordList) {
-//            if(!s.equals(word)){
-//                word = s;
-//                break;
-//            }
-//        }
+        for (String s : normalWordList) {
+            if(!s.equals(word)){
+                word = s;
+                break;
+            }
+        }
 //        System.out.println(word + " - " + russianMorphology.getNormalForms(word));
         String normalWord = russianMorphology.getNormalForms(word).get(0);
         boolean check = russianMorphology.getMorphInfo(word).stream()

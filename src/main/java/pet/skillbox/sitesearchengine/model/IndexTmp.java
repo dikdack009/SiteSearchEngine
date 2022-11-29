@@ -11,9 +11,6 @@ import javax.persistence.*;
 @AllArgsConstructor
 @Entity
 @Table(name = "index_tmp")
-@PrimaryKeyJoinColumns({
-        @PrimaryKeyJoinColumn(name="page_id"),
-        @PrimaryKeyJoinColumn(name="lemma")})
 public class IndexTmp {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

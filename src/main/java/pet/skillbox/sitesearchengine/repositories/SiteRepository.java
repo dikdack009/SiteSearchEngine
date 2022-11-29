@@ -6,10 +6,12 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import org.w3c.dom.stylesheets.LinkStyle;
 import pet.skillbox.sitesearchengine.model.Site;
 import pet.skillbox.sitesearchengine.model.Status;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Repository
 public interface SiteRepository extends JpaRepository<Site,Integer> {
@@ -18,7 +20,6 @@ public interface SiteRepository extends JpaRepository<Site,Integer> {
     @Modifying
     @Query("UPDATE Site SET status = ?1, statusTime = ?2, lastError = ?3 WHERE id = ?4")
     void updateSiteStatus(Status status, LocalDateTime dateTime, String lastError, Integer id);
-    void deleteById(@NotNull Integer id);
-    Site getSiteById(Integer id);
-
+    void deleteByUrl(@NotNull String url);
+    Site getSiteByUrl(String url);
 }

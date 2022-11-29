@@ -137,24 +137,36 @@ public class CrawlingService {
     }
 
     @Transactional
-    public void deleteSiteInfo(int id) {
-        System.out.println("Удаление сайта с id = " + id);
-        System.out.println(lemmaRepository.getFirstBySiteId(id));
-        if (lemmaRepository.getFirstBySiteId(id) != null) {
-            lemmaRepository.deleteBySiteId(id);
-            System.out.println("Удалили леммы с id = " + id);
+    public Integer deleteSiteInfo(String url) {
+        Site site = siteRepository.getSiteByUrl(url);
+        if (site != null) {
+            int id = site.getId();
+            System.out.println("Удаление сайта с id = " + id);
+            System.out.println(lemmaRepository.getFirstBySiteId(id));
+            if (lemmaRepository.getFirstBySiteId(id) != null) {
+                lemmaRepository.deleteBySiteId(id);
+                System.out.println("Удалили леммы с id = " + id);
+            }
+            if (pageRepository.getFirstBySiteId(id) != null) {
+                pageRepository.deleteBySiteId(id);
+                System.out.println("Удалили странницы с id = " + id);
+            }
+            if (indexRepository.getFirstBySiteId(id) != null) {
+                indexRepository.deleteBySiteId(id);
+                System.out.println("Удалили индексы с id = " + id);
+            }
         }
-
-        if (pageRepository.getFirstBySiteId(id) != null) {
-            pageRepository.deleteBySiteId(id);
-            System.out.println("Удалили странницы с id = " + id);
+        else {
+            return -1;
         }
-
-        if (indexRepository.getFirstBySiteId(id) != null) {
-            indexRepository.deleteBySiteId(id);
-            System.out.println("Удалили индексы с id = " + id);
-        }
+        System.out.println("ENNNNNNNNNNNNNNND");
+        return 1;
     }
+
+//    @Transactional
+//    public void deleteAllSites(int id) {
+//        siteRepository.get
+//    }
 
     @Transactional
     public void deleteTmpSiteInfo(int id) {
@@ -174,9 +186,9 @@ public class CrawlingService {
     }
 
     @Transactional
-    public void deleteSite(int id) {
-        if (siteRepository.getSiteById(id) != null) {
-            siteRepository.deleteById(id);
+    public void deleteSite(String url) {
+        if (siteRepository.getSiteByUrl(url) != null) {
+            siteRepository.deleteByUrl(url);
         }
     }
 }

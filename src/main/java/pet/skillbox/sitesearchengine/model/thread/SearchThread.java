@@ -1,8 +1,11 @@
-package pet.skillbox.sitesearchengine.model;
+package pet.skillbox.sitesearchengine.model.thread;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import pet.skillbox.sitesearchengine.controller.crawling.SearchSystem;
+import pet.skillbox.sitesearchengine.model.Lemma;
+import pet.skillbox.sitesearchengine.model.Page;
+import pet.skillbox.sitesearchengine.model.Site;
 import pet.skillbox.sitesearchengine.model.response.Data;
 import pet.skillbox.sitesearchengine.repositories.DBConnection;
 

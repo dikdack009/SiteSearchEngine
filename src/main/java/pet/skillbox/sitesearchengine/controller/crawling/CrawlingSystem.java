@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import pet.skillbox.sitesearchengine.configuration.Config;
 import pet.skillbox.sitesearchengine.model.*;
+import pet.skillbox.sitesearchengine.model.thread.CrawlingThread;
 import pet.skillbox.sitesearchengine.repositories.DBConnection;
 import pet.skillbox.sitesearchengine.services.CrawlingService;
 import pet.skillbox.sitesearchengine.services.MorphologyServiceImpl;

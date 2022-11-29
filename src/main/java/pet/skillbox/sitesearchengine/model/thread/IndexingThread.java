@@ -1,9 +1,11 @@
-package pet.skillbox.sitesearchengine.model;
+package pet.skillbox.sitesearchengine.model.thread;
 
 import pet.skillbox.sitesearchengine.configuration.Config;
 import pet.skillbox.sitesearchengine.configuration.SiteProperty;
 import pet.skillbox.sitesearchengine.controller.IndexingController;
 import pet.skillbox.sitesearchengine.controller.crawling.CrawlingSystem;
+import pet.skillbox.sitesearchengine.model.Site;
+import pet.skillbox.sitesearchengine.model.Status;
 import pet.skillbox.sitesearchengine.model.response.IndexingResponse;
 import pet.skillbox.sitesearchengine.repositories.DBConnection;
 import pet.skillbox.sitesearchengine.services.CrawlingService;
@@ -33,14 +35,26 @@ public class IndexingThread implements Callable<IndexingResponse> {
         Site site = new Site(Status.INDEXING, LocalDateTime.now(), null, url, name);
         CrawlingSystem crawlingSystem =  new CrawlingSystem(config, crawlingService, site);
         try {
+            if (config.isStopIndexing()){
+                site = new Site(Status.FAILED, LocalDateTime.now(), "Индексация остановлена пользователем", url, name);
+                crawlingService.updateStatus(site);
+                return new IndexingResponse(false, "Индексация остановлена пользователем");
+            }
             indexingController.setIndexing(true);
             crawlingService.updateStatus(site);
-            crawlingService.deleteSiteInfo(site.getId());
+            crawlingService.deleteSiteInfo(site.getUrl());
+            System.out.println("Удалили");
+            if (config.isStopIndexing()){
+                site = new Site(Status.FAILED, LocalDateTime.now(), "Индексация остановлена пользователем", url, name);
+                crawlingService.updateStatus(site);
+                return new IndexingResponse(false, "Индексация остановлена пользователем");
+            }
+            System.out.println("Удалили?????????????????????");
             crawlingSystem.start(config, id);
             if (config.isStopIndexing()){
-                site = new Site(Status.INDEXED, LocalDateTime.now(), "Индексация остановлена", url, name);
+                site = new Site(Status.FAILED, LocalDateTime.now(), "Индексация остановлена пользователем", url, name);
                 crawlingService.updateStatus(site);
-                return new IndexingResponse(false, "Индексация остановлена");
+                return new IndexingResponse(false, "Индексация остановлена пользователем");
             }
 //            crawlingService.deleteSiteInfo(site.getId());
 //            DBConnection.fromTmpToActualUpdate(site.getId());

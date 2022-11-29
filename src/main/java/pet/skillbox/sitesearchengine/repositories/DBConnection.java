@@ -39,71 +39,6 @@ public class DBConnection {
         return connection;
     }
 
-    public static void createFieldTable() throws SQLException {
-        connection.createStatement().execute("DROP TABLE IF EXISTS field ");
-        connection.createStatement().execute("create table field (" +
-                "id INT NOT NULL AUTO_INCREMENT, " +
-                "name VARCHAR(255) NOT NULL, " +
-                "selector VARCHAR(255) NOT NULL, " +
-                "weight FLOAT NOT NULL, " +
-                "PRIMARY KEY(id))");
-        connection.createStatement().execute("INSERT INTO field(name, selector, weight) " +
-                "VALUES( 'title', 'title', 1.5)");
-        connection.createStatement().execute("INSERT INTO field(name, selector, weight) " +
-                "VALUES( 'body', 'body', 0.8)");
-    }
-
-    public static void createPageTable() throws SQLException {
-        connection.createStatement().execute("DROP TABLE IF EXISTS page");
-        connection.createStatement().execute("create table page (" +
-                "id INT NOT NULL AUTO_INCREMENT, " +
-                "path TEXT NOT NULL, " +
-                "code INT NOT NULL, " +
-                "content MEDIUMTEXT NOT NULL, " +
-                "site_id INT NOT NULL, " +
-                "PRIMARY KEY(id), " +
-                "UNIQUE KEY pair_id (path(50), site_id))");
-    }
-
-    public static void createLemmaTable() throws SQLException {
-        connection.createStatement().execute("DROP TABLE IF EXISTS lemma");
-        connection.createStatement().execute("create table lemma (" +
-                "id INT NOT NULL AUTO_INCREMENT, " +
-                "lemma VARCHAR(255) NOT NULL, " +
-                "frequency INT NOT NULL, " +
-                "site_id INT NOT NULL, " +
-                "PRIMARY KEY(id), " +
-                "UNIQUE KEY(lemma(50), site_id));");
-//        connection.createStatement().execute("CREATE INDEX lemma ON lemma(lemma);");
-    }
-
-    public static void createIndexTable() throws SQLException {
-        connection.createStatement().execute("DROP TABLE IF EXISTS `index`");
-        connection.createStatement().execute("create table `index` (" +
-                "id INT NOT NULL AUTO_INCREMENT, " +
-                "page_id INT NOT NULL, " +
-                "lemma VARCHAR(255) NOT NULL, " +
-                "`rank` FLOAT NOT NULL, " +
-                "site_id INT NOT NULL, " +
-                "PRIMARY KEY (id), " +
-                "UNIQUE KEY(page_id, lemma(50), site_id))");
-//        connection.createStatement().execute("CREATE INDEX lemma ON `index`(lemma);");
-//        connection.createStatement().execute("CREATE INDEX page_id ON `index`(page_id);");
-    }
-
-    public static void createSiteTable() throws SQLException {
-        connection.createStatement().execute("DROP TABLE IF EXISTS site");
-        connection.createStatement().execute("create table site (" +
-                "id INT NOT NULL AUTO_INCREMENT, " +
-                "status ENUM('INDEXING', 'INDEXED', 'FAILED') NOT NULL, " +
-                "status_time DATETIME NOT NULL, " +
-                "last_error TEXT, " +
-                "url VARCHAR(255) NOT NULL, " +
-                "name VARCHAR(255) NOT NULL, " +
-                "PRIMARY KEY(id), " +
-                "UNIQUE KEY(url))");
-    }
-
     public static void insert(Builder builder) throws SQLException {
 //        insertAllPages(builder.getPageBuilder().toString());
         insertAllLemmas(builder.getLemmaBuilder().toString());
@@ -114,56 +49,6 @@ public class DBConnection {
         tmpInsertAllPages(builder.getPageBuilder().toString());
         tmpInsertAllLemmas(builder.getLemmaBuilder().toString());
         tmpInsertAllIndexes(builder.getIndexBuilder().toString());
-    }
-
-    public static void insertSite(String site) throws SQLException {
-        String sql = "INSERT INTO site(id, status, status_time, last_error, url, name) " +
-                "VALUES" + site;
-        getConnection().createStatement().execute(sql);
-    }
-
-    public static void updateSite(String url, String status, String error) throws SQLException {
-        String sql = "UPDATE site SET status = '" + status + "', status_time = '" + LocalDateTime.now() +
-                "', last_error = '" + error + "' WHERE url = '" + url + "'";
-        getConnection().createStatement().execute(sql);
-    }
-
-    public static List<Field> getAllFields() throws SQLException {
-        ResultSet rs = null;
-        List<Field> fieldList = new ArrayList<>();
-        try {
-            rs = getConnection().createStatement().executeQuery("SELECT * FROM field");
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        while (true) {
-            assert rs != null;
-            if (!rs.next()) break;
-            Field field = new Field(rs.getString("name"),
-                    rs.getString("selector"),
-                    rs.getFloat("weight"));
-            fieldList.add(field);
-        }
-        return fieldList;
-    }
-
-    public static int getSiteIdByPath(String path) throws SQLException {
-        ResultSet rs = null;
-        String sql = "SELECT id FROM site WHERE site.url = '" + path + "'";
-//        System.out.println(sql);
-        try {
-            rs = getConnection().createStatement().executeQuery(sql);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-//        System.out.println("SELECT id FROM site WHERE site.url = '" + path + "'");
-        int id = -1;
-        while (true) {
-            assert rs != null;
-            if (!rs.next()) break;
-            id = rs.getInt("id");
-        }
-        return id;
     }
 
     public static List<Page> getPagesFromResultSet(ResultSet rs) throws SQLException {
@@ -194,39 +79,6 @@ public class DBConnection {
         return rank;
     }
 
-    public static List<Lemma> getRequestLemmas(Set<String> lemmas, int siteId) throws SQLException {
-        StringJoiner stringJoiner = new StringJoiner(
-                "' OR lemma = '",
-                "SELECT * FROM lemma WHERE lemma = '",
-                "'");
-        lemmas.forEach(stringJoiner::add);
-        String sql = stringJoiner.toString();
-        if (siteId > 0){
-            sql += " AND site_id = " + siteId + " ORDER BY lemma";
-        } else {
-            sql += " ORDER BY lemma";
-        }
-//        System.out.println(sql);
-        ResultSet rs = null;
-        List<Lemma> lemmaList = new ArrayList<>();
-        try {
-//            System.out.println(stringJoiner.toString());
-            rs = getConnection().createStatement().executeQuery(sql);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        while (true) {
-            assert rs != null;
-            if (!rs.next()) break;
-            Lemma lemma = new Lemma(rs.getInt("id"),
-                    rs.getString("lemma"),
-                    rs.getInt("frequency"),
-                    siteId);
-            lemmaList.add(lemma);
-        }
-        return lemmaList;
-    }
-
     public static List<Page> getPagesFromRequest(List<Lemma> lemmaSet, int siteId) throws SQLException {
         StringBuilder result = new StringBuilder("SELECT * FROM page where ('");
         for (Lemma lemma : lemmaSet) {
@@ -249,27 +101,10 @@ public class DBConnection {
         return getPagesFromResultSet(rs);
     }
 
-    public static int getPageNumber(int siteId) throws SQLException {
-        ResultSet rs = null;
-        try {
-            String sql = "SELECT COUNT(*) AS c FROM page WHERE site_id = " + siteId;
-            rs = getConnection().createStatement().executeQuery(sql);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        assert rs != null;
-        int c = 0;
-        while (rs.next()) {
-            c = rs.getInt("c");
-        }
-        return c;
-    }
-
     public static void insertAllLemmas(String lemmas) throws SQLException {
         String sql = "INSERT INTO lemma(lemma, frequency, site_id) " +
                 "VALUES" + lemmas +
                 "ON DUPLICATE KEY UPDATE frequency=frequency + 1";
-//        System.out.println(sql);
         getConnection().createStatement().execute(sql);
     }
 
@@ -277,21 +112,18 @@ public class DBConnection {
         String sql = "INSERT INTO lemma_tmp(lemma, frequency, site_id) " +
                 "VALUES" + lemmas +
                 "ON DUPLICATE KEY UPDATE frequency=frequency + 1";
-//        System.out.println(sql);
         getConnection().createStatement().execute(sql);
     }
 
     public static void insertAllPages(String pages) throws SQLException {
         String sql = "INSERT INTO page(id, path, code, content, site_id)  " +
                 "VALUES" + pages;
-//        System.out.println(sql);
         getConnection().createStatement().execute(sql);
     }
 
     public static void tmpInsertAllPages(String pages) throws SQLException {
         String sql = "INSERT INTO page_tmp(id, path, code, content, site_id)  " +
                 "VALUES" + pages;
-//        System.out.println(sql);
         getConnection().createStatement().execute(sql);
     }
 

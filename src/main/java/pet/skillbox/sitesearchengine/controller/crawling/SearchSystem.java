@@ -7,7 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import pet.skillbox.sitesearchengine.model.Lemma;
 import pet.skillbox.sitesearchengine.model.Page;
-import pet.skillbox.sitesearchengine.model.SearchThread;
+import pet.skillbox.sitesearchengine.model.thread.SearchThread;
 import pet.skillbox.sitesearchengine.model.Site;
 import pet.skillbox.sitesearchengine.model.response.Data;
 import pet.skillbox.sitesearchengine.model.response.SearchResponse;
@@ -41,7 +41,6 @@ public class SearchSystem {
         this.limit = limit == null ? 20 : limit;
         this.crawlingService = crawlingService;
         this.siteLink = siteLink;
-         //DBConnection.getSiteIdByPath(siteLink);
     }
 
     public ResponseEntity<SearchResponse> request() throws IOException, SQLException, InterruptedException {
@@ -69,7 +68,6 @@ public class SearchSystem {
         }
         Map<String, Lemma> requestLemmaMap = lemmaList.stream().collect(Collectors.toMap(Lemma::getLemma, v -> v));
 
-//        double quantityPages = DBConnection.countPages(siteId);
         double quantityPages = crawlingService.countPages(siteId);
         System.out.println(quantityPages);
         if (quantityPages == 0) {
@@ -178,21 +176,35 @@ public class SearchSystem {
     }
 
     private int searchSpacesBefore(String text, String word) {
-        char[] array = text.replaceAll("[^[a-zA-Zа-яА-Я0-9]]", "-").toLowerCase().toCharArray();
-        int tmp = new String(array).indexOf("-" + word + "-") - 1;
+        text = text.replaceAll("\\pP", " ");
+        char[] array = text.replaceAll("[^[a-zA-Zа-яА-Я0-9]]", " ").toLowerCase().toCharArray();
+        int tmp = new String(array).indexOf(" " + word + " ");
+        System.out.println(text.replaceAll("[^[a-zA-Zа-яА-Я0-9]]", " ").toLowerCase());
         int count = 0;
         char[] textArray = text.toCharArray();
         int i = 0;
-        for ( ; i < tmp; ++i ) {
+        System.out.println("Word = " + word);
+        for ( ; i <= tmp; ++i ) {
+            System.out.print(textArray[i]);
             if (textArray[i] == ' ') {
                 count++;
             }
         }
-        return count + 1;
+        System.out.print("|||");
+        System.out.print(textArray[i]);
+        System.out.print(textArray[i+1]);
+        System.out.print(textArray[i+2]);
+        System.out.print(textArray[i+3]);
+        System.out.println();
+        System.out.println("пробелов " + count);
+        System.out.println("Индекс найденного слова " + tmp);
+        return count;
     }
 
     private Pair<Integer, Integer> searchSpacesAfter(String text, int count) {
-        char[] textArray = text.toCharArray();
+        String textCopy = text.replaceAll("\\pP", " ");
+        char[] textArray = textCopy.toLowerCase().toCharArray();
+//        char[] textArray = text.replaceAll("[^[a-zA-Zа-яА-Я0-9]]", " ").toLowerCase().toCharArray();
         int i, spaceId = 0, newCount = 0;
         for (i = 0; i < textArray.length; ++i) {
             if(textArray[i] == ' ') {
@@ -208,7 +220,10 @@ public class SearchSystem {
 //        if (!Character.isLetterOrDigit(textArray[i + 1])) {
 //            i++;
 //        }
-        return new Pair<>(spaceId, !Character.isLetterOrDigit(textArray[i + 1]) ? ++i : i);
+        System.out.println("проблов старых " + count);
+        System.out.println("проблов новых " + newCount);
+        System.out.println("next " + text.toCharArray()[i]  + text.toCharArray()[i + 1] + text.toCharArray()[i + 2]);
+        return new Pair<>(spaceId, !Character.isLetterOrDigit(text.toCharArray()[i + 1]) ? ++i : i);
     }
 
     private Map<Page, Double> getPages(List<Lemma> lemmaList) throws SQLException {
