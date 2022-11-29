@@ -8,7 +8,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pet.skillbox.sitesearchengine.configuration.Config;
 import pet.skillbox.sitesearchengine.configuration.SiteProperty;
+import pet.skillbox.sitesearchengine.model.Link;
 import pet.skillbox.sitesearchengine.model.response.IndexingResponse;
+import pet.skillbox.sitesearchengine.model.response.LinksResponse;
 import pet.skillbox.sitesearchengine.model.response.Statistic;
 import pet.skillbox.sitesearchengine.model.thread.IndexingThread;
 import pet.skillbox.sitesearchengine.services.CrawlingService;
@@ -34,6 +36,19 @@ public class IndexingController {
     public IndexingController(Config config, CrawlingService crawlingService) {
         this.config = config;
         this.crawlingService = crawlingService;
+    }
+
+    //TODO: добавить стобец юзер в ссылки
+    @GetMapping(path="/api/getLinks", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
+    public ResponseEntity<LinksResponse> getLinks() {
+        return new ResponseEntity<>(new LinksResponse(true, null, crawlingService.getLinks()), HttpStatus.OK);
+    }
+
+    @PostMapping(path="/api/saveLink", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
+    public ResponseEntity<LinksResponse> saveLink(@RequestParam String link, @RequestParam String name) {
+        boolean result = crawlingService.saveLink(new Link(link, name));
+        LinksResponse linksResponse = new LinksResponse(result, result ? null : "Ссылка уже добавлена", crawlingService.getLinks());
+        return new ResponseEntity<>(linksResponse, result ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
     }
 
     @GetMapping(path="/api/startIndexing", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )

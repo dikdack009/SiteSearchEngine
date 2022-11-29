@@ -22,12 +22,14 @@ public class CrawlingService {
     private final PageTmpRepository pageTmpRepository;
     private final IndexTmpRepository indexTmpRepository;
     private final SiteRepository siteRepository;
+    private final LinkRepository linkRepository;
 
     @Autowired
     public CrawlingService(LemmaRepository lemmaRepository, FieldRepository fieldRepository,
                            PageRepository pageRepository, IndexRepository indexRepository,
                            LemmaTmpRepository lemmaTmpRepository, PageTmpRepository pageTmpRepository,
-                           IndexTmpRepository indexTmpRepository, SiteRepository siteRepository) {
+                           IndexTmpRepository indexTmpRepository, SiteRepository siteRepository,
+                           LinkRepository linkRepository) {
         this.lemmaRepository = lemmaRepository;
         this.fieldRepository = fieldRepository;
         this.pageRepository = pageRepository;
@@ -36,6 +38,7 @@ public class CrawlingService {
         this.pageTmpRepository = pageTmpRepository;
         this.indexTmpRepository = indexTmpRepository;
         this.siteRepository = siteRepository;
+        this.linkRepository = linkRepository;
     }
 
 
@@ -134,6 +137,20 @@ public class CrawlingService {
     public synchronized int savePage(Page page) {
         pageRepository.save(page);
         return page.getId();
+    }
+
+    @Transactional
+    public boolean saveLink(Link link) {
+        if (linkRepository.getLinkByLink(link.getLink()) == null) {
+            linkRepository.save(link);
+            return true;
+        }
+        return false;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Link> getLinks() {
+        return linkRepository.findAll();
     }
 
     @Transactional
