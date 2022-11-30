@@ -26,16 +26,16 @@ local:
   path: /admin
   user-agent: DuckSearchBot
   sites:
-      - url:  https://www.playback.ru
-        name: PlayBack
-      - url: https://lentgga.ru
-        name: Ленggта.ру
-      - url: https://www.svetlovka.ru/
-        name: Библиотека Светловка
-      - url: https://www.lutherancathedral.ru/
-        name: Собор Петра и Павла
-      - url: https://volochek.life
-        name: Волчёк
+#      - url:  https://www.playback.ru
+#        name: PlayBack
+#      - url: https://lentgga.ru
+#        name: Ленggта.ру
+#      - url: https://www.svetlovka.ru/
+#        name: Библиотека Светловка
+#      - url: https://www.lutherancathedral.ru/
+#        name: Собор Петра и Павла
+#      - url: https://volochek.life
+#        name: Волчёк
 
 
 

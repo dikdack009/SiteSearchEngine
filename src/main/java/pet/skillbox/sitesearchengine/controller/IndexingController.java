@@ -1,5 +1,6 @@
 package pet.skillbox.sitesearchengine.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,8 +16,10 @@ import pet.skillbox.sitesearchengine.model.response.Statistic;
 import pet.skillbox.sitesearchengine.model.thread.IndexingThread;
 import pet.skillbox.sitesearchengine.services.CrawlingService;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -51,8 +54,11 @@ public class IndexingController {
         return new ResponseEntity<>(linksResponse, result ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
     }
 
-    @GetMapping(path="/api/startIndexing", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
-    public ResponseEntity<IndexingResponse> startIndexing(@RequestBody Map<String, String> body) {
+    @PostMapping(path="/api/startIndexing", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
+    public ResponseEntity<IndexingResponse> startIndexing(@RequestBody String body) throws IOException {
+        Map<String, Object> tmp = new ObjectMapper().readValue(body, HashMap.class);
+        Map<String, String> result  = new ObjectMapper().readValue(tmp.get("data").toString(), HashMap.class);
+        System.out.println(result);
         AtomicReference<IndexingResponse> response = new AtomicReference<>();
         if (isIndexing){
             response.set(new IndexingResponse(false, "Индексация уже запущена"));
@@ -63,8 +69,8 @@ public class IndexingController {
 
         int id = crawlingService.getMaxPageId() + 1;
         List<SiteProperty> newSiteList = new ArrayList<>();
-        for (String url : body.keySet()) {
-            SiteProperty site = new SiteProperty(url, body.get(url));
+        for (String url : result.keySet()) {
+            SiteProperty site = new SiteProperty(url, result.get(url));
             site.setUrl(url);
             newSiteList.add(site);
             tasks.add(new IndexingThread(this, site, config, crawlingService, id));
