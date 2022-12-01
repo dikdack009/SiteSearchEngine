@@ -47,11 +47,25 @@ public class IndexingController {
         return new ResponseEntity<>(new LinksResponse(true, null, crawlingService.getLinks()), HttpStatus.OK);
     }
 
-    @PostMapping(path="/api/saveLink", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
-    public ResponseEntity<LinksResponse> saveLink(@RequestParam String link, @RequestParam String name) {
-        boolean result = crawlingService.saveLink(new Link(link, name));
+    @PostMapping(path="/api/addLink", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
+    public ResponseEntity<LinksResponse> saveLink(@RequestParam(name = "url") String url, @RequestParam String name) {
+        boolean result = crawlingService.saveLink(new Link(url, name));
         LinksResponse linksResponse = new LinksResponse(result, result ? null : "Ссылка уже добавлена", crawlingService.getLinks());
         return new ResponseEntity<>(linksResponse, result ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
+    }
+
+    @DeleteMapping(path="/api/deleteLink", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
+    public ResponseEntity<IndexingResponse> deleteLink(@RequestParam String url) {
+        boolean result = crawlingService.deleteLink(url);
+        IndexingResponse indexingResponse = new IndexingResponse(result, result ? null : "Ссылка не добавлена");
+        return new ResponseEntity<>(indexingResponse, result ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
+    }
+
+    @DeleteMapping(path="/api/deleteAllLinks", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
+    public ResponseEntity<IndexingResponse> deleteAllLinks() {
+        IndexingResponse indexingResponse = new IndexingResponse(true, null);
+        crawlingService.deleteAllLinks();
+        return new ResponseEntity<>(indexingResponse, HttpStatus.OK);
     }
 
     @PostMapping(path="/api/startIndexing", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
@@ -96,11 +110,6 @@ public class IndexingController {
         return new ResponseEntity<>(response.get(), HttpStatus.OK);
     }
 
-    @PostMapping(path="/api/startSiteIndexing", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
-    public ResponseEntity<IndexingResponse> startSiteIndexing() {
-        return new ResponseEntity<>(new IndexingResponse(true, null), HttpStatus.OK);
-    }
-
     @GetMapping(path="/api/stopIndexing", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
     public ResponseEntity<IndexingResponse> stopIndexing() {
         IndexingResponse response;
@@ -121,22 +130,21 @@ public class IndexingController {
 
     @DeleteMapping(path="/api/deleteSite", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
     public ResponseEntity<IndexingResponse> deleteSite(@RequestParam String url) {
-        int res = crawlingService.deleteSiteInfo(url);
+        boolean result = crawlingService.deleteSiteInfo(url);
         crawlingService.deleteSite(url);
-        IndexingResponse indexingResponse = res == 1 ? new IndexingResponse(true, null)
-                : new IndexingResponse(false, "Сайт " + url + " не проиндексирован");
-        return new ResponseEntity<>(indexingResponse, res == 1 ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
+        IndexingResponse indexingResponse = new IndexingResponse(result, result ? null : "Сайт " + url + " не проиндексирован");
+        return new ResponseEntity<>(indexingResponse, result ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
     }
 
-    @DeleteMapping(path="/api/deleteAll", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
-    public ResponseEntity<IndexingResponse> deleteAll() {
-        IndexingResponse indexingResponse = new IndexingResponse(false, "Сайты не проиндексированы");
-        int res = -1;
+    @DeleteMapping(path="/api/deleteAllSites", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
+    public ResponseEntity<IndexingResponse> deleteAllSites() {
+        IndexingResponse indexingResponse = new IndexingResponse(true, null);
+        boolean result = true;
         for (SiteProperty site : config.getSites()) {
             String url = site.getUrl();
-            res = crawlingService.deleteSiteInfo(url);
+            result = crawlingService.deleteSiteInfo(url);
             crawlingService.deleteSite(url);
         }
-        return new ResponseEntity<>(indexingResponse, res == 1 ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(indexingResponse, result ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
     }
 }

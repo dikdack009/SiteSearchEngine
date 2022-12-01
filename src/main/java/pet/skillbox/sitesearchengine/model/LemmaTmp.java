@@ -4,10 +4,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 
 @AllArgsConstructor
@@ -28,13 +28,15 @@ public class LemmaTmp implements Comparable<Lemma> {
     @Column(nullable = false)
     private Integer frequency;
 
-    @Column(name = "site_id", nullable = false)
-    private Integer siteId;
+    @JoinColumn(name = "site_id", nullable = false)
+    @ManyToOne (cascade=CascadeType.ALL)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Site site;
 
-    public LemmaTmp(String lemma, int frequency, int siteId) {
+    public LemmaTmp(String lemma, int frequency,Site site) {
         this.lemma = lemma;
         this.frequency = frequency;
-        this.siteId = siteId;
+        this.site = site;
     }
 
     @Override
@@ -42,17 +44,18 @@ public class LemmaTmp implements Comparable<Lemma> {
         if (this == o) return true;
         if (!(o instanceof Lemma)) return false;
         Lemma lemma1 = (Lemma) o;
-        return Objects.equals(getSiteId(), lemma1.getSiteId()) && getLemma().equals(lemma1.getLemma());
+        return Objects.equals(getSite(), lemma1.getSite()) && getLemma().equals(lemma1.getLemma());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getLemma(), getSiteId());
+        return Objects.hash(getLemma(), getSite().getId());
     }
 
     @Override
     public int compareTo(Lemma o) {
-        return this.getLemma().compareTo(o.getLemma())*this.getSiteId().compareTo(o.getSiteId());
+        return this.getLemma().compareTo(o.getLemma())
+                *this.getSite().getId().compareTo(o.getSite().getId());
     }
 
     @Override

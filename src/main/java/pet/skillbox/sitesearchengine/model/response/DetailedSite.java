@@ -1,11 +1,13 @@
 package pet.skillbox.sitesearchengine.model.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import pet.skillbox.sitesearchengine.model.Status;
 
 import java.time.LocalDateTime;
 
 @Getter
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class DetailedSite {
     private final String url;
     private final String name;

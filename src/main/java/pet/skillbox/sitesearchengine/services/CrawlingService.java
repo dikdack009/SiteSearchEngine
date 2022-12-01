@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pet.skillbox.sitesearchengine.model.*;
+import pet.skillbox.sitesearchengine.model.response.LinkModel;
 import pet.skillbox.sitesearchengine.repositories.*;
 
 import java.time.LocalDateTime;
@@ -39,6 +40,8 @@ public class CrawlingService {
         this.indexTmpRepository = indexTmpRepository;
         this.siteRepository = siteRepository;
         this.linkRepository = linkRepository;
+        fieldRepository.save(new Field("title", "title", 1.5f));
+        fieldRepository.save(new Field("body", "body", 0.8f));
     }
 
 
@@ -64,11 +67,6 @@ public class CrawlingService {
         return pageRepository.getByPath(page.getPath());
     }
 
-    @Transactional
-    public void addIndex(Index index) {
-        indexRepository.save(index);
-    }
-
     @Transactional(readOnly = true)
     public List<Lemma> getLemmaList(Set<String> lemmas, int id) {
         List<Lemma> lemmaList = new ArrayList<>();
@@ -83,13 +81,14 @@ public class CrawlingService {
 
     @Transactional
     public void addLemma(Lemma lemma) {
-        Lemma lemmaFromDB = lemmaRepository.getLemmaByLemmaAndSiteId(lemma.getLemma(), 0);
-
-        if (lemmaFromDB != null){
-            lemmaRepository.delete(lemmaFromDB);
+        System.out.println(lemma);
+        Lemma oldLemma = lemmaRepository.getLemmaByLemma(lemma.getLemma());
+        System.out.println(oldLemma);
+        if (oldLemma == null) {
+            lemmaRepository.save(lemma);
+        } else {
+            lemmaRepository.updateLemma(lemma.getLemma(), lemma.getFrequency() + 1, lemma.getId());
         }
-
-        lemmaRepository.save(lemma);
     }
 
     @Transactional
@@ -135,6 +134,9 @@ public class CrawlingService {
 
     @Transactional
     public synchronized int savePage(Page page) {
+        System.out.println("saving page");
+        System.out.println("<" + page.getId() + ">");
+        System.out.println(" - " + page.getSite().getId() + " " + page.getSite().getUrl());
         pageRepository.save(page);
         return page.getId();
     }
@@ -149,12 +151,17 @@ public class CrawlingService {
     }
 
     @Transactional(readOnly = true)
-    public List<Link> getLinks() {
-        return linkRepository.findAll();
+    public List<LinkModel> getLinks() {
+        List<LinkModel> models = new ArrayList<>();
+        List<Link> links = linkRepository.findAll();
+        for (Link link : links) {
+            models.add(new LinkModel(link.getLink(), link.getName()));
+        }
+        return models;
     }
 
     @Transactional
-    public Integer deleteSiteInfo(String url) {
+    public boolean deleteSiteInfo(String url) {
         Site site = siteRepository.getSiteByUrl(url);
         if (site != null) {
             int id = site.getId();
@@ -174,10 +181,10 @@ public class CrawlingService {
             }
         }
         else {
-            return -1;
+            return false;
         }
         System.out.println("ENNNNNNNNNNNNNNND");
-        return 1;
+        return true;
     }
 
 //    @Transactional
@@ -207,5 +214,19 @@ public class CrawlingService {
         if (siteRepository.getSiteByUrl(url) != null) {
             siteRepository.deleteByUrl(url);
         }
+    }
+
+    @Transactional
+    public boolean deleteLink(String url) {
+        if (linkRepository.getLinkByLink(url) != null) {
+            linkRepository.deleteLinkByLink(url);
+            return true;
+        }
+        return false;
+    }
+
+    @Transactional
+    public void deleteAllLinks() {
+        linkRepository.deleteAll();
     }
 }

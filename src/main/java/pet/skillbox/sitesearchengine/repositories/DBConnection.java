@@ -53,12 +53,14 @@ public class DBConnection {
 
     public static List<Page> getPagesFromResultSet(ResultSet rs) throws SQLException {
         List<Page> pageList = new ArrayList<>();
+        Site site = new Site();
         while (rs.next()) {
+            site.setId(rs.getInt("site_id"));
             Page page = new Page(rs.getInt("id"),
                     rs.getString("path"),
                     rs.getInt("code"),
                     rs.getString("content"),
-                    rs.getInt("site_id"));
+                    site);
             pageList.add(page);
         }
         return pageList;

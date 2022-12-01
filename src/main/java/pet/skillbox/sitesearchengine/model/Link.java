@@ -11,8 +11,8 @@ import javax.persistence.*;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity
 @Table(name = "link")
+@Entity
 public class Link {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

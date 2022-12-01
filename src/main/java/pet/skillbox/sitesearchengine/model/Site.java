@@ -8,6 +8,7 @@ import org.springframework.security.core.GrantedAuthority;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 @AllArgsConstructor
@@ -17,9 +18,8 @@ import java.util.Set;
 @Entity
 @Table(name = "site")
 public class Site implements GrantedAuthority {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
 
     @Enumerated(EnumType.STRING)
@@ -41,12 +41,24 @@ public class Site implements GrantedAuthority {
     @ManyToMany(mappedBy = "sites")
     private Set<User> users;
 
+    @OneToMany(targetEntity = Page.class, mappedBy = "site")
+    private Set<Page> pages;
+
+    @OneToMany(targetEntity = Lemma.class, mappedBy = "site")
+    private Set<Lemma> lemmas;
+
+    @OneToMany(targetEntity = Index.class, mappedBy = "site")
+    private Set<Index> indexes;
+
     public Site(Status status, LocalDateTime statusTime, String lastError, String url, String name) {
         this.status = status;
         this.statusTime = statusTime;
         this.lastError = lastError;
         this.url = url;
         this.name = name;
+        pages = new HashSet<>();
+        lemmas = new HashSet<>();
+        indexes = new HashSet<>();
     }
 
     public Site(int id, Status status, LocalDateTime statusTime, String lastError, String url, String name) {

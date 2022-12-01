@@ -32,7 +32,7 @@ public class SearchThread implements Callable<Data> {
         Document d = Jsoup.parse(page.getContent());
         String title = d.select("title").text();
         String contentWithoutTags = title + " " + d.select("body").text();
-        Site site = DBConnection.getSiteById(page.getSiteId());
+        Site site = DBConnection.getSiteById(page.getSite().getId());
         return new Data(site.getUrl(), site.getName(), page.getPath(), title,
                 searchSystem.getSnippetFirstStep(requestLemmas, contentWithoutTags),
                 value/max);

@@ -4,10 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.*;
-import javax.persistence.criteria.CriteriaBuilder;
 import java.util.Objects;
 
 @Getter
@@ -18,7 +19,7 @@ import java.util.Objects;
 @Table(name = "page")
 public class Page implements Comparable<Page>{
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(length = 65535, columnDefinition = "TEXT", unique = true)
@@ -30,14 +31,16 @@ public class Page implements Comparable<Page>{
     @Column(length = 16777215, columnDefinition = "MEDIUMTEXT")
     private String content;
 
-    @Column(name = "site_id", nullable = false)
-    private Integer siteId;
+    @JoinColumn(name = "site_id", nullable = false)
+    @ManyToOne
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Site site;
 
-    public Page(String path, int code, String content, Integer siteId) {
+    public Page(String path, int code, String content, Site site) {
         this.path = path;
         this.code = code;
         this.content = content;
-        this.siteId = siteId;
+        this.site = site;
     }
 
     public Page(String path, int code, String content) {
@@ -52,7 +55,7 @@ public class Page implements Comparable<Page>{
                 "\tid=" + id + "" +
                 "\tpath='" + path + '\'' + "" +
                 "\tcode=" + code + "" +
-                "\tsiteId=" + siteId + "" +
+                "\tsiteId=" + site + "" +
                 '}';
     }
 
@@ -61,16 +64,17 @@ public class Page implements Comparable<Page>{
         if (this == o) return true;
         if (!(o instanceof Page)) return false;
         Page page1 = (Page) o;
-        return Objects.equals(getSiteId(), page1.getSiteId()) && Objects.equals(getPath(), page1.getPath());
+        return Objects.equals(getSite(), page1.getSite()) && Objects.equals(getPath(), page1.getPath());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getPath(), getSiteId());
+        return Objects.hash(getPath(), getSite());
     }
 
     @Override
     public int compareTo(@NotNull Page o) {
-        return this.getPath().compareTo(o.getPath())*this.getSiteId().compareTo(o.getSiteId());
+        return this.getPath().compareTo(o.getPath())*
+                this.getSite().getId().compareTo(o.getSite().getId());
     }
 }

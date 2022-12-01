@@ -3,6 +3,8 @@ package pet.skillbox.sitesearchengine.model;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
 
@@ -19,14 +21,16 @@ public class Index {
     @Column(name = "page_id")
     private int pageId;
 
-    @Column(name = "lemma", length = 65535, columnDefinition = "VARCHAR(255)")
+    @Column(name = "lemma")
     private String lemma;
 
     @Column(name = "`rank`")
     private float rank;
 
-    @Column(name = "site_id")
-    private int siteId;
+    @JoinColumn(name = "site_id", nullable = false)
+    @ManyToOne
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Site site;
 
     public Index() {
 

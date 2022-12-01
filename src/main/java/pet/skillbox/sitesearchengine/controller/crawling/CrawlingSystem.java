@@ -75,7 +75,9 @@ public class CrawlingSystem {
             return null;
         }
         allLinks = new HashMap<>(linksGenerator.getAllLinksMap());
-        if (allLinks.isEmpty()) {
+        System.out.println("Все найденные ссылки");
+        System.out.println(allLinks);
+        if (allLinks.keySet().isEmpty()) {
             lastError = "Главная странница сайта недоступна";
             return null;
         }
@@ -126,9 +128,14 @@ public class CrawlingSystem {
             return;
         }
         Page tmpPage = allLinks.get(path);
-        Page page = new Page(tmpPage.getPath(), tmpPage.getCode(), tmpPage.getContent(), site.getId());
+        Page page = new Page(tmpPage.getPath(), tmpPage.getCode(), tmpPage.getContent());
+        Site tmpSite = new Site(site.getId(), site.getStatus(), site.getStatusTime(),
+                site.getLastError(), site.getUrl(), site.getName());
+
+        page.setSite(tmpSite);
         int id = crawlingService.savePage(page);
         page.setId(id);
+        System.out.println("id");
         System.out.println(site.getUrl() + path + " id = " + id);
         try {
 //            updatePageDB(builder, page);
@@ -142,13 +149,13 @@ public class CrawlingSystem {
     }
 
     private void parseTagsContent(String content, Integer pageId, Builder builder) throws SQLException {
-        if (config.isStopIndexing()) {
-            return;
-        }
         Document d = Jsoup.parse(content);
         Set<String> allWords = new HashSet<>();
 
         for (Field field : fieldList) {
+            if (config.isStopIndexing()) {
+                return;
+            }
             String tagContent = d.select(field.getName()).text();
             Map<String, Integer> tagNormalForms;
             try {
@@ -180,17 +187,17 @@ public class CrawlingSystem {
 //                .append("', ").append(site.getId()).append(")"));
 //    }
 
-    private void updateIndexDB(Builder builder, Field field, Map<String, Integer> normalFormsMap, int id) throws SQLException {
+    private void updateIndexDB(Builder builder, Field field, Map<String, Integer> tagLemmas, int id) throws SQLException {
         if (builder.getIndexBuilder().length() > 2000000) {
             DBConnection.insertAllIndexes(builder.getIndexBuilder().toString());
             builder.setIndexBuilder(new StringBuilder());
         }
-        normalFormsMap.keySet().forEach(word ->
+        tagLemmas.keySet().forEach(lemma ->
                 builder.setIndexBuilder(builder.getIndexBuilder()
                         .append(builder.getIndexBuilder().length() == 0 ? "" : ",")
                         .append("(").append(id)
-                        .append(", '").append(word).append("', ")
-                        .append(normalFormsMap.get(word) * field.getWeight()).append(", ")
+                        .append(", '").append(lemma).append("', ")
+                        .append(tagLemmas.get(lemma) * field.getWeight()).append(", ")
                         .append(site.getId()).append(")")));
     }
 

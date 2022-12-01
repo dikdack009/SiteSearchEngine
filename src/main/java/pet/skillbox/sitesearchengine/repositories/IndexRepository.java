@@ -10,4 +10,5 @@ public interface IndexRepository extends JpaRepository<Index, Integer> {
     void deleteBySiteId(int siteId);
 
     Index getFirstBySiteId(Integer siteId);
+    Index getBySiteId(Integer siteId);
 }

@@ -16,9 +16,9 @@ public class LinksResponse {
     @Getter
     private String error;
     @Getter
-    private List<Link> links;
+    private List<LinkModel> links;
 
-    public LinksResponse(Boolean result, String error, List<Link> links) {
+    public LinksResponse(Boolean result, String error, List<LinkModel> links) {
         this.result = result;
         this.error = error;
         this.links = links;

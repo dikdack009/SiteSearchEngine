@@ -42,6 +42,7 @@ public class IndexingThread implements Callable<IndexingResponse> {
             }
             indexingController.setIndexing(true);
             crawlingService.updateStatus(site);
+            System.out.println(site);
             crawlingService.deleteSiteInfo(site.getUrl());
             System.out.println("Удалили");
             if (config.isStopIndexing()){
