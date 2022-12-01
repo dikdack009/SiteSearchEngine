@@ -40,8 +40,8 @@ public class CrawlingService {
         this.indexTmpRepository = indexTmpRepository;
         this.siteRepository = siteRepository;
         this.linkRepository = linkRepository;
-        fieldRepository.save(new Field("title", "title", 1.5f));
-        fieldRepository.save(new Field("body", "body", 0.8f));
+//        fieldRepository.save(new Field("title", "title", 1.5f));
+//        fieldRepository.save(new Field("body", "body", 0.8f));
     }
 
 

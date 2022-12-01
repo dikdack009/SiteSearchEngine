@@ -70,6 +70,7 @@ public class IndexingController {
 
     @PostMapping(path="/api/startIndexing", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
     public ResponseEntity<IndexingResponse> startIndexing(@RequestBody String body) throws IOException {
+
         Map<String, Object> tmp = new ObjectMapper().readValue(body, HashMap.class);
         Map<String, String> result  = new ObjectMapper().readValue(tmp.get("data").toString(), HashMap.class);
         System.out.println(result);

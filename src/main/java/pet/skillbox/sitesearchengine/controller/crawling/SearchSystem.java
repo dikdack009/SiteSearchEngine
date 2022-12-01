@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import pet.skillbox.sitesearchengine.model.Lemma;
 import pet.skillbox.sitesearchengine.model.Page;
 import pet.skillbox.sitesearchengine.model.thread.SearchThread;
-import pet.skillbox.sitesearchengine.model.Site;
 import pet.skillbox.sitesearchengine.model.response.Data;
 import pet.skillbox.sitesearchengine.model.response.SearchResponse;
 import pet.skillbox.sitesearchengine.repositories.DBConnection;
@@ -19,6 +18,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -27,40 +27,46 @@ public class SearchSystem {
     private final String query;
     private final int offset;
     private final int limit;
-    private int siteId;
-    private final String siteLink;
+    private final Set<Integer> linkIdList;
+    private final Set<String> links;
     @Getter
     private String error;
     private final CrawlingService crawlingService;
 
     //TODO: сделать индексацию больше чем одного сайта
 
-    public SearchSystem(String query, String siteLink, Integer offset, Integer limit, CrawlingService crawlingService) throws SQLException {
+    public SearchSystem(String query, Set<String> links, Integer offset, Integer limit, CrawlingService crawlingService) throws SQLException {
         this.query = query;
         this.offset = offset == null ? 0 : offset;
         this.limit = limit == null ? 20 : limit;
         this.crawlingService = crawlingService;
-        this.siteLink = siteLink;
+        this.links = links;
+        linkIdList = new HashSet<>();
     }
 
     public ResponseEntity<SearchResponse> request() throws IOException, SQLException, InterruptedException {
-        Site site = crawlingService.getSiteByUrl(siteLink);
-        int id = site == null ? -1 : site.getId();
-        siteId = siteLink == null ? 0 : id;
+        links.forEach(l -> {
+
+            System.out.println(l.trim());
+            System.out.println(crawlingService.getSiteByUrl(l.trim()));
+            linkIdList.add(crawlingService.getSiteByUrl(l.trim()).getId());
+
+        });
+//        Site site = crawlingService.getSiteByUrl(siteLink);
+//        int id = site == null ? -1 : site.getId();
+//        siteId = siteLink == null ? 0 : id;
         if (query.isEmpty()){
             error = "Задан пустой поисковый запрос";
             return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.BAD_REQUEST);
         }
-        if (siteId < 0) {
-            error = "Указанная страница не найдена";
-            return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.NOT_FOUND);
-        }
+
         long m = System.currentTimeMillis();
         Set<String> requestNormalForms = new MorphologyServiceImpl().getNormalFormsList(query).keySet();
         List<Lemma> requestLemmas = new ArrayList<>();
         List<Lemma> optionalLemmas = new ArrayList<>();
 
-        List<Lemma> lemmaList = crawlingService.getLemmaList(requestNormalForms, siteId);
+        List<Lemma> lemmaList = new ArrayList<>();
+        linkIdList.forEach(id -> lemmaList.addAll(crawlingService.getLemmaList(requestNormalForms, id)));
         System.out.println(lemmaList);
         if (lemmaList.isEmpty()) {
             error = "Нет результатов";
@@ -68,16 +74,17 @@ public class SearchSystem {
         }
         Map<String, Lemma> requestLemmaMap = lemmaList.stream().collect(Collectors.toMap(Lemma::getLemma, v -> v));
 
-        double quantityPages = crawlingService.countPages(siteId);
-        System.out.println(quantityPages);
-        if (quantityPages == 0) {
+        AtomicReference<Double> quantityPages = new AtomicReference<>((double) 0);
+        linkIdList.forEach(id -> quantityPages.updateAndGet(v -> v + crawlingService.countPages(id)));
+        System.out.println(quantityPages.get());
+        if (quantityPages.get() == 0) {
             error = "Нет результатов";
             return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.BAD_REQUEST);
         }
         for(String re : requestNormalForms) {
             if (requestLemmaMap.containsKey(re)) {
                 Lemma currentLemmaFromDB = requestLemmaMap.get(re);
-                if (currentLemmaFromDB.getFrequency() / quantityPages <= 1) {
+                if (currentLemmaFromDB.getFrequency() / quantityPages.get() <= 1) {
                     requestLemmas.add(currentLemmaFromDB);
                 }
                 else {
@@ -228,7 +235,15 @@ public class SearchSystem {
 
     private Map<Page, Double> getPages(List<Lemma> lemmaList) throws SQLException {
         long m = System.currentTimeMillis();
-        List<Page> pageList = DBConnection.getPagesFromRequest(lemmaList, siteId);
+        List<Page> pageList = new ArrayList<>();
+        linkIdList.forEach(id -> {
+            try {
+                pageList.addAll(DBConnection.getPagesFromRequest(lemmaList, id));
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        System.out.println(pageList.size());
         System.out.println("Время получения странниц по запросу: " + (double) (System.currentTimeMillis() - m) / 1000 + " sec.");
         Map<Page, Double> absRelPage = new HashMap<>();
         for (Page page : pageList) {
