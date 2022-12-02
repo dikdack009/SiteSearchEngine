@@ -48,8 +48,8 @@ public class IndexingController {
     }
 
     @PostMapping(path="/api/addLink", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
-    public ResponseEntity<LinksResponse> saveLink(@RequestParam(name = "url") String url, @RequestParam String name) {
-        boolean result = crawlingService.saveLink(new Link(url, name));
+    public ResponseEntity<LinksResponse> saveLink(@RequestParam String url, @RequestParam String name, @RequestParam int isSelected) {
+        boolean result = crawlingService.saveLink(new Link(url, name, isSelected));
         LinksResponse linksResponse = new LinksResponse(result, result ? null : "Ссылка уже добавлена", crawlingService.getLinks());
         return new ResponseEntity<>(linksResponse, result ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
     }
