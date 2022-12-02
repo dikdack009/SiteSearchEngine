@@ -10,6 +10,7 @@ import pet.skillbox.sitesearchengine.repositories.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -148,6 +149,11 @@ public class CrawlingService {
             return true;
         }
         return false;
+    }
+
+    @Transactional
+    public void updateLinks(Map<String, Integer> link) {
+        link.forEach(linkRepository::updateLink);
     }
 
     @Transactional(readOnly = true)

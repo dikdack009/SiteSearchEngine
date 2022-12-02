@@ -1,5 +1,7 @@
 package pet.skillbox.sitesearchengine.controller.api;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -7,8 +9,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pet.skillbox.sitesearchengine.model.Link;
 import pet.skillbox.sitesearchengine.model.response.IndexingResponse;
+import pet.skillbox.sitesearchengine.model.response.LinkModel;
 import pet.skillbox.sitesearchengine.model.response.LinksResponse;
 import pet.skillbox.sitesearchengine.services.CrawlingService;
+
+import javax.persistence.PostUpdate;
+import javax.persistence.criteria.CriteriaBuilder;
+import java.io.IOException;
+import java.util.*;
 
 @RestController
 public class LinkController {
@@ -29,6 +37,23 @@ public class LinkController {
         boolean result = crawlingService.saveLink(new Link(url, name, isSelected));
         LinksResponse linksResponse = new LinksResponse(result, result ? null : "Ссылка уже добавлена", crawlingService.getLinks());
         return new ResponseEntity<>(linksResponse, result ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
+    }
+    @PostMapping(path="/api/updateLinks", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
+    public ResponseEntity<LinksResponse> updateLinks(@RequestBody String body) throws IOException {
+        System.out.println(body);
+//        Map<String, Object> tmp = new ObjectMapper().readValue(body, HashMap.class);
+//        System.out.println(tmp.get("data").toString());
+//        System.out.println(tmp.values().size());
+//        tmp.values().forEach(System.out::println);
+        Map<String, Integer> result  = new ObjectMapper().readValue(body, HashMap.class);
+        System.out.println(result);
+//        crawlingService.updateLinks(result);
+        for (String s : result.keySet()) {
+            System.out.println(s);
+            System.out.println(result.get(s));
+        }
+        crawlingService.updateLinks(result);
+        return new ResponseEntity<>(new LinksResponse(true, null, null),  HttpStatus.OK);
     }
 
     @DeleteMapping(path="/api/deleteLink", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
