@@ -40,18 +40,9 @@ public class LinkController {
     }
     @PostMapping(path="/api/updateLinks", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
     public ResponseEntity<LinksResponse> updateLinks(@RequestBody String body) throws IOException {
-        System.out.println(body);
-//        Map<String, Object> tmp = new ObjectMapper().readValue(body, HashMap.class);
-//        System.out.println(tmp.get("data").toString());
-//        System.out.println(tmp.values().size());
-//        tmp.values().forEach(System.out::println);
-        Map<String, Integer> result  = new ObjectMapper().readValue(body, HashMap.class);
+        Map<String, Object> tmp = new ObjectMapper().readValue(body, HashMap.class);
+        Map<String, Integer> result  = new ObjectMapper().readValue(tmp.get("data").toString(), HashMap.class);
         System.out.println(result);
-//        crawlingService.updateLinks(result);
-        for (String s : result.keySet()) {
-            System.out.println(s);
-            System.out.println(result.get(s));
-        }
         crawlingService.updateLinks(result);
         return new ResponseEntity<>(new LinksResponse(true, null, null),  HttpStatus.OK);
     }
