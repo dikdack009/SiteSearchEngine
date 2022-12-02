@@ -155,7 +155,7 @@ public class CrawlingService {
         List<LinkModel> models = new ArrayList<>();
         List<Link> links = linkRepository.findAll();
         for (Link link : links) {
-            models.add(new LinkModel(link.getLink(), link.getName()));
+            models.add(new LinkModel(link.getLink(), link.getName(), link.getIsSelected()));
         }
         return models;
     }
