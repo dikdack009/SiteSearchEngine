@@ -2,12 +2,11 @@ package pet.skillbox.sitesearchengine.model.thread;
 
 import pet.skillbox.sitesearchengine.configuration.Config;
 import pet.skillbox.sitesearchengine.configuration.SiteProperty;
-import pet.skillbox.sitesearchengine.controller.IndexingController;
+import pet.skillbox.sitesearchengine.controller.api.IndexingController;
 import pet.skillbox.sitesearchengine.controller.crawling.CrawlingSystem;
 import pet.skillbox.sitesearchengine.model.Site;
 import pet.skillbox.sitesearchengine.model.Status;
 import pet.skillbox.sitesearchengine.model.response.IndexingResponse;
-import pet.skillbox.sitesearchengine.repositories.DBConnection;
 import pet.skillbox.sitesearchengine.services.CrawlingService;
 
 import java.time.LocalDateTime;

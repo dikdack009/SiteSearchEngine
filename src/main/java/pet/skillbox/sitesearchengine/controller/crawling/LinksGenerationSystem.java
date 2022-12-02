@@ -7,15 +7,13 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import pet.skillbox.sitesearchengine.configuration.Config;
 import pet.skillbox.sitesearchengine.model.Page;
-import pet.skillbox.sitesearchengine.repositories.DBConnection;
 
-import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveAction;
 
-public class SiteLinksGenerator extends RecursiveAction {
+public class LinksGenerationSystem extends RecursiveAction {
     private final String rootUrl;
     private final String url;
     private final CopyOnWriteArraySet<String> allLinks;
@@ -25,8 +23,8 @@ public class SiteLinksGenerator extends RecursiveAction {
     @Getter
     private String error;
 
-    public SiteLinksGenerator(String rootUrl, String url,
-                              CopyOnWriteArraySet<String> allLinks, Map<String, Page> allLinksMap, Config config) {
+    public LinksGenerationSystem(String rootUrl, String url,
+                                 CopyOnWriteArraySet<String> allLinks, Map<String, Page> allLinksMap, Config config) {
         this.rootUrl = rootUrl;
         this.url = url;
         this.allLinks = allLinks;
@@ -40,7 +38,7 @@ public class SiteLinksGenerator extends RecursiveAction {
         if (allLinks.size() > 40_000 || config.isStopIndexing()) {
             return;
         }
-        Set<SiteLinksGenerator> taskList = new HashSet<>();
+        Set<LinksGenerationSystem> taskList = new HashSet<>();
         List<String> list = new ArrayList<>();
         try {
             Connection connection = connectPath(url);
@@ -71,7 +69,7 @@ public class SiteLinksGenerator extends RecursiveAction {
         }
 
         for (String link : list) {
-            SiteLinksGenerator task = new SiteLinksGenerator(rootUrl, link, allLinks, allLinksMap, config);
+            LinksGenerationSystem task = new LinksGenerationSystem(rootUrl, link, allLinks, allLinksMap, config);
             task.fork();
             taskList.add(task);
         }

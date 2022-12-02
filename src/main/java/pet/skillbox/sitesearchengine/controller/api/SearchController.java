@@ -1,4 +1,4 @@
-package pet.skillbox.sitesearchengine.controller;
+package pet.skillbox.sitesearchengine.controller.api;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;

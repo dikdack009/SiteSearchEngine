@@ -21,7 +21,7 @@ public class Link {
     private String link;
     @Column(length = 65535, columnDefinition = "TEXT", unique = true)
     private String name;
-    @Column(length = 65535, columnDefinition = "TEXT", unique = true)
+    @Column(columnDefinition = "TINYINT(1)")
     private int isSelected;
 
     public Link(String link, String name, int isSelected) {

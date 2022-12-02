@@ -67,7 +67,7 @@ public class CrawlingSystem {
         long mm = System.currentTimeMillis();
         CopyOnWriteArraySet<String> links = new CopyOnWriteArraySet<>();
         Map<String, Page> allLinksMap = Collections.synchronizedMap(new HashMap<>());
-        SiteLinksGenerator linksGenerator = new SiteLinksGenerator(site.getUrl(), site.getUrl(), links, allLinksMap, config);
+        LinksGenerationSystem linksGenerator = new LinksGenerationSystem(site.getUrl(), site.getUrl(), links, allLinksMap, config);
         new ForkJoinPool().invoke(linksGenerator);
 
         if (config.isStopIndexing()) {
