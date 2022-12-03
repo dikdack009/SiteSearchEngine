@@ -22,4 +22,9 @@ public interface SiteRepository extends JpaRepository<Site,Integer> {
     void updateSiteStatus(Status status, LocalDateTime dateTime, String lastError, Integer id);
     void deleteByUrl(@NotNull String url);
     Site getSiteByUrl(String url);
+    @Transactional
+    @Modifying
+    @Query("UPDATE Site SET isDeleted = ?2 WHERE id = ?1")
+    void updateSiteDelete(Integer id, Integer isDeleted);
+    void deleteByIsDeleted(Integer isDeleted);
 }

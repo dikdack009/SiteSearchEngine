@@ -31,16 +31,21 @@ public class Page implements Comparable<Page>{
     @Column(length = 16777215, columnDefinition = "MEDIUMTEXT")
     private String content;
 
+    @Column(name = "is_deleted", columnDefinition = "TINYINT(1) default 0", nullable = false)
+    private Integer isDeleted;
+
     @JoinColumn(name = "site_id", nullable = false)
     @ManyToOne
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Site site;
 
-    public Page(String path, int code, String content, Site site) {
+    public Page(int id, String path, int code, String content, Site site, Integer isDeleted) {
+        this.id = id;
         this.path = path;
         this.code = code;
         this.content = content;
         this.site = site;
+        this.isDeleted = isDeleted;
     }
 
     public Page(String path, int code, String content) {

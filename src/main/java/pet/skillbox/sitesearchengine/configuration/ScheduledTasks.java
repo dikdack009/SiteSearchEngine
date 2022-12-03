@@ -24,7 +24,7 @@ public class ScheduledTasks {
 
 
     @Scheduled(cron = "0 0 4 * * *")
-    public void reportCurrentTime() {
-//        crawlingService.deleteSite("vff");
+    public void deleteData() {
+        crawlingService.deleteAllDeletedDataB();
     }
 }

@@ -23,12 +23,15 @@ public class Lemma implements Comparable<Lemma> {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(length = 65535, columnDefinition = "VARCHAR(255)", nullable = false, unique = true)
+    @Column(length = 65535, columnDefinition = "VARCHAR(255)", nullable = false)
     @PrimaryKeyJoinColumn
     private String lemma;
 
     @Column(nullable = false)
     private Integer frequency;
+
+    @Column(name = "is_deleted", columnDefinition = "TINYINT(1) default 0", nullable = false)
+    private Integer isDeleted;
 
     @JoinColumn(name = "site_id", nullable = false)
     @ManyToOne

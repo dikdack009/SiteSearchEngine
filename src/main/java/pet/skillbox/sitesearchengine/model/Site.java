@@ -38,6 +38,9 @@ public class Site implements GrantedAuthority {
     @Column(length = 65535, columnDefinition = "VARCHAR(255)", nullable = false, unique = true)
     private String name;
 
+    @Column(name = "is_deleted", columnDefinition = "TINYINT(1) default 0", nullable = false)
+    private Integer isDeleted;
+
     @ManyToMany(mappedBy = "sites")
     private Set<User> users;
 
@@ -56,18 +59,23 @@ public class Site implements GrantedAuthority {
         this.lastError = lastError;
         this.url = url;
         this.name = name;
+        this.isDeleted = isDeleted;
         pages = new HashSet<>();
         lemmas = new HashSet<>();
         indexes = new HashSet<>();
     }
 
-    public Site(int id, Status status, LocalDateTime statusTime, String lastError, String url, String name) {
+    public Site(int id, Status status, LocalDateTime statusTime, String lastError, String url, String name, Integer isDeleted) {
         this.id = id;
         this.status = status;
         this.statusTime = statusTime;
         this.lastError = lastError;
         this.url = url;
         this.name = name;
+        this.isDeleted = isDeleted;
+        pages = new HashSet<>();
+        lemmas = new HashSet<>();
+        indexes = new HashSet<>();
     }
 
     @Override

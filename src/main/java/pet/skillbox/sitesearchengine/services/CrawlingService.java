@@ -7,6 +7,7 @@ import pet.skillbox.sitesearchengine.model.*;
 import pet.skillbox.sitesearchengine.model.response.LinkModel;
 import pet.skillbox.sitesearchengine.repositories.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,8 +42,8 @@ public class CrawlingService {
         this.indexTmpRepository = indexTmpRepository;
         this.siteRepository = siteRepository;
         this.linkRepository = linkRepository;
-//        fieldRepository.save(new Field("title", "title", 1.5f));
-//        fieldRepository.save(new Field("body", "body", 0.8f));
+        fieldRepository.save(new Field("title", "title", 1.5f));
+        fieldRepository.save(new Field("body", "body", 0.8f));
     }
 
 
@@ -94,6 +95,7 @@ public class CrawlingService {
 
     @Transactional
     public int addSite(Site site) {
+        site.setIsDeleted(0);
         siteRepository.save(site);
         return getSiteIdByUrl(site.getUrl());
     }
@@ -138,6 +140,7 @@ public class CrawlingService {
         System.out.println("saving page");
         System.out.println("<" + page.getId() + ">");
         System.out.println(" - " + page.getSite().getId() + " " + page.getSite().getUrl());
+        page.setIsDeleted(0);
         pageRepository.save(page);
         return page.getId();
     }
@@ -174,15 +177,15 @@ public class CrawlingService {
             System.out.println("Удаление сайта с id = " + id);
             System.out.println(lemmaRepository.getFirstBySiteId(id));
             if (lemmaRepository.getFirstBySiteId(id) != null) {
-                lemmaRepository.deleteBySiteId(id);
+                lemmaRepository.updateLemmaDelete(1, site);
                 System.out.println("Удалили леммы с id = " + id);
             }
             if (pageRepository.getFirstBySiteId(id) != null) {
-                pageRepository.deleteBySiteId(id);
+                pageRepository.updatePageDelete(1, site);
                 System.out.println("Удалили странницы с id = " + id);
             }
             if (indexRepository.getFirstBySiteId(id) != null) {
-                indexRepository.deleteBySiteId(id);
+                indexRepository.updateIndexDelete(1, site);
                 System.out.println("Удалили индексы с id = " + id);
             }
         }
@@ -191,6 +194,17 @@ public class CrawlingService {
         }
         System.out.println("ENNNNNNNNNNNNNNND");
         return true;
+    }
+
+    @Transactional
+    public void deleteAllDeletedDataB() {
+        System.out.println("Удаление всех нужны данных" + LocalDateTime.now());
+
+        siteRepository.deleteByIsDeleted(1);
+        lemmaRepository.deleteByIsDeleted(1);
+        pageRepository.deleteByIsDeleted(1);
+        indexRepository.deleteByIsDeleted(1);
+        System.out.println("ENNNNNNNNNNNNNNND");
     }
 
 //    @Transactional
@@ -216,9 +230,17 @@ public class CrawlingService {
     }
 
     @Transactional
-    public void deleteSite(String url) {
+    public void deleteSiteFromDB(String url) {
         if (siteRepository.getSiteByUrl(url) != null) {
             siteRepository.deleteByUrl(url);
+        }
+    }
+
+    @Transactional
+    public void deleteSite(String url) {
+        Site site = siteRepository.getSiteByUrl(url);
+        if (site != null) {
+            siteRepository.updateSiteDelete(site.getId(), 1);
         }
     }
 

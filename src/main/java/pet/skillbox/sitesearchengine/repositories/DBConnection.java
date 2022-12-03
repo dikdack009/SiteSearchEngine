@@ -60,7 +60,8 @@ public class DBConnection {
                     rs.getString("path"),
                     rs.getInt("code"),
                     rs.getString("content"),
-                    site);
+                    site,
+                    rs.getInt("is_deleted"));
             pageList.add(page);
         }
         return pageList;
@@ -145,30 +146,25 @@ public class DBConnection {
         getConnection().createStatement().execute(sql);
     }
     public static int countSites(int siteId) throws SQLException {
-        String sql = "SELECT COUNT(distinct id) AS c FROM site ";
+        String sql = "SELECT COUNT(distinct id) AS c FROM site WHERE is_deleted = 0";
         return sqlRequest(siteId, sql);
     }
 
     public static int countLemmas(int siteId) throws SQLException {
-        String sql = "SELECT COUNT(distinct id) AS c FROM lemma ";
+        String sql = "SELECT COUNT(distinct id) AS c FROM lemma WHERE is_deleted = 0";
         return sqlRequest(siteId, sql);
     }
 
     public static int countPages(int siteId) throws SQLException {
-        String sql = "SELECT COUNT(distinct id) AS c FROM page ";
+        String sql = "SELECT COUNT(distinct id) AS c FROM page WHERE is_deleted = 0";
         return sqlRequest(siteId, sql);
-    }
-
-    public static int getMaxPageId() throws SQLException {
-        String sql = "SELECT MAX(id) AS c FROM page ";
-        return sqlRequest(0, sql);
     }
 
     private static int sqlRequest(int siteId, String sql) throws SQLException {
 //        System.out.println(sql);
         ResultSet rs = null;
         if (siteId > 0){
-            sql += "WHERE site_id = " + siteId;
+            sql += " and site_id = " + siteId;
         }
 //        System.out.println(sql);
         try {
