@@ -83,7 +83,7 @@ public class CrawlingSystem {
         }
         System.out.println((double)(System.currentTimeMillis() - mm) / 60000 + " min.");
         System.out.println("Индексация...");
-        return chunked(allLinks.keySet().stream(), allLinks.keySet().size() / 50).values();
+        return chunked(allLinks.keySet().stream(), allLinks.keySet().size() / 50 == 0 ? allLinks.keySet().size() : allLinks.keySet().size() / 50).values();
     }
 
     public void start(Config config, int id) {

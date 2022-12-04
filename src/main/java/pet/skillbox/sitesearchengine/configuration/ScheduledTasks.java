@@ -23,8 +23,9 @@ public class ScheduledTasks {
     }
 
 
-    @Scheduled(cron = "0 0 4 * * *")
+    @Scheduled(cron = "0 0 3 * * *")
     public void deleteData() {
+        System.out.println("SCHEDULE");
         crawlingService.deleteAllDeletedDataB();
     }
 }

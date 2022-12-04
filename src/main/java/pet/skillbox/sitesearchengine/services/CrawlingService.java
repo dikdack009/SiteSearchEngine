@@ -42,8 +42,6 @@ public class CrawlingService {
         this.indexTmpRepository = indexTmpRepository;
         this.siteRepository = siteRepository;
         this.linkRepository = linkRepository;
-        fieldRepository.save(new Field("title", "title", 1.5f));
-        fieldRepository.save(new Field("body", "body", 0.8f));
     }
 
 
@@ -198,12 +196,16 @@ public class CrawlingService {
 
     @Transactional
     public void deleteAllDeletedDataB() {
-        System.out.println("Удаление всех нужны данных" + LocalDateTime.now());
+        System.out.println("Удаление всех нужных данных " + LocalDateTime.now());
 
         siteRepository.deleteByIsDeleted(1);
+        System.out.println(lemmaRepository.countAllByIsDeleted(1));
         lemmaRepository.deleteByIsDeleted(1);
+        System.out.println(lemmaRepository.countAllByIsDeleted(1));
         pageRepository.deleteByIsDeleted(1);
+        System.out.println(pageRepository.countAllByIsDeleted(1));
         indexRepository.deleteByIsDeleted(1);
+        System.out.println(indexRepository.countAllByIsDeleted(1));
         System.out.println("ENNNNNNNNNNNNNNND");
     }
 
@@ -256,5 +258,21 @@ public class CrawlingService {
     @Transactional
     public void deleteAllLinks() {
         linkRepository.deleteAll();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Field> getFields() {
+        return fieldRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Site> getSites() {
+        return siteRepository.findAll();
+    }
+
+    @Transactional
+    public void insertBasicFields() {
+        fieldRepository.save(new Field("title", "title", 1.5f));
+        fieldRepository.save(new Field("body", "body", 0.8f));
     }
 }

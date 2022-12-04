@@ -13,6 +13,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveAction;
 
+import static java.lang.Thread.sleep;
+
 public class LinksGenerationSystem extends RecursiveAction {
     private final String rootUrl;
     private final String url;
@@ -41,6 +43,7 @@ public class LinksGenerationSystem extends RecursiveAction {
         Set<LinksGenerationSystem> taskList = new HashSet<>();
         List<String> list = new ArrayList<>();
         try {
+            sleep(1000);
             Connection connection = connectPath(url);
             int statusCode = connection.execute().statusCode();
             int idPathBegin = rootUrl.length();

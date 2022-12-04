@@ -19,4 +19,6 @@ public interface LemmaRepository extends JpaRepository<Lemma, Integer> {
     @Modifying
     @Query("UPDATE Lemma SET isDeleted = ?1 WHERE site = ?2")
     void updateLemmaDelete(Integer isDeleted, Site site);
+
+    Integer countAllByIsDeleted(Integer isDeleted);
 }

@@ -17,9 +17,8 @@ public interface PageRepository extends JpaRepository<Page, Integer> {
     @Query("SELECT MAX(id) FROM Page")
     Integer getMaxPageId();
     Page getFirstBySiteId(Integer siteId);
-
     @Modifying
     @Query("UPDATE Page SET isDeleted = ?1 WHERE site = ?2")
     void updatePageDelete(Integer isDeleted, Site site);
-
+    Integer countAllByIsDeleted(Integer isDeleted);
 }
