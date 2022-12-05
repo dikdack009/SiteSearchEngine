@@ -16,7 +16,8 @@ import java.util.Set;
 @Getter
 @Setter
 @Entity
-@Table(name = "site")
+@Table(name = "site", uniqueConstraints = {@UniqueConstraint(name = "UniqueUrlAndDeleted",
+        columnNames = {"url", "is_deleted"})})
 public class Site implements GrantedAuthority {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -59,7 +60,6 @@ public class Site implements GrantedAuthority {
         this.lastError = lastError;
         this.url = url;
         this.name = name;
-        this.isDeleted = isDeleted;
         pages = new HashSet<>();
         lemmas = new HashSet<>();
         indexes = new HashSet<>();

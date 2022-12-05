@@ -17,14 +17,14 @@ import java.util.Objects;
 @Getter
 @Setter
 @Entity
-@Table(name = "lemma")
+@Table(name = "lemma", uniqueConstraints = {@UniqueConstraint(name = "UniqueLemmaAndDeleted",
+                columnNames = {"lemma", "is_deleted"})})
 public class Lemma implements Comparable<Lemma> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(length = 65535, columnDefinition = "VARCHAR(255)", nullable = false)
-    @PrimaryKeyJoinColumn
+    @Column(name = "lemma", length = 65535, columnDefinition = "VARCHAR(255)", nullable = false)
     private String lemma;
 
     @Column(nullable = false)

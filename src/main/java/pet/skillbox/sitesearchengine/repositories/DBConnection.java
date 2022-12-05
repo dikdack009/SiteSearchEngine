@@ -24,14 +24,6 @@ public class DBConnection {
             try {
                 connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/" + name +
                         "?user=" + user + "&password=" + pass);
-//                if (createTables) {
-//                    createFieldTable();
-//                    createPageTable();
-//                    createLemmaTable();
-//                    createIndexTable();
-//                    createSiteTable();
-//                }
-
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -49,6 +41,18 @@ public class DBConnection {
         tmpInsertAllPages(builder.getPageBuilder().toString());
         tmpInsertAllLemmas(builder.getLemmaBuilder().toString());
         tmpInsertAllIndexes(builder.getIndexBuilder().toString());
+    }
+
+    public static void addIndexes() {
+        String sql = "CREATE INDEX index_lemma ON `index`(lemma); " +
+                "CREATE INDEX index_page_id ON `index`(page_id); " +
+                "CREATE INDEX lemma_lemma ON lemma(lemma); " +
+                "CREATE INDEX page_path ON page(path(100)); ";
+        try {
+            getConnection().createStatement().execute(sql);
+        } catch(SQLException e){
+            throw new RuntimeException(e);
+        }
     }
 
     public static List<Page> getPagesFromResultSet(ResultSet rs) throws SQLException {
@@ -202,6 +206,7 @@ public class DBConnection {
 
     public static List<DetailedSite> getDBStatistic() throws SQLException {
         List<DetailedSite> stat = new ArrayList<>();
+        System.out.println("Статистика из бд");
         ResultSet rs = null;
         try {
             rs = getConnection().createStatement().executeQuery("SELECT * FROM site");

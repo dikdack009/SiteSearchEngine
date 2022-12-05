@@ -18,4 +18,5 @@ public interface IndexRepository extends JpaRepository<Index, Integer> {
     @Query("UPDATE Index SET isDeleted = ?1 WHERE site = ?2")
     void updateIndexDelete(Integer isDeleted, Site site);
     Integer countAllByIsDeleted(Integer isDeleted);
+
 }

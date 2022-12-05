@@ -21,27 +21,20 @@ public class CrawlingService {
     private final FieldRepository fieldRepository;
     private final PageRepository pageRepository;
     private final IndexRepository indexRepository;
-    private final LemmaTmpRepository lemmaTmpRepository;
-    private final PageTmpRepository pageTmpRepository;
-    private final IndexTmpRepository indexTmpRepository;
     private final SiteRepository siteRepository;
     private final LinkRepository linkRepository;
 
     @Autowired
     public CrawlingService(LemmaRepository lemmaRepository, FieldRepository fieldRepository,
                            PageRepository pageRepository, IndexRepository indexRepository,
-                           LemmaTmpRepository lemmaTmpRepository, PageTmpRepository pageTmpRepository,
-                           IndexTmpRepository indexTmpRepository, SiteRepository siteRepository,
-                           LinkRepository linkRepository) {
+                           SiteRepository siteRepository, LinkRepository linkRepository) {
         this.lemmaRepository = lemmaRepository;
         this.fieldRepository = fieldRepository;
         this.pageRepository = pageRepository;
         this.indexRepository = indexRepository;
-        this.lemmaTmpRepository = lemmaTmpRepository;
-        this.pageTmpRepository = pageTmpRepository;
-        this.indexTmpRepository = indexTmpRepository;
         this.siteRepository = siteRepository;
         this.linkRepository = linkRepository;
+//        DBConnection.addIndexes();
     }
 
 
@@ -214,22 +207,7 @@ public class CrawlingService {
 //        siteRepository.get
 //    }
 
-    @Transactional
-    public void deleteTmpSiteInfo(int id) {
-        System.out.println("Удаление временного сайта с id = " + id);
-        if (lemmaTmpRepository.getFirstBySiteId(id) != null) {
-            lemmaTmpRepository.deleteBySiteId(id);
-        }
-        System.out.println("Удалили леммы");
-        if (pageTmpRepository.getFirstBySiteId(id) != null) {
-            pageTmpRepository.deleteBySiteId(id);
-        }
-        System.out.println("Удалили странницы");
-        if (indexTmpRepository.getFirstBySiteId(id) != null) {
-            indexTmpRepository.deleteBySiteId(id);
-        }
-        System.out.println("Удалили индексы");
-    }
+
 
     @Transactional
     public void deleteSiteFromDB(String url) {

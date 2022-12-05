@@ -12,7 +12,8 @@ import javax.persistence.*;
 @Setter
 @AllArgsConstructor
 @Entity
-@Table(name = "`index`")
+@Table(name = "`index`", uniqueConstraints = {@UniqueConstraint(name = "UniquePageIdAndLemmaAndDeleted",
+        columnNames = {"page_id", "lemma", "is_deleted"})})
 public class Index {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import pet.skillbox.sitesearchengine.controller.api.IndexingController;
 import pet.skillbox.sitesearchengine.model.Site;
 import pet.skillbox.sitesearchengine.model.Status;
+import pet.skillbox.sitesearchengine.repositories.DBConnection;
 import pet.skillbox.sitesearchengine.services.CrawlingService;
 
 import java.io.IOException;
@@ -38,13 +39,12 @@ public class RunAfterStartup {
         System.out.println(failedIndexingSites);
         StringJoiner stringJoiner = new StringJoiner("\\\",\\\"", "{\"data\":\"{\\\"", "\\\"}\"}");
         for (Site site : failedIndexingSites) {
-            String siteUrl = site.getUrl();
-            String siteName = site.getName();
-            stringJoiner.add(siteUrl + "\\\":\\\"" + siteName);
+            stringJoiner.add(site.getUrl() + "\\\":\\\"" + site.getName());
         }
         if (!failedIndexingSites.isEmpty()) {
             indexingController.startIndexing(stringJoiner.toString());
         }
+//        DBConnection.addIndexes();
         System.out.println("Yaaah, I am running........");
     }
 }

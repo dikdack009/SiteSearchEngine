@@ -16,13 +16,15 @@ import java.util.Objects;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "page")
+@Table(name = "page", uniqueConstraints = {@UniqueConstraint(name = "UniquePathAndDeleted",
+        columnNames = {"path", "is_deleted"})})
 public class Page implements Comparable<Page>{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(length = 65535, columnDefinition = "TEXT", unique = true)
+    @Column(length = 65535, columnDefinition = "TEXT")
+    @PrimaryKeyJoinColumn
     private String path;
 
     @Column

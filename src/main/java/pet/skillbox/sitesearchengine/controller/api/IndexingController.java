@@ -101,6 +101,7 @@ public class IndexingController {
 
     @GetMapping(path="/api/statistics", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
     public ResponseEntity<Statistic> statistics() throws SQLException {
+        System.out.println("Зашли в статистику");
         return new ResponseEntity<>(new Statistic(isIndexing), HttpStatus.OK);
     }
 }

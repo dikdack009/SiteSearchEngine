@@ -43,7 +43,7 @@ public class LinksGenerationSystem extends RecursiveAction {
         Set<LinksGenerationSystem> taskList = new HashSet<>();
         List<String> list = new ArrayList<>();
         try {
-            sleep(1000);
+            sleep(200);
             Connection connection = connectPath(url);
             int statusCode = connection.execute().statusCode();
             int idPathBegin = rootUrl.length();
