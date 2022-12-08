@@ -33,7 +33,7 @@ public class Page implements Comparable<Page>{
     @Column(length = 16777215, columnDefinition = "MEDIUMTEXT")
     private String content;
 
-    @Column(name = "is_deleted", columnDefinition = "TINYINT(1) default 0", nullable = false)
+    @Column(name = "is_deleted", columnDefinition = "INT default 0", nullable = false)
     private Integer isDeleted;
 
     @JoinColumn(name = "site_id", nullable = false)

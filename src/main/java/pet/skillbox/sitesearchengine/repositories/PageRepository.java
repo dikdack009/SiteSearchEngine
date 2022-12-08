@@ -13,12 +13,14 @@ public interface PageRepository extends JpaRepository<Page, Integer> {
     Page getByPath(String path);
     Integer countPagesBySiteId(Integer siteId);
     Integer countPagesByCode(int code);
-    void deleteByIsDeleted(Integer isDeleted);
+    @Modifying
+    @Query("DELETE FROM Page WHERE isDeleted > 0")
+    void deleteByIsDeleted();
     @Query("SELECT MAX(id) FROM Page")
     Integer getMaxPageId();
     Page getFirstBySiteId(Integer siteId);
     @Modifying
-    @Query("UPDATE Page SET isDeleted = ?1 WHERE site = ?2")
-    void updatePageDelete(Integer isDeleted, Site site);
+    @Query("UPDATE Page SET isDeleted = ?2 WHERE site = ?1 and isDeleted = 0")
+    void updatePageDelete(Site site, Integer newNumber);
     Integer countAllByIsDeleted(Integer isDeleted);
 }

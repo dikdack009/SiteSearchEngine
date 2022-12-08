@@ -38,12 +38,19 @@ public class LinkController {
         LinksResponse linksResponse = new LinksResponse(result, result ? null : "Ссылка уже добавлена", crawlingService.getLinks());
         return new ResponseEntity<>(linksResponse, result ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
     }
+
     @PostMapping(path="/api/updateLinks", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
     public ResponseEntity<LinksResponse> updateLinks(@RequestBody String body) throws IOException {
         Map<String, Object> tmp = new ObjectMapper().readValue(body, HashMap.class);
         Map<String, Integer> result  = new ObjectMapper().readValue(tmp.get("data").toString(), HashMap.class);
         System.out.println(result);
         crawlingService.updateLinks(result);
+        return new ResponseEntity<>(new LinksResponse(true, null, null),  HttpStatus.OK);
+    }
+
+    @PostMapping(path="/api/updateLink", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
+    public ResponseEntity<LinksResponse> updateLink(@RequestParam String url, @RequestParam Integer isSelected) {
+        crawlingService.updateLink(url, isSelected);
         return new ResponseEntity<>(new LinksResponse(true, null, null),  HttpStatus.OK);
     }
 

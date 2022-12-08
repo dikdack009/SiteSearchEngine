@@ -15,13 +15,13 @@ public class CrawlingThread extends Thread{
     private final List<String> urlPool;
     private final CrawlingSystem crawlingSystem;
     private final int siteId;
-    private final CrawlingService crawlingService;
 
-    public CrawlingThread(List<String> urlPool, CrawlingSystem crawlingSystem, int siteId, CrawlingService crawlingService){
+    public CrawlingThread(List<String> urlPool, CrawlingSystem crawlingSystem, int siteId){
+        CrawlingSystem crawlingSystem1;
         this.urlPool = urlPool;
-        this.crawlingSystem = crawlingSystem;
+        crawlingSystem1 = new CrawlingSystem(crawlingSystem);
+        this.crawlingSystem = crawlingSystem1;
         this.siteId = siteId;
-        this.crawlingService = crawlingService;
     }
 
     @Override
@@ -32,11 +32,8 @@ public class CrawlingThread extends Thread{
             if (!builder.getLemmaBuilder().toString().equals("")) {
                 DBConnection.insert(builder);
             }
-//            crawlingService.deleteTmpSiteInfo(siteId);
         } catch (SQLException e) {
             crawlingSystem.setLastError(e.getMessage());
-            System.out.println("Ошибка - ");
-            e.printStackTrace();
             crawlingSystem.getRootLogger().debug("Ошибка - " + e.getMessage().substring(e.getMessage().indexOf(":") + 2));
             throw new RuntimeException(e.getMessage().substring(e.getMessage().indexOf(":") + 2));
         }

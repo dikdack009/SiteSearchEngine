@@ -10,13 +10,15 @@ import pet.skillbox.sitesearchengine.model.Site;
 
 @Repository
 public interface IndexRepository extends JpaRepository<Index, Integer> {
-    void deleteByIsDeleted(Integer isDeleted);
+    @Modifying
+    @Query("DELETE FROM Index WHERE isDeleted > 0")
+    void deleteByIsDeleted();
 
     Index getFirstBySiteId(Integer siteId);
     Index getBySiteId(Integer siteId);
     @Modifying
-    @Query("UPDATE Index SET isDeleted = ?1 WHERE site = ?2")
-    void updateIndexDelete(Integer isDeleted, Site site);
+    @Query("UPDATE Index SET isDeleted = ?2 WHERE site = ?1 and isDeleted = 0")
+    void updateIndexDelete(Site site, Integer newNumber);
     Integer countAllByIsDeleted(Integer isDeleted);
 
 }

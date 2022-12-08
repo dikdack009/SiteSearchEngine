@@ -18,20 +18,19 @@ public class IndexingThread implements Callable<IndexingResponse> {
     private final IndexingController indexingController;
     private final Config config;
     private final CrawlingService crawlingService;
-    private final int id;
 
-    public IndexingThread(IndexingController indexingController, SiteProperty siteProperty, Config config, CrawlingService crawlingService, int id) {
+    public IndexingThread(IndexingController indexingController, SiteProperty siteProperty, Config config, CrawlingService crawlingService) {
         this.url = siteProperty.getUrl();
         this.name = siteProperty.getName();
         this.indexingController = indexingController;
         this.config = config;
         this.crawlingService = crawlingService;
-        this.id = id;
     }
 
     @Override
     public IndexingResponse call() {
         Site site = new Site(Status.INDEXING, LocalDateTime.now(), null, url, name);
+        crawlingService.updateStatus(site);
         CrawlingSystem crawlingSystem =  new CrawlingSystem(config, crawlingService, site);
         try {
             if (config.isStopIndexing()){
@@ -40,7 +39,6 @@ public class IndexingThread implements Callable<IndexingResponse> {
                 return new IndexingResponse(false, "Индексация остановлена пользователем");
             }
             indexingController.setIndexing(true);
-            crawlingService.updateStatus(site);
             System.out.println(site);
             crawlingService.deleteSiteInfo(site.getUrl());
             System.out.println("Удалили");
@@ -50,23 +48,18 @@ public class IndexingThread implements Callable<IndexingResponse> {
                 return new IndexingResponse(false, "Индексация остановлена пользователем");
             }
             System.out.println("Удалили?????????????????????");
-            crawlingSystem.start(config, id);
+            crawlingSystem.start(config);
             if (config.isStopIndexing()){
                 site = new Site(Status.FAILED, LocalDateTime.now(), "Индексация остановлена пользователем", url, name);
                 crawlingService.updateStatus(site);
                 return new IndexingResponse(false, "Индексация остановлена пользователем");
             }
-//            crawlingService.deleteSiteInfo(site.getId());
-//            DBConnection.fromTmpToActualUpdate(site.getId());
-//            crawlingService.deleteTmpSiteInfo(site.getId());
             Status status = crawlingSystem.getLastError() == null ? Status.INDEXED : Status.FAILED;
             site = new Site(status, LocalDateTime.now(), crawlingSystem.getLastError(), url, name);
             crawlingService.updateStatus(site);
 
-//            DBConnection.updateSite(url, "INDEXED", config.isStopIndexing() ? "Индексация остановлена" : null);
             return new IndexingResponse(true, null);
         } catch (Exception e) {
-//            DBConnection.updateSite(url, "FAILED", crawlingSystem.getLastError());
             System.out.println(site.getUrl());
             e.printStackTrace();
             String error = crawlingSystem.getLastError() == null ? "Неизвестная ошибка" : crawlingSystem.getLastError();

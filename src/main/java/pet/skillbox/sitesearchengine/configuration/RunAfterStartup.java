@@ -15,6 +15,7 @@ import pet.skillbox.sitesearchengine.services.CrawlingService;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @Component
@@ -30,7 +31,7 @@ public class RunAfterStartup {
     }
 
     @EventListener(ApplicationReadyEvent.class)
-    public void runAfterStartup() throws IOException {
+    public void runAfterStartup() throws IOException, ExecutionException, InterruptedException {
         if (crawlingService.getFields().isEmpty()) {
             crawlingService.insertBasicFields();
         }
@@ -46,5 +47,6 @@ public class RunAfterStartup {
         }
 //        DBConnection.addIndexes();
         System.out.println("Yaaah, I am running........");
+
     }
 }

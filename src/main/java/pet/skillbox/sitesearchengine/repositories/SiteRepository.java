@@ -24,7 +24,9 @@ public interface SiteRepository extends JpaRepository<Site,Integer> {
     Site getSiteByUrl(String url);
     @Transactional
     @Modifying
-    @Query("UPDATE Site SET isDeleted = ?2 WHERE id = ?1")
+    @Query("UPDATE Site SET isDeleted = isDeleted + ?1 WHERE id = ?1 and isDeleted = 0")
     void updateSiteDelete(Integer id, Integer isDeleted);
-    void deleteByIsDeleted(Integer isDeleted);
+    @Modifying
+    @Query("DELETE FROM Site WHERE isDeleted > 0")
+    void deleteByIsDeleted();
 }

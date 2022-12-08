@@ -27,5 +27,6 @@ public class ScheduledTasks {
     public void deleteData() {
         System.out.println("SCHEDULE");
         crawlingService.deleteAllDeletedDataB();
+        crawlingService.setNewDeleteIndex();
     }
 }

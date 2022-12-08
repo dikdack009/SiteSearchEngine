@@ -5,15 +5,11 @@ import lombok.Getter;
 import lombok.ToString;
 
 @Data
+@Getter
 @ToString
 public class Builder {
-    @Getter
     private StringBuilder pageBuilder;
-
-    @Getter
     private StringBuilder indexBuilder;
-
-    @Getter
     private StringBuilder lemmaBuilder;
 
     public Builder(){

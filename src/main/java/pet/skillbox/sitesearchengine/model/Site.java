@@ -39,7 +39,7 @@ public class Site implements GrantedAuthority {
     @Column(length = 65535, columnDefinition = "VARCHAR(255)", nullable = false, unique = true)
     private String name;
 
-    @Column(name = "is_deleted", columnDefinition = "TINYINT(1) default 0", nullable = false)
+    @Column(name = "is_deleted", columnDefinition = "INT default 0", nullable = false)
     private Integer isDeleted;
 
     @ManyToMany(mappedBy = "sites")

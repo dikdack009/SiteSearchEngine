@@ -37,12 +37,6 @@ public class DBConnection {
         insertAllIndexes(builder.getIndexBuilder().toString());
     }
 
-    public static void tmpInsert(Builder builder) throws SQLException {
-        tmpInsertAllPages(builder.getPageBuilder().toString());
-        tmpInsertAllLemmas(builder.getLemmaBuilder().toString());
-        tmpInsertAllIndexes(builder.getIndexBuilder().toString());
-    }
-
     public static void addIndexes() {
         String sql = "CREATE INDEX index_lemma ON `index`(lemma); " +
                 "CREATE INDEX index_page_id ON `index`(page_id); " +
@@ -109,46 +103,18 @@ public class DBConnection {
     }
 
     public static void insertAllLemmas(String lemmas) throws SQLException {
-        String sql = "INSERT INTO lemma(lemma, frequency, site_id) " +
-                "VALUES" + lemmas +
-                "ON DUPLICATE KEY UPDATE frequency=frequency + 1";
-        getConnection().createStatement().execute(sql);
-    }
-
-    public static void tmpInsertAllLemmas(String lemmas) throws SQLException {
-        String sql = "INSERT INTO lemma_tmp(lemma, frequency, site_id) " +
-                "VALUES" + lemmas +
-                "ON DUPLICATE KEY UPDATE frequency=frequency + 1";
-        getConnection().createStatement().execute(sql);
-    }
-
-    public static void insertAllPages(String pages) throws SQLException {
-        String sql = "INSERT INTO page(id, path, code, content, site_id)  " +
-                "VALUES" + pages;
-        getConnection().createStatement().execute(sql);
-    }
-
-    public static void tmpInsertAllPages(String pages) throws SQLException {
-        String sql = "INSERT INTO page_tmp(id, path, code, content, site_id)  " +
-                "VALUES" + pages;
+        String sql = "INSERT INTO lemma(lemma, frequency, site_id, is_deleted) " +
+                "VALUES " + lemmas + " ON DUPLICATE KEY UPDATE frequency=frequency + 1";
         getConnection().createStatement().execute(sql);
     }
 
     public static void insertAllIndexes(String indexes) throws SQLException {
-        String sql = "INSERT INTO `index`(page_id, lemma, `rank`, site_id) " +
-                "VALUES" + indexes +
-                "AS new ON DUPLICATE KEY UPDATE `index`.`rank`=`index`.`rank` + new.`rank`";
-//        System.out.println(sql);
+        String sql = "INSERT INTO `index`(page_id, lemma, `rank`, site_id, is_deleted) " +
+                "VALUES " + indexes +
+                " AS new ON DUPLICATE KEY UPDATE `index`.`rank`=`index`.`rank` + new.`rank`";
         getConnection().createStatement().execute(sql);
     }
 
-    public static void tmpInsertAllIndexes(String indexes) throws SQLException {
-        String sql = "INSERT INTO index_tmp(page_id, lemma, `rank`, site_id) " +
-                "VALUES" + indexes +
-                "AS new ON DUPLICATE KEY UPDATE index_tmp.`rank`=index_tmp.`rank` + new.`rank`";
-//        System.out.println(sql);
-        getConnection().createStatement().execute(sql);
-    }
     public static int countSites(int siteId) throws SQLException {
         String sql = "SELECT COUNT(distinct id) AS c FROM site WHERE is_deleted = 0";
         return sqlRequest(siteId, sql);
@@ -237,20 +203,9 @@ public class DBConnection {
             stat.add(new DetailedSite(url, name, status, time,
                     error, countPages(id),  countLemmas(id)));
         }
+        System.out.println("Вернули статистику");
         return stat;
     }
 
-    public static void fromTmpToActualUpdate(int id) throws SQLException {
-//        deleteSiteInfo(id);
-        String sql = "INSERT INTO `index`(page_id, lemma, `rank`, site_id)" +
-                "SELECT page_id, lemma, `rank`, site_id FROM index_tmp WHERE site_id = " + id;
-        getConnection().createStatement().execute(sql);
-        sql = "INSERT INTO lemma(lemma, frequency, site_id)" +
-                "SELECT lemma, frequency, site_id FROM lemma_tmp WHERE site_id = " + id;
-        getConnection().createStatement().execute(sql);
-        sql = "INSERT INTO page(id, path, code, content, site_id)" +
-                "SELECT id, path, code, content, site_id FROM page_tmp WHERE site_id = " + id;
-        getConnection().createStatement().execute(sql);
-//        deleteTmpSiteInfo(id);
-    }
+
 }

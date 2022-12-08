@@ -1,11 +1,9 @@
 package pet.skillbox.sitesearchengine.controller.api;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
@@ -16,8 +14,6 @@ import pet.skillbox.sitesearchengine.services.CrawlingService;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
-
 
 @RestController
 public class SearchController {
@@ -29,7 +25,7 @@ public class SearchController {
         this.crawlingService = crawlingService;
     }
 
-    @GetMapping(path="/api/search", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
+    @PostMapping(path="/api/search", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
     @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
     public ResponseEntity<SearchResponse> statistics(@RequestParam String query,
                                                      @RequestParam(required = false) Integer offset,
@@ -37,20 +33,15 @@ public class SearchController {
         System.out.println(body);
         Map<String, Object> tmp = new ObjectMapper().readValue(body, HashMap.class);
         System.out.println("tmp" + tmp);
-        ObjectMapper objectMapper = new ObjectMapper();
-//        String[] ttt = new ObjectMapper().readValue(tmp.get("data").toString(), String[].class);
-        body = tmp.get("data").toString();
-        body = body.substring(1, body.length() - 1);
-
-        Set<String> links = Arrays.stream(body.split(",")).collect(Collectors.toSet());
-        System.out.println(tmp.get("data").toString());
+        tmp = new ObjectMapper().readValue(tmp.get("data").toString(), HashMap.class);
+        Set<String> sites = new ObjectMapper().readValue(tmp.get("sites").toString(), HashSet.class);
 
         Logger rootLogger = LogManager.getLogger("search");
         rootLogger.info("Поиск - <" + query + ">");
         long mm = System.currentTimeMillis();
         ResponseEntity<SearchResponse> result = null;
         try {
-            result = new SearchSystem(query, links, offset, limit, crawlingService).request();
+            result = new SearchSystem(query, sites, offset, limit, crawlingService).request();
             rootLogger.info("Нашли за " + (double)(System.currentTimeMillis() - mm) / 1000 + " сек.");
         } catch (Exception exception) {
             exception.printStackTrace();

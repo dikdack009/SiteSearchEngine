@@ -12,7 +12,6 @@ public class Statistics {
     private final List<DetailedSite> detailed;
 
     public Statistics(boolean isIndexing) throws SQLException {
-        System.out.println("зашли в конструктор пониже");
         total = new Total(isIndexing);
         detailed = DBConnection.getDBStatistic();
     }

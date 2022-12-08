@@ -46,15 +46,11 @@ public class SearchSystem {
 
     public ResponseEntity<SearchResponse> request() throws IOException, SQLException, InterruptedException {
         links.forEach(l -> {
-
             System.out.println(l.trim());
             System.out.println(crawlingService.getSiteByUrl(l.trim()));
             linkIdList.add(crawlingService.getSiteByUrl(l.trim()).getId());
-
         });
-//        Site site = crawlingService.getSiteByUrl(siteLink);
-//        int id = site == null ? -1 : site.getId();
-//        siteId = siteLink == null ? 0 : id;
+
         if (query.isEmpty()){
             error = "Задан пустой поисковый запрос";
             return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.BAD_REQUEST);

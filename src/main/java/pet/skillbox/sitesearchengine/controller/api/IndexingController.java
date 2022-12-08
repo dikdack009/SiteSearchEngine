@@ -14,6 +14,7 @@ import pet.skillbox.sitesearchengine.model.response.IndexingResponse;
 import pet.skillbox.sitesearchengine.model.response.LinksResponse;
 import pet.skillbox.sitesearchengine.model.response.Statistic;
 import pet.skillbox.sitesearchengine.model.thread.IndexingThread;
+import pet.skillbox.sitesearchengine.model.thread.StatisticThread;
 import pet.skillbox.sitesearchengine.services.CrawlingService;
 
 import java.io.IOException;
@@ -44,7 +45,7 @@ public class IndexingController {
     //TODO: добавить стобец юзер в ссылки
 
     @PostMapping(path="/api/startIndexing", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
-    public ResponseEntity<IndexingResponse> startIndexing(@RequestBody String body) throws IOException {
+    public ResponseEntity<IndexingResponse> startIndexing(@RequestBody String body) throws IOException, InterruptedException, ExecutionException {
         System.out.println(body);
         Map<String, Object> tmp = new ObjectMapper().readValue(body, HashMap.class);
         Map<String, String> result  = new ObjectMapper().readValue(tmp.get("data").toString(), HashMap.class);
@@ -57,28 +58,21 @@ public class IndexingController {
         ExecutorService es = Executors.newFixedThreadPool(100);
         List<IndexingThread> tasks = new ArrayList<>();
 
-        int id = crawlingService.getMaxPageId() + 1;
-        List<SiteProperty> newSiteList = new ArrayList<>();
+//        List<SiteProperty> newSiteList = new ArrayList<>();
         for (String url : result.keySet()) {
             SiteProperty site = new SiteProperty(url, result.get(url));
-            site.setUrl(url);
-            newSiteList.add(site);
-            tasks.add(new IndexingThread(this, site, config, crawlingService, id));
+//            newSiteList.add(site);
+            tasks.add(new IndexingThread(this, site, config, crawlingService));
         }
-        config.setSites(newSiteList);
+//        config.setSites(newSiteList);
         List<Future<IndexingResponse>> futures;
-        try {
-            futures = es.invokeAll(tasks);
-            for(Future<IndexingResponse> f : futures) {
-                response.set(f.get());
-                if (response.get().getError() != null) {
-                    break;
-                }
-            }
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
 
+        futures = es.invokeAll(tasks);
+        for(Future<IndexingResponse> f : futures) {
+            if (f.get().getError() != null) {
+                response.set(f.get());
+            }
+        }
         es.shutdown();
         isIndexing = false;
         config.setStopIndexing(false);
@@ -100,8 +94,13 @@ public class IndexingController {
     }
 
     @GetMapping(path="/api/statistics", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
-    public ResponseEntity<Statistic> statistics() throws SQLException {
+    public ResponseEntity<Statistic> statistics() throws ExecutionException, InterruptedException {
         System.out.println("Зашли в статистику");
-        return new ResponseEntity<>(new Statistic(isIndexing), HttpStatus.OK);
+        ExecutorService es = Executors.newFixedThreadPool(10);
+        List<StatisticThread> tasks = new ArrayList<>();
+        tasks.add(new StatisticThread(isIndexing));
+        ResponseEntity<Statistic> statistic = es.invokeAny(tasks);
+        es.shutdown();
+        return statistic;
     }
 }

@@ -28,7 +28,7 @@ public class Index {
     @Column(name = "`rank`")
     private float rank;
 
-    @Column(name = "is_deleted", columnDefinition = "TINYINT(1) default 0", nullable = false)
+    @Column(name = "is_deleted", columnDefinition = "INT default 0", nullable = false)
     private Integer isDeleted;
 
     @JoinColumn(name = "site_id", nullable = false)

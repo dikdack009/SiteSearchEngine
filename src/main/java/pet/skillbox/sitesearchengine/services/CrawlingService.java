@@ -7,7 +7,6 @@ import pet.skillbox.sitesearchengine.model.*;
 import pet.skillbox.sitesearchengine.model.response.LinkModel;
 import pet.skillbox.sitesearchengine.repositories.*;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,17 +22,20 @@ public class CrawlingService {
     private final IndexRepository indexRepository;
     private final SiteRepository siteRepository;
     private final LinkRepository linkRepository;
+    private final IndexDeleteRepository indexDeleteRepository;
 
     @Autowired
     public CrawlingService(LemmaRepository lemmaRepository, FieldRepository fieldRepository,
                            PageRepository pageRepository, IndexRepository indexRepository,
-                           SiteRepository siteRepository, LinkRepository linkRepository) {
+                           SiteRepository siteRepository, LinkRepository linkRepository,
+                           IndexDeleteRepository indexDeleteRepository) {
         this.lemmaRepository = lemmaRepository;
         this.fieldRepository = fieldRepository;
         this.pageRepository = pageRepository;
         this.indexRepository = indexRepository;
         this.siteRepository = siteRepository;
         this.linkRepository = linkRepository;
+        this.indexDeleteRepository = indexDeleteRepository;
 //        DBConnection.addIndexes();
     }
 
@@ -64,7 +66,8 @@ public class CrawlingService {
     public List<Lemma> getLemmaList(Set<String> lemmas, int id) {
         List<Lemma> lemmaList = new ArrayList<>();
         lemmas.forEach(l -> {
-            Lemma lemma = id > 0 ? lemmaRepository.getLemmaByLemmaAndSiteId(l, id) : lemmaRepository.getLemmaByLemma(l);
+            Lemma lemma = id > 0 ? lemmaRepository.getLemmaByLemmaAndSiteIdAndIsDeleted(l, id, 0)
+                    : lemmaRepository.getLemmaByLemmaAndIsDeleted(l, 0);
             if (lemma != null) {
                 lemmaList.add(lemma);
             }
@@ -72,17 +75,17 @@ public class CrawlingService {
         return lemmaList;
     }
 
-    @Transactional
-    public void addLemma(Lemma lemma) {
-        System.out.println(lemma);
-        Lemma oldLemma = lemmaRepository.getLemmaByLemma(lemma.getLemma());
-        System.out.println(oldLemma);
-        if (oldLemma == null) {
-            lemmaRepository.save(lemma);
-        } else {
-            lemmaRepository.updateLemma(lemma.getLemma(), lemma.getFrequency() + 1, lemma.getId());
-        }
-    }
+//    @Transactional
+//    public void addLemma(Lemma lemma) {
+//        System.out.println(lemma);
+//        Lemma oldLemma = lemmaRepository.getLemmaByLemmaAndIsDeleted(lemma.getLemma(), 0);
+//        System.out.println(oldLemma);
+//        if (oldLemma == null) {
+//            lemmaRepository.save(lemma);
+//        } else {
+//            lemmaRepository.updateLemma(lemma.getLemma(), lemma.getFrequency() + 1, lemma.getId());
+//        }
+//    }
 
     @Transactional
     public int addSite(Site site) {
@@ -104,11 +107,6 @@ public class CrawlingService {
         return siteId;
     }
 
-//    @Transactional(readOnly = true)
-//    public List<Site> getIndexingSites() {
-//        return siteRepository.findAllBy(Status.INDEXING);
-//    }
-
     @Transactional(readOnly = true)
     public Site getSiteByUrl(String url) {
         return siteRepository.getByUrl(url) ;
@@ -127,13 +125,12 @@ public class CrawlingService {
     }
 
     @Transactional
-    public synchronized int savePage(Page page) {
+    public synchronized void savePage(Page page) {
         System.out.println("saving page");
         System.out.println("<" + page.getId() + ">");
         System.out.println(" - " + page.getSite().getId() + " " + page.getSite().getUrl());
         page.setIsDeleted(0);
         pageRepository.save(page);
-        return page.getId();
     }
 
     @Transactional
@@ -150,6 +147,11 @@ public class CrawlingService {
         link.forEach(linkRepository::updateLink);
     }
 
+    @Transactional
+    public void updateLink(String link, Integer isSelected) {
+        linkRepository.updateLink(link, isSelected);
+    }
+
     @Transactional(readOnly = true)
     public List<LinkModel> getLinks() {
         List<LinkModel> models = new ArrayList<>();
@@ -163,22 +165,26 @@ public class CrawlingService {
     @Transactional
     public boolean deleteSiteInfo(String url) {
         Site site = siteRepository.getSiteByUrl(url);
+        System.out.println("Удаляемый сайт: " + site);
+        Integer deleteIndex = indexDeleteRepository.getOne(1).getDeleteNumber();
+        System.out.println("Индекс = " + deleteIndex);
         if (site != null) {
             int id = site.getId();
             System.out.println("Удаление сайта с id = " + id);
-            System.out.println(lemmaRepository.getFirstBySiteId(id));
             if (lemmaRepository.getFirstBySiteId(id) != null) {
-                lemmaRepository.updateLemmaDelete(1, site);
+                lemmaRepository.updateLemmaDelete(site, deleteIndex);
                 System.out.println("Удалили леммы с id = " + id);
             }
             if (pageRepository.getFirstBySiteId(id) != null) {
-                pageRepository.updatePageDelete(1, site);
+                pageRepository.updatePageDelete(site, deleteIndex);
                 System.out.println("Удалили странницы с id = " + id);
             }
             if (indexRepository.getFirstBySiteId(id) != null) {
-                indexRepository.updateIndexDelete(1, site);
+                indexRepository.updateIndexDelete(site, deleteIndex);
                 System.out.println("Удалили индексы с id = " + id);
             }
+            indexDeleteRepository.updateIndexDeleteDelete(deleteIndex + 1);
+            System.out.println("Обновили метку удаления");
         }
         else {
             return false;
@@ -188,32 +194,21 @@ public class CrawlingService {
     }
 
     @Transactional
-    public void deleteAllDeletedDataB() {
-        System.out.println("Удаление всех нужных данных " + LocalDateTime.now());
-
-        siteRepository.deleteByIsDeleted(1);
-        System.out.println(lemmaRepository.countAllByIsDeleted(1));
-        lemmaRepository.deleteByIsDeleted(1);
-        System.out.println(lemmaRepository.countAllByIsDeleted(1));
-        pageRepository.deleteByIsDeleted(1);
-        System.out.println(pageRepository.countAllByIsDeleted(1));
-        indexRepository.deleteByIsDeleted(1);
-        System.out.println(indexRepository.countAllByIsDeleted(1));
-        System.out.println("ENNNNNNNNNNNNNNND");
+    public void setNewDeleteIndex() {
+        indexDeleteRepository.updateDefaultDeleteDelete();
     }
 
-//    @Transactional
-//    public void deleteAllSites(int id) {
-//        siteRepository.get
-//    }
-
-
-
     @Transactional
-    public void deleteSiteFromDB(String url) {
-        if (siteRepository.getSiteByUrl(url) != null) {
-            siteRepository.deleteByUrl(url);
-        }
+    public void deleteAllDeletedDataB() {
+        System.out.println("Удаление всех нужных данных " + LocalDateTime.now());
+        siteRepository.deleteByIsDeleted();
+        lemmaRepository.deleteByIsDeleted();
+        System.out.println(lemmaRepository.countAllByIsDeleted(1));
+        pageRepository.deleteByIsDeleted();
+        System.out.println(pageRepository.countAllByIsDeleted(1));
+        indexRepository.deleteByIsDeleted();
+        System.out.println(indexRepository.countAllByIsDeleted(1));
+        System.out.println("ENNNNNNNNNNNNNNND");
     }
 
     @Transactional

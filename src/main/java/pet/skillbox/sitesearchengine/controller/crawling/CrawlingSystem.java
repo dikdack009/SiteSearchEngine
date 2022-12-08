@@ -28,14 +28,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Getter
 @Component
 public class CrawlingSystem {
 
-    private Site site;
+    private final Site site;
     @Getter
     private final Logger rootLogger;
     private List<Field> fieldList;
-    private static volatile int pageId;
     @Getter
     @Setter
     private String lastError;
@@ -43,15 +43,23 @@ public class CrawlingSystem {
     private final Config config;
     private final CrawlingService crawlingService;
 
-    private static synchronized int getPageId() {
-        return pageId++;
-    }
 
     @Autowired
     public CrawlingSystem(Config config, CrawlingService crawlingService) {
+        this.site = new Site();
         this.config = config;
         this.crawlingService = crawlingService;
         rootLogger = LogManager.getRootLogger();
+    }
+
+    public CrawlingSystem(CrawlingSystem newCrawlingSystem) {
+        this.site = newCrawlingSystem.getSite();
+        this.rootLogger = newCrawlingSystem.getRootLogger();
+        this.config = newCrawlingSystem.getConfig();
+        this.crawlingService = newCrawlingSystem.getCrawlingService();
+        this.allLinks = newCrawlingSystem.getAllLinks();
+        this.fieldList = newCrawlingSystem.getFieldList();
+        this.lastError = newCrawlingSystem.getLastError();
     }
 
     public CrawlingSystem(Config config, CrawlingService crawlingService, Site site) {
@@ -86,13 +94,11 @@ public class CrawlingSystem {
         return chunked(allLinks.keySet().stream(), allLinks.keySet().size() / 50 == 0 ? allLinks.keySet().size() : allLinks.keySet().size() / 50).values();
     }
 
-    public void start(Config config, int id) {
+    public void start(Config config) {
         if (config.isStopIndexing()) {
             return;
         }
-        pageId = id;
-        System.out.println(site.getUrl() + " pageId = " + pageId);
-        rootLogger.info("Новый запуск - " + site.getUrl());
+        rootLogger.info("Новый запуск id = " + site.getId() + " - " + site.getUrl());
         System.out.println("Парсинг...");
         Collection<List<String>> chunked = parsing();
         if (chunked == null || chunked.isEmpty()) {
@@ -103,7 +109,7 @@ public class CrawlingSystem {
         rootLogger.info("На сайте " + site.getUrl() + " Кол-во ссылок: " + allLinks.keySet().size());
         List<CrawlingThread> threadList = new ArrayList<>();
         int finalSiteId = site.getId();
-        chunked.forEach(c -> threadList.add(new CrawlingThread(c, this, finalSiteId, crawlingService)));
+        chunked.forEach(c -> threadList.add(new CrawlingThread(c, this, finalSiteId)));
         threadList.forEach(Thread::start);
         threadList.forEach(t -> {
             try {
@@ -133,22 +139,20 @@ public class CrawlingSystem {
                 site.getLastError(), site.getUrl(), site.getName(), 0);
 
         page.setSite(tmpSite);
-        int id = crawlingService.savePage(page);
-        page.setId(id);
-        System.out.println("id");
-        System.out.println(site.getUrl() + path + " id = " + id);
+        int siteId = site.getId();
+        crawlingService.savePage(page);
+        System.out.println(site.getUrl() + path + " id = " + siteId);
         try {
-//            updatePageDB(builder, page);
             if (page.getCode() != 200) {
                 return;
             }
-            parseTagsContent(page.getContent(), page.getId(), builder);
+            parseTagsContent(page.getContent(), page.getId(), builder, siteId);
         } catch (SQLException e) {
             rootLogger.error(e.getMessage());
         }
     }
 
-    private void parseTagsContent(String content, Integer pageId, Builder builder) throws SQLException {
+    private void parseTagsContent(String content, Integer pageId, Builder builder, int siteId) throws SQLException {
         Document d = Jsoup.parse(content);
         Set<String> allWords = new HashSet<>();
 
@@ -167,49 +171,35 @@ public class CrawlingSystem {
                 return;
             }
             if (!tagNormalForms.isEmpty()) {
-                updateIndexDB(builder, field, tagNormalForms, pageId);
+                updateIndexDB(builder, field, tagNormalForms, pageId, siteId);
             }
         }
         if (!allWords.isEmpty()) {
-            updateLemmaDB(builder, allWords);
+            updateLemmaDB(builder, allWords, siteId);
         }
     }
 
-//    private void updatePageDB(Builder builder, Page page) throws SQLException {
-//        if (builder.getPageBuilder().length() > 2000000) {
-//            DBConnection.insertAllPages(builder.getPageBuilder().toString());
-//            builder.setPageBuilder(new StringBuilder());
-//        }
-//        builder.setPageBuilder(builder.getPageBuilder()
-//                .append(builder.getPageBuilder().length() == 0 ? "" : ",")
-//                .append("(").append(page.getId()).append(",'").append(page.getPath()).append("', ")
-//                .append(page.getCode()).append(", '").append(page.getContent())
-//                .append("', ").append(site.getId()).append(")"));
-//    }
-
-    private void updateIndexDB(Builder builder, Field field, Map<String, Integer> tagLemmas, int id) throws SQLException {
+    private void updateIndexDB(Builder builder, Field field, Map<String, Integer> tagLemmas, int id, int siteId) throws SQLException {
         if (builder.getIndexBuilder().length() > 2000000) {
             DBConnection.insertAllIndexes(builder.getIndexBuilder().toString());
             builder.setIndexBuilder(new StringBuilder());
         }
-        tagLemmas.keySet().forEach(lemma ->
-                builder.setIndexBuilder(builder.getIndexBuilder()
+        tagLemmas.keySet().forEach(lemma -> builder.setIndexBuilder(builder.getIndexBuilder()
                         .append(builder.getIndexBuilder().length() == 0 ? "" : ",")
-                        .append("(").append(id)
-                        .append(", '").append(lemma).append("', ")
+                        .append("(").append(id).append(", '").append(lemma).append("', ")
                         .append(tagLemmas.get(lemma) * field.getWeight()).append(", ")
-                        .append(site.getId()).append(")")));
+                        .append(siteId).append(", 0)")));
     }
 
-    private void updateLemmaDB(Builder builder, Set<String> normalFormsSet) throws SQLException {
+    private void updateLemmaDB(Builder builder, Set<String> normalFormsSet, int siteId) throws SQLException {
         if (builder.getLemmaBuilder().length() > 2000000) {
+            System.out.println(builder.getLemmaBuilder());
             DBConnection.insertAllLemmas(builder.getLemmaBuilder().toString());
             builder.setLemmaBuilder(new StringBuilder());
         }
-        normalFormsSet.forEach(word ->
-                builder.setLemmaBuilder(builder.getLemmaBuilder()
+        System.out.println("lemma_id = " + siteId);
+        normalFormsSet.forEach(word -> builder.setLemmaBuilder(builder.getLemmaBuilder()
                         .append(builder.getLemmaBuilder().length() == 0 ? "" : ",")
-                        .append("('").append(word)
-                        .append("', 1, ").append(site.getId()).append(")")));
+                        .append("('").append(word).append("', 1, ").append(siteId).append(", 0)")));
     }
 }
