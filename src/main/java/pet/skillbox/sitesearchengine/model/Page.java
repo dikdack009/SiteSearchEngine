@@ -17,7 +17,7 @@ import java.util.Objects;
 @NoArgsConstructor
 @Entity
 @Table(name = "page", uniqueConstraints = {@UniqueConstraint(name = "UniquePathAndDeleted",
-        columnNames = {"path", "is_deleted"})})
+        columnNames = {"path", "is_deleted", "site_id"})})
 public class Page implements Comparable<Page>{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

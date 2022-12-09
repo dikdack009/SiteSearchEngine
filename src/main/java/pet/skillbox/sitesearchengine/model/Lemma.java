@@ -18,7 +18,7 @@ import java.util.Objects;
 @Setter
 @Entity
 @Table(name = "lemma", uniqueConstraints = {@UniqueConstraint(name = "UniqueLemmaAndDeleted",
-                columnNames = {"lemma", "is_deleted"})})
+                columnNames = {"lemma", "is_deleted", "site_id"})})
 public class Lemma implements Comparable<Lemma> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -197,7 +197,7 @@ public class CrawlingSystem {
             DBConnection.insertAllLemmas(builder.getLemmaBuilder().toString());
             builder.setLemmaBuilder(new StringBuilder());
         }
-        System.out.println("lemma_id = " + siteId);
+        System.out.println("lemma_site_id = " + siteId);
         normalFormsSet.forEach(word -> builder.setLemmaBuilder(builder.getLemmaBuilder()
                         .append(builder.getLemmaBuilder().length() == 0 ? "" : ",")
                         .append("('").append(word).append("', 1, ").append(siteId).append(", 0)")));
