@@ -45,22 +45,22 @@ public class Lemma implements Comparable<Lemma> {
     }
 
     @Override
+    public int compareTo(Lemma o) {
+        return this.getLemma().compareTo(o.getLemma())
+                *this.getSite().getId().compareTo(o.getSite().getId());
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Lemma)) return false;
+        if (o == null || getClass() != o.getClass()) return false;
         Lemma lemma1 = (Lemma) o;
-        return Objects.equals(getSite(), lemma1.getSite()) && getLemma().equals(lemma1.getLemma());
+        return Objects.equals(lemma, lemma1.lemma) && Objects.equals(site, lemma1.site);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getLemma(), getSite());
-    }
-
-    @Override
-    public int compareTo(Lemma o) {
-        return this.getLemma().compareTo(o.getLemma())
-                *this.getSite().getId().compareTo(o.getSite().getId());
+        return Objects.hash(lemma, site);
     }
 
     @Override

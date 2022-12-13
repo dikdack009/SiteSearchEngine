@@ -19,7 +19,6 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class SearchSystem {
@@ -33,8 +32,6 @@ public class SearchSystem {
     private String error;
     private final CrawlingService crawlingService;
 
-    //TODO: сделать индексацию больше чем одного сайта
-
     public SearchSystem(String query, Set<String> links, Integer offset, Integer limit, CrawlingService crawlingService) throws SQLException {
         this.query = query;
         this.offset = offset == null ? 0 : offset;
@@ -46,8 +43,6 @@ public class SearchSystem {
 
     public ResponseEntity<SearchResponse> request() throws IOException, SQLException, InterruptedException {
         links.forEach(l -> {
-            System.out.println(l.trim());
-            System.out.println(crawlingService.getSiteByUrl(l.trim()));
             linkIdList.add(crawlingService.getSiteByUrl(l.trim()).getId());
         });
 
@@ -62,24 +57,33 @@ public class SearchSystem {
         List<Lemma> optionalLemmas = new ArrayList<>();
 
         List<Lemma> lemmaList = new ArrayList<>();
-        linkIdList.forEach(id -> lemmaList.addAll(crawlingService.getLemmaList(requestNormalForms, id)));
-        System.out.println(lemmaList);
+
+        linkIdList.forEach(id -> {
+            List<Lemma> l = crawlingService.getLemmaList(requestNormalForms, id);
+            l.forEach(lemma -> lemma.setId(id));
+            lemmaList.addAll(l);
+        });
         if (lemmaList.isEmpty()) {
             error = "Нет результатов";
             return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.BAD_REQUEST);
         }
-        Map<String, Lemma> requestLemmaMap = lemmaList.stream().collect(Collectors.toMap(Lemma::getLemma, v -> v));
 
         AtomicReference<Double> quantityPages = new AtomicReference<>((double) 0);
         linkIdList.forEach(id -> quantityPages.updateAndGet(v -> v + crawlingService.countPages(id)));
-        System.out.println(quantityPages.get());
+
         if (quantityPages.get() == 0) {
             error = "Нет результатов";
             return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.BAD_REQUEST);
         }
         for(String re : requestNormalForms) {
-            if (requestLemmaMap.containsKey(re)) {
-                Lemma currentLemmaFromDB = requestLemmaMap.get(re);
+            if (lemmaList.stream().anyMatch(lemma -> lemma.getLemma().equals(re))) {
+                AtomicReference<Lemma> currentLemma = new AtomicReference<>(null);
+                lemmaList.forEach(lemma -> {
+                    if (lemma.getLemma().equals(re)) {
+                        currentLemma.set(lemma);
+                    }
+                });
+                Lemma currentLemmaFromDB = currentLemma.get();
                 if (currentLemmaFromDB.getFrequency() / quantityPages.get() <= 1) {
                     requestLemmas.add(currentLemmaFromDB);
                 }
@@ -120,13 +124,12 @@ public class SearchSystem {
 
         List<Data> searchResults = new ArrayList<>();
         System.out.println("Размер - " + pageDoubleMap.size());
-        ExecutorService es = Executors.newFixedThreadPool(100);
+        ExecutorService es = Executors.newFixedThreadPool(300);
         List<SearchThread> tasks = new ArrayList<>();
         requestLemmas.addAll(optionalLemmas);
         List<Page> subPageList = new ArrayList<>(pageDoubleMap.keySet())
                 .subList(offset, Math.min(offset + limit, pageDoubleMap.size()));
         for (Page page : subPageList) {
-            System.out.println(page.getId() + " - " + page.getPath());
             SearchThread searchThread = new SearchThread(page, pageDoubleMap.get(page), this, max, requestLemmas);
             tasks.add(searchThread);
         }
@@ -145,6 +148,7 @@ public class SearchSystem {
     }
 
     public String getSnippetFirstStep(List<Lemma> lemmaList, String content) throws IOException {
+
         List<Integer> indexes = new ArrayList<>();
         String normalText = new MorphologyServiceImpl().getNormalText(content).toLowerCase();
         for (Lemma lemma : lemmaList) {
@@ -167,11 +171,11 @@ public class SearchSystem {
         for (int j = 0; j < indexes.size(); ++j) {
             int indexOfContent = indexes.get(j);
             if (j != indexes.size() - 1 && Math.abs(indexOfContent - indexes.get(j + 1)) < 70) {
-                snippet.append(content, indexOfContent + 1, Math.min(indexOfContent + 100, content.length()));
+                snippet.append(content, indexOfContent + 1, Math.min(indexOfContent + 200, content.length()));
                 j += 1;
             }
             else {
-                snippet.append(content, indexOfContent + 1, Math.min(indexOfContent + 90, content.length()));
+                snippet.append(content, indexOfContent + 1, Math.min(indexOfContent + 180, content.length()));
             }
             snippet.append("...");
         }
@@ -182,25 +186,15 @@ public class SearchSystem {
         text = text.replaceAll("\\pP", " ");
         char[] array = text.replaceAll("[^[a-zA-Zа-яА-Я0-9]]", " ").toLowerCase().toCharArray();
         int tmp = new String(array).indexOf(" " + word + " ");
-        System.out.println(text.replaceAll("[^[a-zA-Zа-яА-Я0-9]]", " ").toLowerCase());
         int count = 0;
         char[] textArray = text.toCharArray();
         int i = 0;
         System.out.println("Word = " + word);
         for ( ; i <= tmp; ++i ) {
-            System.out.print(textArray[i]);
             if (textArray[i] == ' ') {
                 count++;
             }
         }
-        System.out.print("|||");
-        System.out.print(textArray[i]);
-        System.out.print(textArray[i+1]);
-        System.out.print(textArray[i+2]);
-        System.out.print(textArray[i+3]);
-        System.out.println();
-        System.out.println("пробелов " + count);
-        System.out.println("Индекс найденного слова " + tmp);
         return count;
     }
 
@@ -213,19 +207,14 @@ public class SearchSystem {
             if(textArray[i] == ' ') {
                 newCount++;
             }
-            if (newCount == count - 4 || count < 5){
+            if (newCount == count - 14 || count < 12){
                 spaceId = i;
             }
             if (newCount == count) {
                 break;
             }
         }
-//        if (!Character.isLetterOrDigit(textArray[i + 1])) {
-//            i++;
-//        }
-        System.out.println("проблов старых " + count);
-        System.out.println("проблов новых " + newCount);
-        System.out.println("next " + text.toCharArray()[i]  + text.toCharArray()[i + 1] + text.toCharArray()[i + 2]);
+
         return new Pair<>(spaceId, !Character.isLetterOrDigit(text.toCharArray()[i + 1]) ? ++i : i);
     }
 
@@ -239,7 +228,6 @@ public class SearchSystem {
                 throw new RuntimeException(e);
             }
         });
-        System.out.println(pageList.size());
         System.out.println("Время получения странниц по запросу: " + (double) (System.currentTimeMillis() - m) / 1000 + " sec.");
         Map<Page, Double> absRelPage = new HashMap<>();
         for (Page page : pageList) {

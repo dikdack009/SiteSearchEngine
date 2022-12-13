@@ -33,7 +33,6 @@ public class SearchController {
         System.out.println(body);
         Map<String, Object> tmp = new ObjectMapper().readValue(body, HashMap.class);
         System.out.println("tmp" + tmp);
-        tmp = new ObjectMapper().readValue(tmp.get("data").toString(), HashMap.class);
         Set<String> sites = new ObjectMapper().readValue(tmp.get("sites").toString(), HashSet.class);
 
         Logger rootLogger = LogManager.getLogger("search");
