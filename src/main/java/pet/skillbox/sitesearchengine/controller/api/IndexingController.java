@@ -1,6 +1,7 @@
 package pet.skillbox.sitesearchengine.controller.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.mail.MessagingException;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -43,7 +44,7 @@ public class IndexingController {
     }
 
     @PostMapping(path="/api/startIndexing", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
-    public ResponseEntity<IndexingResponse> startIndexing(@RequestBody String body) throws IOException, InterruptedException, ExecutionException {
+    public ResponseEntity<IndexingResponse> startIndexing(@RequestBody String body) throws IOException, InterruptedException, ExecutionException, MessagingException {
         System.out.println(body);
         Map<String, Object> tmp = new ObjectMapper().readValue(body, HashMap.class);
         Map<String, String> result  = new ObjectMapper().readValue(tmp.get("data").toString(), HashMap.class);
@@ -71,7 +72,7 @@ public class IndexingController {
         es.shutdown();
         isIndexing = false;
         config.setStopIndexing(false);
-        emailService.sendSimpleMessage("", "", "");
+        emailService.sendMessage("", "", "");
         System.out.println("Закончили индексацию !!!");
         return new ResponseEntity<>(response.get(), HttpStatus.OK);
     }
