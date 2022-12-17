@@ -9,16 +9,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pet.skillbox.sitesearchengine.configuration.Config;
 import pet.skillbox.sitesearchengine.configuration.SiteProperty;
-import pet.skillbox.sitesearchengine.model.Link;
 import pet.skillbox.sitesearchengine.model.response.IndexingResponse;
-import pet.skillbox.sitesearchengine.model.response.LinksResponse;
 import pet.skillbox.sitesearchengine.model.response.Statistic;
 import pet.skillbox.sitesearchengine.model.thread.IndexingThread;
 import pet.skillbox.sitesearchengine.model.thread.StatisticThread;
 import pet.skillbox.sitesearchengine.services.CrawlingService;
+import pet.skillbox.sitesearchengine.services.EmailServiceImpl;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,14 +33,14 @@ public class IndexingController {
     private boolean isIndexing = false;
     private final Config config;
     private final CrawlingService crawlingService;
+    private final EmailServiceImpl emailService;
 
     @Autowired
-    public IndexingController(Config config, CrawlingService crawlingService) {
+    public IndexingController(Config config, CrawlingService crawlingService, EmailServiceImpl emailService) {
         this.config = config;
         this.crawlingService = crawlingService;
+        this.emailService = emailService;
     }
-
-    //TODO: добавить стобец юзер в ссылки
 
     @PostMapping(path="/api/startIndexing", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
     public ResponseEntity<IndexingResponse> startIndexing(@RequestBody String body) throws IOException, InterruptedException, ExecutionException {
@@ -58,13 +56,10 @@ public class IndexingController {
         ExecutorService es = Executors.newFixedThreadPool(100);
         List<IndexingThread> tasks = new ArrayList<>();
 
-//        List<SiteProperty> newSiteList = new ArrayList<>();
         for (String url : result.keySet()) {
             SiteProperty site = new SiteProperty(url, result.get(url));
-//            newSiteList.add(site);
             tasks.add(new IndexingThread(this, site, config, crawlingService));
         }
-//        config.setSites(newSiteList);
         List<Future<IndexingResponse>> futures;
 
         futures = es.invokeAll(tasks);
@@ -76,6 +71,7 @@ public class IndexingController {
         es.shutdown();
         isIndexing = false;
         config.setStopIndexing(false);
+        emailService.sendSimpleMessage("", "", "");
         System.out.println("Закончили индексацию !!!");
         return new ResponseEntity<>(response.get(), HttpStatus.OK);
     }

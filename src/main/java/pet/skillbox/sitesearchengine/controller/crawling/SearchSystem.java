@@ -147,7 +147,7 @@ public class SearchSystem {
         return new ResponseEntity<>(new SearchResponse(true, pageDoubleMap.size(), searchResults, null), HttpStatus.OK);//subList(offset, Math.min((int) (offset + limit), searchResults.size()));
     }
 
-    public String getSnippetFirstStep(List<Lemma> lemmaList, String content) throws IOException {
+    public synchronized String getSnippetFirstStep(List<Lemma> lemmaList, String content) throws IOException {
 
         List<Integer> indexes = new ArrayList<>();
         String normalText = new MorphologyServiceImpl().getNormalText(content).toLowerCase();
@@ -155,8 +155,10 @@ public class SearchSystem {
             int spaces = searchSpacesBefore(normalText, lemma.getLemma());
             Pair<Integer, Integer> pair = searchSpacesAfter(content, spaces);
             int i = pair.getValue();
-            char[] array = content.replaceAll("[^[a-zA-Zа-яА-Я0-9]]", "-").toLowerCase().toCharArray();
-            int tmp = new String(array).indexOf("-", i + 1);
+            System.out.println("\n\nHell = " + content.substring(i));
+
+            String newContent = content.replaceAll("\\pP", "-").replaceAll("[^[a-zA-Zа-яА-Я0-9]]", "-").toLowerCase();
+            int tmp = newContent.indexOf("-", i + 1);
             content = content.substring(0, i + 1) + "<b>" + content.substring(i + 1, tmp) + "</b>" + content.substring(tmp);
             indexes.add(pair.getKey());
         }
@@ -184,37 +186,65 @@ public class SearchSystem {
 
     private int searchSpacesBefore(String text, String word) {
         text = text.replaceAll("\\pP", " ");
-        char[] array = text.replaceAll("[^[a-zA-Zа-яА-Я0-9]]", " ").toLowerCase().toCharArray();
-        int tmp = new String(array).indexOf(" " + word + " ");
+        String newText = text.replaceAll("[^[a-zA-Zа-яА-Я0-9\\-]]", " ").toLowerCase();
+        char[] textArray = newText.toCharArray();
+        int tmp = newText.indexOf(" " + word + " ");
         int count = 0;
-        char[] textArray = text.toCharArray();
         int i = 0;
-        System.out.println("Word = " + word);
+        int newCount = 0;
+        for (i = 0; i < textArray.length; ++i) {
+            if (textArray[i] == ' ') {
+                newCount++;
+            }
+        }
+        i = 0;
+        System.out.println("Пробелов в упрощенном тексте " + newCount);
+        System.out.print("Word = " + word);
         for ( ; i <= tmp; ++i ) {
             if (textArray[i] == ' ') {
                 count++;
             }
         }
+        System.out.print(" Next word = ");
+        System.out.print(textArray[i]);
+        System.out.print(textArray[i+1]);
+        System.out.print(textArray[i+2]);
+        System.out.print(textArray[i+3]);
+        System.out.println(textArray[i+4]);
+        System.out.println(newText);
         return count;
     }
 
     private Pair<Integer, Integer> searchSpacesAfter(String text, int count) {
-        String textCopy = text.replaceAll("\\pP", " ");
-        char[] textArray = textCopy.toLowerCase().toCharArray();
-//        char[] textArray = text.replaceAll("[^[a-zA-Zа-яА-Я0-9]]", " ").toLowerCase().toCharArray();
+        text = text.replaceAll("\\pP", " ");
+        String newText = text.replaceAll("[^[a-zA-Zа-яА-Я0-9\\-/]]", " ").toLowerCase();
+        char[] textArray = newText.toCharArray();
+        System.out.println(text);
         int i, spaceId = 0, newCount = 0;
+        for (i = 0; i < textArray.length; ++i) {
+            if (textArray[i] == ' ') {
+                newCount++;
+            }
+        }
+        System.out.println("Пробелов в обычном тексте " + newCount);
+        newCount = 0;
         for (i = 0; i < textArray.length; ++i) {
             if(textArray[i] == ' ') {
                 newCount++;
             }
-            if (newCount == count - 14 || count < 12){
+            if (newCount == count - 14){
                 spaceId = i;
             }
             if (newCount == count) {
                 break;
             }
         }
-
+        System.out.print("Next next word = ");
+        System.out.print(textArray[i]);
+        System.out.print(textArray[i+1]);
+        System.out.print(textArray[i+2]);
+        System.out.print(textArray[i+3]);
+        System.out.println(textArray[i+4]);
         return new Pair<>(spaceId, !Character.isLetterOrDigit(text.toCharArray()[i + 1]) ? ++i : i);
     }
 

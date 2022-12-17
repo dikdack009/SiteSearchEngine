@@ -21,6 +21,18 @@ spring:
       properties:
         enable-logging: true
 #    prefix: classpath:/templates
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: search.engine.mephi12@gmail.com
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+    password: ivdvuyxxskxidlee
 
 local:
   path: /admin

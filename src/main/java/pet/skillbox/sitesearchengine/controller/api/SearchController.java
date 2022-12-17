@@ -32,7 +32,6 @@ public class SearchController {
                                                      @RequestParam(required = false) Integer limit, @RequestBody String body) throws IOException {
         System.out.println(body);
         Map<String, Object> tmp = new ObjectMapper().readValue(body, HashMap.class);
-        System.out.println("tmp" + tmp);
         Set<String> sites = new ObjectMapper().readValue(tmp.get("sites").toString(), HashSet.class);
 
         Logger rootLogger = LogManager.getLogger("search");
