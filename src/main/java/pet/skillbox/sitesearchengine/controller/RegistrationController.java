@@ -29,6 +29,7 @@ public class RegistrationController {
         newUser.setUsername(userName);
         newUser.setPassword(password);
         newUser.setPasswordConfirm(confirmPassword);
+        System.out.println(newUser);
         RegistrationResponse registrationResponse;
         if (!newUser.getPassword().equals(newUser.getPasswordConfirm())){
             registrationResponse = new RegistrationResponse(false, "Пароли не совпадают");

@@ -94,4 +94,13 @@ public class User implements UserDetails {
     public void setSites(Set<Site> sites) {
         this.sites = sites;
     }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", username='" + username + '\'' +
+                ", password='" + password + '\'' +
+                '}';
+    }
 }

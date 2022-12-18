@@ -33,16 +33,6 @@
 					</dependency>
 				</dependencies>
 			</plugin>
-<!--			<plugin>-->
-<!--				<groupId>org.apache.maven.plugins</groupId>-->
-<!--				<artifactId>maven-compiler-plugin</artifactId>-->
-<!--				<configuration>-->
-<!--					<source>17</source>-->
-<!--					<target>17</target>-->
-
-<!--				</configuration>-->
-<!--				<version>${maven-compiler-plugin.version}</version>-->
-<!--			</plugin>-->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
@@ -77,6 +67,11 @@
 	</parent>
 
 	<dependencies>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt</artifactId>
+			<version>0.9.1</version>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-context-support</artifactId>
@@ -114,11 +109,6 @@
 			<artifactId>javax.activation-api</artifactId>
 			<version>1.2.0</version>
 		</dependency>
-<!--		<dependency>-->
-<!--			<groupId>org.hibernate.javax.persistence</groupId>-->
-<!--			<artifactId>hibernate-jpa-2.1-api</artifactId>-->
-<!--			<version>1.0.2.Final</version>-->
-<!--		</dependency>-->
 		<dependency>
 			<groupId>org.openjfx</groupId>
 			<artifactId>javafx-base</artifactId>
@@ -151,11 +141,6 @@
 			<artifactId>validation-api</artifactId>
 			<version>2.0.1.Final</version>
 		</dependency>
-<!--		<dependency>-->
-<!--			<groupId>org.hibernate</groupId>-->
-<!--			<artifactId>hibernate-entitymanager</artifactId>-->
-<!--			<version>5.3.7.Final</version>-->
-<!--		</dependency>-->
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-validator</artifactId>
@@ -224,20 +209,9 @@
 			<artifactId>lombok</artifactId>
 			<version>1.18.24</version>
 		</dependency>
-<!--		<dependency>-->
-<!--			<groupId>org.hibernate</groupId>-->
-<!--			<artifactId>hibernate-core</artifactId>-->
-<!--			<version>5.6.5.Final</version>-->
-<!--		</dependency>-->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter</artifactId>
-<!--			<exclusions>-->
-<!--				<exclusion>-->
-<!--					<groupId>org.springframework.boot</groupId>-->
-<!--					<artifactId>spring-boot-starter-logging</artifactId>-->
-<!--				</exclusion>-->
-<!--			</exclusions>-->
 			<version>2.1.4.RELEASE</version>
 		</dependency>
 		<dependency>

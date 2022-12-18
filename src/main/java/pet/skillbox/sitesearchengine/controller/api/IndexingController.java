@@ -17,6 +17,7 @@ import pet.skillbox.sitesearchengine.model.thread.StatisticThread;
 import pet.skillbox.sitesearchengine.services.CrawlingService;
 import pet.skillbox.sitesearchengine.services.EmailServiceImpl;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,6 +47,7 @@ public class IndexingController {
     @PostMapping(path="/api/startIndexing", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
     public ResponseEntity<IndexingResponse> startIndexing(@RequestBody String body) throws IOException, InterruptedException, ExecutionException, MessagingException {
         System.out.println(body);
+
         Map<String, Object> tmp = new ObjectMapper().readValue(body, HashMap.class);
         Map<String, String> result  = new ObjectMapper().readValue(tmp.get("data").toString(), HashMap.class);
         System.out.println(result);

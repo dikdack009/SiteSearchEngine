@@ -33,7 +33,6 @@ spring:
           starttls:
             enable: true
     password: ivdvuyxxskxidlee
-
 local:
   path: /admin
   user-agent: DuckSearchBot

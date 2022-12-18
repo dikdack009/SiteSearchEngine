@@ -1,17 +1,30 @@
 package pet.skillbox.sitesearchengine.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.csrf.CsrfFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import pet.skillbox.sitesearchengine.repositories.JwtTokenRepository;
 import pet.skillbox.sitesearchengine.services.UserService;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -19,6 +32,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter implements WebM
 
     @Autowired
     UserService userService;
+    @Autowired
+    private JwtTokenRepository jwtTokenRepository;
+
+    @Autowired
+    @Qualifier("handlerExceptionResolver")
+    private HandlerExceptionResolver resolver;
 
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
@@ -26,36 +45,26 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter implements WebM
     }
 
     @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.userDetailsService(this.userService);
+    }
+    @Override
     protected void configure(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
-                .csrf()
-                .disable()
-                .authorizeRequests()
-                .antMatchers("/**").permitAll()
-                //Доступ только для не зарегистрированных пользователей
-                .antMatchers("/api/registration").not().fullyAuthenticated()
-                .antMatchers("/api/statistic").not().fullyAuthenticated()
-                .antMatchers("/api/stopIndexing").not().fullyAuthenticated()
-                .antMatchers("/api/startIndexing").not().fullyAuthenticated()
-                .antMatchers("/api/search").not().fullyAuthenticated()
-                //Доступ только для пользователей с ролью Администратор
-                .antMatchers("/api/admin/**").hasRole("ADMIN")
-                .antMatchers("/news").hasRole("USER")
-                //Доступ разрешен всем пользователей
-                .antMatchers("/", "/resources/**").permitAll()
-                //Все остальные страницы требуют аутентификации
-                .anyRequest().not().authenticated()
+                    .cors().configurationSource(corsConfigurationSource())
                 .and()
-                //Настройка для входа в систему
-                .formLogin()
-                .loginPage("/login")
-                //Перенарпавление на главную страницу после успешного входа
-                .defaultSuccessUrl("/")
-                .permitAll()
+                    .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.NEVER)
                 .and()
-                .logout()
-                .permitAll()
-                .logoutSuccessUrl("/");
+                    .addFilterAt(new JwtCsrfFilter(jwtTokenRepository, resolver), CsrfFilter.class)
+                    .csrf().ignoringAntMatchers("/**")
+                .and()
+                    .authorizeRequests()
+                    .antMatchers("/api/auth/login").authenticated()
+                    .antMatchers("/api/registration").authenticated()
+                .and()
+                    .httpBasic()
+                    .authenticationEntryPoint(((request, response, e) -> resolver.resolveException(request, response, null, e)));
+
     }
 
     @Override
@@ -73,5 +82,20 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter implements WebM
     @Autowired
     protected void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
         auth.userDetailsService(userService).passwordEncoder(bCryptPasswordEncoder());
+    }
+
+    @Bean
+    CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("*"));
+        configuration.setAllowedMethods(Arrays.asList("GET","POST","DELETE"));
+        configuration.setAllowCredentials(true);
+        //the below three lines will add the relevant CORS response headers
+        configuration.addAllowedOrigin("*");
+        configuration.addAllowedHeader("*");
+        configuration.addAllowedMethod("*");
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 }

@@ -30,8 +30,8 @@ public class UserService implements UserDetailsService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username);
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        User user = userRepository.findByUsername(email);
         if (user == null) {
             throw new UsernameNotFoundException("User not found");
         }
@@ -58,6 +58,14 @@ public class UserService implements UserDetailsService {
         user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
         userRepository.save(user);
         return true;
+    }
+
+    public User checkUser(User user) {
+        User userFromDB = userRepository.findByUsername(user.getUsername());
+        if (userFromDB != null) {
+            return null;
+        }
+        return user.getPassword().equals(bCryptPasswordEncoder.encode(userFromDB.getPassword())) ? userFromDB : null;
     }
 
     public boolean deleteUser(Long userId) {
