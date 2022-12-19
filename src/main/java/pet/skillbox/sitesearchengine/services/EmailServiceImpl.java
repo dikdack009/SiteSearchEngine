@@ -1,16 +1,15 @@
 package pet.skillbox.sitesearchengine.services;
 
-import jakarta.mail.Address;
-import jakarta.mail.MessagingException;
-import jakarta.mail.Multipart;
-import jakarta.mail.internet.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
-import org.springframework.stereotype.Component;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.stereotype.Component;
 
+
+import javax.mail.Address;
+import javax.mail.MessagingException;
+import javax.mail.Multipart;
+import javax.mail.internet.*;
 import java.io.UnsupportedEncodingException;
 
 @Component
@@ -31,10 +30,9 @@ public class EmailServiceImpl  {
         this.emailSender = emailSender;
     }
 
-    public void sendMessage(String to, String subject, String ctext) throws MessagingException, UnsupportedEncodingException {
+    public void sendMessage(String to, String subject, String ctext) throws UnsupportedEncodingException, MessagingException {
         // ...
 
-        JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
         MimeMessage message = emailSender.createMimeMessage();
 
         MimeMessageHelper helper = new MimeMessageHelper(message, true);

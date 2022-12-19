@@ -42,8 +42,8 @@ public class Site implements GrantedAuthority {
     @Column(name = "is_deleted", columnDefinition = "INT default 0", nullable = false)
     private Integer isDeleted;
 
-    @ManyToMany(mappedBy = "sites")
-    private Set<User> users;
+//    @ManyToMany(mappedBy = "sites")
+//    private Set<User> users;
 
     @OneToMany(targetEntity = Page.class, mappedBy = "site")
     private Set<Page> pages;

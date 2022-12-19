@@ -1,12 +1,12 @@
 package pet.skillbox.sitesearchengine.controller.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.mail.MessagingException;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import pet.skillbox.sitesearchengine.configuration.Config;
 import pet.skillbox.sitesearchengine.configuration.SiteProperty;
@@ -17,7 +17,7 @@ import pet.skillbox.sitesearchengine.model.thread.StatisticThread;
 import pet.skillbox.sitesearchengine.services.CrawlingService;
 import pet.skillbox.sitesearchengine.services.EmailServiceImpl;
 
-import javax.servlet.http.HttpServletRequest;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,7 +45,7 @@ public class IndexingController {
     }
 
     @PostMapping(path="/api/startIndexing", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
-    public ResponseEntity<IndexingResponse> startIndexing(@RequestBody String body) throws IOException, InterruptedException, ExecutionException, MessagingException {
+    public ResponseEntity<IndexingResponse> startIndexing(@RequestBody String body) throws IOException, InterruptedException, ExecutionException,  javax.mail.MessagingException {
         System.out.println(body);
 
         Map<String, Object> tmp = new ObjectMapper().readValue(body, HashMap.class);
@@ -92,6 +92,7 @@ public class IndexingController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @PreAuthorize("hasAuthority('USER')")
     @GetMapping(path="/api/statistics", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
     public ResponseEntity<Statistic> statistics() throws ExecutionException, InterruptedException {
         System.out.println("Зашли в статистику");

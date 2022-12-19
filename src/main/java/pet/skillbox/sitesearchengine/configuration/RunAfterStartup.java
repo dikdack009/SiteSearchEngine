@@ -1,6 +1,6 @@
 package pet.skillbox.sitesearchengine.configuration;
 
-import jakarta.mail.MessagingException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.configurationprocessor.json.JSONArray;
 import org.springframework.boot.configurationprocessor.json.JSONException;
@@ -32,7 +32,7 @@ public class RunAfterStartup {
     }
 
     @EventListener(ApplicationReadyEvent.class)
-    public void runAfterStartup() throws IOException, ExecutionException, InterruptedException, MessagingException {
+    public void runAfterStartup() throws IOException, ExecutionException, InterruptedException, javax.mail.MessagingException {
         if (crawlingService.getFields().isEmpty()) {
             crawlingService.insertBasicFields();
         }
