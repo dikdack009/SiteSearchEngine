@@ -23,10 +23,13 @@ public class Link {
     private String name;
     @Column(columnDefinition = "TINYINT(1)")
     private int isSelected;
+    @Column(name = "user_id", columnDefinition = "INT default 0", nullable = false)
+    private int userId;
 
-    public Link(String link, String name, int isSelected) {
+    public Link(String link, String name, int isSelected, int userId) {
         this.link = link;
         this.name = name;
         this.isSelected = isSelected;
+        this.userId = userId;
     }
 }

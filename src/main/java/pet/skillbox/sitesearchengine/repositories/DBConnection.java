@@ -115,22 +115,22 @@ public class DBConnection {
         getConnection().createStatement().execute(sql);
     }
 
-    public static int countSites(int siteId) throws SQLException {
-        String sql = "SELECT COUNT(distinct id) AS c FROM site WHERE is_deleted = 0";
-        return sqlRequest(siteId, sql);
+    public static int countSites(int siteId, int userId) throws SQLException {
+        String sql = "SELECT COUNT(distinct id) AS c FROM site WHERE is_deleted = 0 and user_id = " + userId;
+        return sqlRequest(siteId, sql, userId);
     }
 
-    public static int countLemmas(int siteId) throws SQLException {
+    public static int countLemmas(int siteId, int userId) throws SQLException {
         String sql = "SELECT COUNT(distinct id) AS c FROM lemma WHERE is_deleted = 0";
-        return sqlRequest(siteId, sql);
+        return sqlRequest(siteId, sql, userId);
     }
 
-    public static int countPages(int siteId) throws SQLException {
+    public static int countPages(int siteId, int userId) throws SQLException {
         String sql = "SELECT COUNT(distinct id) AS c FROM page WHERE is_deleted = 0";
-        return sqlRequest(siteId, sql);
+        return sqlRequest(siteId, sql, userId);
     }
 
-    private static int sqlRequest(int siteId, String sql) throws SQLException {
+    private static int sqlRequest(int siteId, String sql, int userId) throws SQLException {
 //        System.out.println(sql);
         ResultSet rs = null;
         if (siteId > 0){
@@ -170,12 +170,12 @@ public class DBConnection {
         return site;
     }
 
-    public static List<DetailedSite> getDBStatistic() throws SQLException {
+    public static List<DetailedSite> getDBStatistic(int userId) throws SQLException {
         List<DetailedSite> stat = new ArrayList<>();
         System.out.println("Статистика из бд");
         ResultSet rs = null;
         try {
-            rs = getConnection().createStatement().executeQuery("SELECT * FROM site");
+            rs = getConnection().createStatement().executeQuery("SELECT * FROM site WHERE user_id = " + userId);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -201,7 +201,7 @@ public class DBConnection {
             String name = rs.getString("name");
             String error = rs.getString("last_error");
             stat.add(new DetailedSite(url, name, status, time,
-                    error, countPages(id),  countLemmas(id)));
+                    error, countPages(id, userId),  countLemmas(id, userId)));
         }
         System.out.println("Вернули статистику");
         return stat;

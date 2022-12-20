@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class CrawlingService {
@@ -91,13 +92,13 @@ public class CrawlingService {
     public int addSite(Site site) {
         site.setIsDeleted(0);
         siteRepository.save(site);
-        return getSiteIdByUrl(site.getUrl());
+        return getSiteIdByUrl(site.getUrl(), site.getUserId());
     }
 
     @Transactional
     public int updateStatus(Site site) {
-        int siteId = getSiteIdByUrl(site.getUrl());
-        System.out.println(site);
+        int siteId = getSiteIdByUrl(site.getUrl(), site.getUserId());
+        System.out.println(siteId + " " + site);
         if (siteId > 0) {
             siteRepository.updateSiteStatus(site.getStatus(), site.getStatusTime(), site.getLastError(), siteId);
 
@@ -109,7 +110,7 @@ public class CrawlingService {
 
     @Transactional(readOnly = true)
     public Site getSiteByUrl(String url) {
-        return siteRepository.getByUrl(url) ;
+        return siteRepository.getByUrlAndUserId(url, 0) ;
     }
 
     @Transactional(readOnly = true)
@@ -119,8 +120,10 @@ public class CrawlingService {
     }
 
     @Transactional(readOnly = true)
-    public int getSiteIdByUrl(String url) {
-        Site site = siteRepository.getByUrl(url);
+    public int getSiteIdByUrl(String url, int userId) {
+        System.out.println("url = " + url);
+        System.out.println(siteRepository.findAll());
+        Site site = siteRepository.getByUrlAndUserId(url, userId);
         return site == null ? -1 : site.getId() ;
     }
 
@@ -143,19 +146,19 @@ public class CrawlingService {
     }
 
     @Transactional
-    public void updateLinks(Map<String, Integer> link) {
-        link.forEach(linkRepository::updateLink);
+    public void updateLinks(Map<String, Integer> links, int userId) {
+        links.forEach((l, i) -> linkRepository.updateLink(l, i, userId));
     }
 
     @Transactional
-    public void updateLink(String link, Integer isSelected) {
-        linkRepository.updateLink(link, isSelected);
+    public void updateLink(String link, Integer isSelected, int userId) {
+        linkRepository.updateLink(link, isSelected, userId);
     }
 
     @Transactional(readOnly = true)
-    public List<LinkModel> getLinks() {
+    public List<LinkModel> getLinks(int userId) {
         List<LinkModel> models = new ArrayList<>();
-        List<Link> links = linkRepository.findAll();
+        List<Link> links = linkRepository.findAll().stream().filter(link -> link.getUserId() == userId).collect(Collectors.toList());
         for (Link link : links) {
             models.add(new LinkModel(link.getLink(), link.getName(), link.getIsSelected()));
         }

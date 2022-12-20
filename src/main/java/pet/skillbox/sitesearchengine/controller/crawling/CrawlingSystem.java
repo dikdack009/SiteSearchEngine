@@ -136,7 +136,7 @@ public class CrawlingSystem {
         Page tmpPage = allLinks.get(path);
         Page page = new Page(tmpPage.getPath(), tmpPage.getCode(), tmpPage.getContent());
         Site tmpSite = new Site(site.getId(), site.getStatus(), site.getStatusTime(),
-                site.getLastError(), site.getUrl(), site.getName(), 0);
+                site.getLastError(), site.getUrl(), site.getName(), 0, 0);
 
         page.setSite(tmpSite);
         int siteId = site.getId();

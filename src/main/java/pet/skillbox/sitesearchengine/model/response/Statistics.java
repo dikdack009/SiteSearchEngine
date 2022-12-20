@@ -10,9 +10,11 @@ import java.util.List;
 public class Statistics {
     private final Total total;
     private final List<DetailedSite> detailed;
+    private final int userId;
 
-    public Statistics(boolean isIndexing) throws SQLException {
-        total = new Total(isIndexing);
-        detailed = DBConnection.getDBStatistic();
+    public Statistics(boolean isIndexing, int userId) throws SQLException {
+        total = new Total(isIndexing, userId);
+        this.userId = userId;
+        detailed = DBConnection.getDBStatistic(userId);
     }
 }

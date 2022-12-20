@@ -32,7 +32,7 @@ public class RunAfterStartup {
     }
 
     @EventListener(ApplicationReadyEvent.class)
-    public void runAfterStartup() throws IOException, ExecutionException, InterruptedException, javax.mail.MessagingException {
+    public void runAfterStartup() throws IOException, ExecutionException, InterruptedException, javax.mail.MessagingException, JSONException {
         if (crawlingService.getFields().isEmpty()) {
             crawlingService.insertBasicFields();
         }
@@ -50,4 +50,5 @@ public class RunAfterStartup {
         System.out.println("Yaaah, I am running........");
 
     }
+    //TODO: подмать как пользователя тут
 }

@@ -17,8 +17,8 @@ public interface LinkRepository extends JpaRepository<Link, Integer> {
     void deleteLinkByLink(String link);
     @Transactional
     @Modifying
-    @Query("UPDATE Link SET isSelected = ?2 WHERE link= ?1")
-    void updateLink(String link, Integer isSelected);
+    @Query("UPDATE Link SET isSelected = ?2 WHERE link= ?1 and userId = ?3")
+    void updateLink(String link, Integer isSelected, int userId);
 
 //    @Override
 //    void deleteAll();

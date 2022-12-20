@@ -11,10 +11,10 @@ public class Total {
     private final int lemmas;
     private final boolean isIndexing;
 
-    public Total(boolean isIndexing) throws SQLException {
-        sites = DBConnection.countSites(0);
-        pages = DBConnection.countPages(0);
-        lemmas = DBConnection.countLemmas(0);
+    public Total(boolean isIndexing, int userId) throws SQLException {
+        sites = DBConnection.countSites(0, userId);
+        pages = DBConnection.countPages(0, userId);
+        lemmas = DBConnection.countLemmas(0, userId);
         this.isIndexing = isIndexing;
     }
 }

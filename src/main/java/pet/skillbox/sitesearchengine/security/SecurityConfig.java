@@ -51,15 +51,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter implements WebM
                 )
                 .and()
                 .authorizeRequests()
-                .antMatchers("/api/auth/login", "/api/auth/token").permitAll()
+                .antMatchers("/api/auth/login", "/api/auth/token", "/api/registration").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .addFilterAfter(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
     }
 
     @Override

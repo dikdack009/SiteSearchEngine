@@ -15,7 +15,7 @@ import java.util.List;
 
 @Repository
 public interface SiteRepository extends JpaRepository<Site,Integer> {
-    Site getByUrl(String url);
+    Site getByUrlAndUserId(String url, int userId);
     @Transactional
     @Modifying
     @Query("UPDATE Site SET status = ?1, statusTime = ?2, lastError = ?3 WHERE id = ?4")
