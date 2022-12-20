@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
+import pet.skillbox.sitesearchengine.model.response.DetailedSite;
 import pet.skillbox.sitesearchengine.model.response.Statistic;
 import pet.skillbox.sitesearchengine.model.thread.StatisticThread;
 
@@ -34,6 +35,8 @@ import java.util.concurrent.Executors;
 public class EmailServiceImpl  {
 
     private final JavaMailSender emailSender;
+    private boolean checkOk = false;
+    private boolean checkError = false;
     String text =
            "<h2><div style = \"display: inline-block\"> Индексация 1 сайта на сайте </div>\n" +
                    "   <div style = \"display: inline-block\">\n" +
@@ -57,18 +60,30 @@ public class EmailServiceImpl  {
 
         Multipart mp = new MimeMultipart();
         MimeBodyPart htmlPart = new MimeBodyPart();
-        htmlPart.setContent(createMessageText(sites, userId), "text/html; charset = utf-8");
+        String text = createMessageText(sites, userId);
+        htmlPart.setContent(text, "text/html; charset = utf-8");
         mp.addBodyPart(htmlPart);
 
         DataSource fdsOk = new FileDataSource(
                 "C:\\SiteSearchEngine\\src\\main\\resources\\img\\indexInfoOk.png");
+        DataSource fdsError = new FileDataSource(
+                "C:\\SiteSearchEngine\\src\\main\\resources\\img\\indexInfoError.png");
 
 
         MimeBodyPart picturePart = new MimeBodyPart();
-        picturePart.setDataHandler(new DataHandler(fdsOk));
-        System.out.println("КАКОЕ_ТО ИМЯ " + fdsOk.getName()    );
-        picturePart.setHeader("Content-ID", fdsOk.getName());
-        mp.addBodyPart(picturePart);
+        if (checkOk) {
+            picturePart.setDataHandler(new DataHandler(fdsOk));
+            System.out.println("КАКОЕ_ТО ИМЯ " + fdsOk.getName());
+            picturePart.setHeader("Content-ID", fdsOk.getName());
+            mp.addBodyPart(picturePart);
+        }
+        if (checkError) {
+            picturePart = new MimeBodyPart();
+            picturePart.setDataHandler(new DataHandler(fdsError));
+            System.out.println("КАКОЕ_ТО ИМЯ " + fdsError.getName());
+            picturePart.setHeader("Content-ID", fdsError.getName());
+            mp.addBodyPart(picturePart);
+        }
 //        helper.setFrom("noreply@serchengine.ru");
 //        helper.setTo("d.harke@yandex.ru");
         helper.setTo("dikdacksun@gmail.com");
@@ -80,44 +95,47 @@ public class EmailServiceImpl  {
         message.setSender(address);
 
         emailSender.send(message);
+        checkOk = false;
+        checkError = false;
         System.out.println("Отправили письмо");
         // ...
     }
 
     private String createMessageText(Map<String, String> sites, int userId) throws ExecutionException, InterruptedException, JSONException, SQLException {
         int numberSites = sites.size();
-        String js = getStatistics(userId);
-        System.out.println(js);
-        JSONObject json = new JSONObject(js);
-        JSONArray array = json.getJSONObject("statistics").getJSONArray("detailed");
+        List<DetailedSite> detailedSites = getStatistics(userId);
         StringBuilder stat = new StringBuilder();
         for (String url : sites.keySet()) {
             String status = "";
             String file = "";
-            for (int i = 0; i < array.length(); ++i) {
-                JSONObject object = array.getJSONObject(i);
-                if (object.getString("url").equals(url)) {
-                    if (object.getString("status").equals("INDEXED")) {
+            String error = "";
+            for (DetailedSite d : detailedSites) {
+
+                if (d.getUrl().equals(url)) {
+                    if (d.getStatus().equals("INDEXED")) {
                         status = "Проиндексировано";
                         file = "indexInfoOk.png";
+                        checkOk = true;
                     }
-                    else if (object.getString("status").equals("FAILED")) {
+                    else if (d.getStatus().equals("FAILED")) {
                         status = "Ошибка";
                         file = "indexInfoError.png";
+                        error = ": "+ d.getError();
+                        checkError = true;
                     }
                 }
             }
             String name = sites.get(url);
 
             stat.append("<div style=\"display: flex;\n").append("margin-top: 10px;\">\n")
-                    .append("<span style=\"width: 40vw;\"><b>").append(name).append("&nbsp;&mdash;</b>&nbsp;")
+                    .append("<span style=\"width: 30vw;\"><b>").append(name).append("&nbsp;&mdash;</b>&nbsp;")
                     .append(url).append("</span>\n").append("<div style=\"display: flex; align-items: center\">\n")
                     .append("<img alt=\"hui\" width=\"35\" height=\"35\" src=\"cid:").append(file).append("\">\n")
-                    .append("<span style=\"margin-right: 3vw; margin-left:10px\">").append(status).append("</span>\n")
-                    .append("</div>\n").append("</div>\n");
+                    .append("<span style=\"margin-right: 3vw; margin-left:10px\"><b>").append(status).append("</b>")
+                    .append(error).append("</span>\n").append("</div>\n").append("</div>\n");
         }
         String siteInfo = numberSites + " веб-" + getNoun(numberSites, "ресурс", "ресурса", "ресурсов");
-
+        System.out.println(stat);
         return
                 "<!DOCTYPE html>\n" +
                 "<html lang=\"en\">\n" +
@@ -202,7 +220,7 @@ public class EmailServiceImpl  {
         return five;
     }
 
-    private String getStatistics(int userId) throws ExecutionException, InterruptedException, SQLException {
-        return new Statistic(false, userId).getStatistics().getDetailed().toString();
+    private List<DetailedSite> getStatistics(int userId) throws SQLException {
+        return new Statistic(false, userId).getStatistics().getDetailed();
     }
 }

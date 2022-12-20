@@ -15,6 +15,7 @@ import pet.skillbox.sitesearchengine.repositories.DBConnection;
 import pet.skillbox.sitesearchengine.services.CrawlingService;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -32,7 +33,7 @@ public class RunAfterStartup {
     }
 
     @EventListener(ApplicationReadyEvent.class)
-    public void runAfterStartup() throws IOException, ExecutionException, InterruptedException, javax.mail.MessagingException, JSONException {
+    public void runAfterStartup() throws IOException, ExecutionException, InterruptedException, javax.mail.MessagingException, JSONException, SQLException {
         if (crawlingService.getFields().isEmpty()) {
             crawlingService.insertBasicFields();
         }
@@ -47,6 +48,7 @@ public class RunAfterStartup {
             indexingController.startIndexing(stringJoiner.toString());
         }
 //        DBConnection.addIndexes();
+        crawlingService.setNewDeleteIndex();
         System.out.println("Yaaah, I am running........");
 
     }
