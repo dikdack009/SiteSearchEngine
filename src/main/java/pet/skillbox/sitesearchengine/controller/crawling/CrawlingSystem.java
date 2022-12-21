@@ -42,6 +42,7 @@ public class CrawlingSystem {
     private Map<String, Page> allLinks;
     private final Config config;
     private final CrawlingService crawlingService;
+    private int userId;
 
 
     @Autowired
@@ -52,7 +53,7 @@ public class CrawlingSystem {
         rootLogger = LogManager.getRootLogger();
     }
 
-    public CrawlingSystem(CrawlingSystem newCrawlingSystem) {
+    public CrawlingSystem(CrawlingSystem newCrawlingSystem, int userId) {
         this.site = newCrawlingSystem.getSite();
         this.rootLogger = newCrawlingSystem.getRootLogger();
         this.config = newCrawlingSystem.getConfig();
@@ -60,11 +61,13 @@ public class CrawlingSystem {
         this.allLinks = newCrawlingSystem.getAllLinks();
         this.fieldList = newCrawlingSystem.getFieldList();
         this.lastError = newCrawlingSystem.getLastError();
+        this.userId = userId;
     }
 
-    public CrawlingSystem(Config config, CrawlingService crawlingService, Site site) {
+    public CrawlingSystem(Config config, CrawlingService crawlingService, Site site, int userId) {
         this.config = config;
         this.crawlingService = crawlingService;
+        this.userId = userId;
         rootLogger = LogManager.getRootLogger();
         fieldList = crawlingService.gelAllFields();
         site.setId(crawlingService.updateStatus(site));
@@ -75,10 +78,10 @@ public class CrawlingSystem {
         long mm = System.currentTimeMillis();
         CopyOnWriteArraySet<String> links = new CopyOnWriteArraySet<>();
         Map<String, Page> allLinksMap = Collections.synchronizedMap(new HashMap<>());
-        LinksGenerationSystem linksGenerator = new LinksGenerationSystem(site.getUrl(), site.getUrl(), links, allLinksMap, config);
+        LinksGenerationSystem linksGenerator = new LinksGenerationSystem(site.getUrl(), site.getUrl(), links, allLinksMap, config, userId);
         new ForkJoinPool().invoke(linksGenerator);
 
-        if (config.isStopIndexing()) {
+        if (config.getStopIndexing().get(userId)) {
             rootLogger.info("Остановили - " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")));
             return null;
         }
@@ -95,7 +98,8 @@ public class CrawlingSystem {
     }
 
     public void start(Config config) {
-        if (config.isStopIndexing()) {
+        System.out.println(config.getStopIndexing());
+        if (config.getStopIndexing().get(userId)) {
             return;
         }
         rootLogger.info("Новый запуск id = " + site.getId() + " - " + site.getUrl());
@@ -109,12 +113,12 @@ public class CrawlingSystem {
         rootLogger.info("На сайте " + site.getUrl() + " Кол-во ссылок: " + allLinks.keySet().size());
         List<CrawlingThread> threadList = new ArrayList<>();
         int finalSiteId = site.getId();
-        chunked.forEach(c -> threadList.add(new CrawlingThread(c, this, finalSiteId)));
+        chunked.forEach(c -> threadList.add(new CrawlingThread(c, this, finalSiteId, userId)));
         threadList.forEach(Thread::start);
         threadList.forEach(t -> {
             try {
                 t.join();
-                if (config.isStopIndexing()) {
+                if (config.getStopIndexing().get(userId)) {
                     t.interrupt();
                 }
             } catch (InterruptedException e) {
@@ -130,7 +134,7 @@ public class CrawlingSystem {
     }
 
     public void appendPageInDB(String path, Builder builder){
-        if (config.isStopIndexing()) {
+        if (config.getStopIndexing().get(userId)) {
             return;
         }
         Page tmpPage = allLinks.get(path);
@@ -157,7 +161,7 @@ public class CrawlingSystem {
         Set<String> allWords = new HashSet<>();
 
         for (Field field : fieldList) {
-            if (config.isStopIndexing()) {
+            if (config.getStopIndexing().get(userId)) {
                 return;
             }
             String tagContent = d.select(field.getName()).text();

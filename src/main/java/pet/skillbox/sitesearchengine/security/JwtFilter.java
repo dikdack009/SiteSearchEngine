@@ -7,7 +7,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.GenericFilterBean;
-import pet.skillbox.sitesearchengine.services.UserService;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -23,12 +22,10 @@ public class JwtFilter extends GenericFilterBean {
     private static final String AUTHORIZATION = "Authorization";
 
     private final JwtProvider jwtProvider;
-    private final UserService userService;
 
     @Autowired
-    public JwtFilter(JwtProvider jwtProvider, UserService userService) {
+    public JwtFilter(JwtProvider jwtProvider) {
         this.jwtProvider = jwtProvider;
-        this.userService = userService;
     }
 
 
@@ -54,16 +51,4 @@ public class JwtFilter extends GenericFilterBean {
         }
         return null;
     }
-
-    public int getUserId(HttpServletRequest request) {
-        final String token = getTokenFromRequest(request);
-        System.out.println("token " + token);
-        if (token != null) {
-            final Claims claims = jwtProvider.getAccessClaims(token);
-            String usernameHash = JwtUtils.getUsername(claims);
-            return userService.getIdByLogin(usernameHash);
-        }
-        return 0;
-    }
-
 }

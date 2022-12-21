@@ -6,7 +6,9 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Getter
@@ -23,9 +25,11 @@ public class Config {
 
     @Getter
     private String path;
-
     @Getter
     @Setter
-    private boolean stopIndexing;
+    private Map<Integer, Boolean> userIndexing = new HashMap<>();
+    @Getter
+    @Setter
+    private Map<Integer, Boolean> stopIndexing = new HashMap<>();
 
 }

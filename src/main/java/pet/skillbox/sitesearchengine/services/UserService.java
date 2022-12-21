@@ -40,8 +40,7 @@ public class UserService implements UserDetailsService  {
             return false;
         }
 
-        user.setLogin(bCryptPasswordEncoder.encode(user.getLogin()));
-        user.setPassword(bCryptPasswordEncoder.encode(user.getLogin() +  user.getPassword()));
+        user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
         userRepository.save(user);
         return true;
     }
@@ -54,19 +53,8 @@ public class UserService implements UserDetailsService  {
         return false;
     }
 
-    public Optional<User> getByHashLogin(String login) {
-        return userRepository.findAll().stream()
-                .filter(user -> bCryptPasswordEncoder.matches(login, user.getLogin())).findFirst();
-    }
-
-//    public String getLoginByHashLogin(String login) {
-//        return userRepository.findAll().stream()
-//                .anyMatch(user -> bCryptPasswordEncoder.matches(login, user.getLogin())) ? ;
-//    }
-
-    public boolean validateUserPassword(String pair) {
-        return userRepository.findAll().stream()
-                .anyMatch(user -> bCryptPasswordEncoder.matches(pair, user.getPassword()));
+    public boolean validateUserPassword(String login, String password) {
+        return bCryptPasswordEncoder.matches(password, userRepository.findByLogin(login).getPassword());
     }
 
     public Optional<User> getByLogin(String login) {

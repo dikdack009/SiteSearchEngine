@@ -3,7 +3,6 @@ package pet.skillbox.sitesearchengine.model.thread;
 import pet.skillbox.sitesearchengine.controller.crawling.CrawlingSystem;
 import pet.skillbox.sitesearchengine.model.Builder;
 import pet.skillbox.sitesearchengine.repositories.DBConnection;
-import pet.skillbox.sitesearchengine.services.CrawlingService;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -16,10 +15,10 @@ public class CrawlingThread extends Thread{
     private final CrawlingSystem crawlingSystem;
     private final int siteId;
 
-    public CrawlingThread(List<String> urlPool, CrawlingSystem crawlingSystem, int siteId){
+    public CrawlingThread(List<String> urlPool, CrawlingSystem crawlingSystem, int siteId, int userId){
         CrawlingSystem crawlingSystem1;
         this.urlPool = urlPool;
-        crawlingSystem1 = new CrawlingSystem(crawlingSystem);
+        crawlingSystem1 = new CrawlingSystem(crawlingSystem, userId);
         this.crawlingSystem = crawlingSystem1;
         this.siteId = siteId;
     }

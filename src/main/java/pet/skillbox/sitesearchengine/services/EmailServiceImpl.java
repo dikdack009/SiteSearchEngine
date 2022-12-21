@@ -1,17 +1,11 @@
 package pet.skillbox.sitesearchengine.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.configurationprocessor.json.JSONArray;
-import org.springframework.boot.configurationprocessor.json.JSONException;
-import org.springframework.boot.configurationprocessor.json.JSONObject;
-import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 import pet.skillbox.sitesearchengine.model.response.DetailedSite;
 import pet.skillbox.sitesearchengine.model.response.Statistic;
-import pet.skillbox.sitesearchengine.model.thread.StatisticThread;
-
 
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
@@ -20,16 +14,9 @@ import javax.mail.Address;
 import javax.mail.MessagingException;
 import javax.mail.Multipart;
 import javax.mail.internet.*;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 @Component
 public class EmailServiceImpl  {
@@ -37,25 +24,16 @@ public class EmailServiceImpl  {
     private final JavaMailSender emailSender;
     private boolean checkOk = false;
     private boolean checkError = false;
-    String text =
-           "<h2><div style = \"display: inline-block\"> Индексация 1 сайта на сайте </div>\n" +
-                   "   <div style = \"display: inline-block\">\n" +
-                   "     <a href = \"http://localhost:3000/\"> SearchEngine.ru </a>\n" +
-                   "    </div>\n" +
-                   "   <div style = \"display: inline-block\"> завершена.</div>\n" +
-                   "     </h2>\n" +
-                   "     <h3>Теперь вы можете осуществить поиск! </h3><h3> P.S. Nice COCK bro)</h3>";
+    private final static String PATH_PICTURE_OK = "C:\\SiteSearchEngine\\src\\main\\resources\\img\\indexInfoOk.png";
+    private final static String PATH_PICTURE_ERROR = "C:\\SiteSearchEngine\\src\\main\\resources\\img\\indexInfoError.png";
 
     @Autowired
     public EmailServiceImpl(JavaMailSender emailSender) {
         this.emailSender = emailSender;
     }
 
-    public void sendMessage(String to, int userId, Map<String, String> sites) throws UnsupportedEncodingException, MessagingException, ExecutionException, InterruptedException, JSONException, SQLException {
-        // ...
-
+    public void sendMessage(String to, int userId, Map<String, String> sites) throws UnsupportedEncodingException, MessagingException, SQLException {
         MimeMessage message = emailSender.createMimeMessage();
-
         MimeMessageHelper helper = new MimeMessageHelper(message, true);
 
         Multipart mp = new MimeMultipart();
@@ -64,30 +42,23 @@ public class EmailServiceImpl  {
         htmlPart.setContent(text, "text/html; charset = utf-8");
         mp.addBodyPart(htmlPart);
 
-        DataSource fdsOk = new FileDataSource(
-                "C:\\SiteSearchEngine\\src\\main\\resources\\img\\indexInfoOk.png");
-        DataSource fdsError = new FileDataSource(
-                "C:\\SiteSearchEngine\\src\\main\\resources\\img\\indexInfoError.png");
+        DataSource fdsOk = new FileDataSource(PATH_PICTURE_OK);
+        DataSource fdsError = new FileDataSource(PATH_PICTURE_ERROR);
 
 
         MimeBodyPart picturePart = new MimeBodyPart();
         if (checkOk) {
             picturePart.setDataHandler(new DataHandler(fdsOk));
-            System.out.println("КАКОЕ_ТО ИМЯ " + fdsOk.getName());
             picturePart.setHeader("Content-ID", fdsOk.getName());
             mp.addBodyPart(picturePart);
         }
         if (checkError) {
             picturePart = new MimeBodyPart();
             picturePart.setDataHandler(new DataHandler(fdsError));
-            System.out.println("КАКОЕ_ТО ИМЯ " + fdsError.getName());
             picturePart.setHeader("Content-ID", fdsError.getName());
             mp.addBodyPart(picturePart);
         }
-//        helper.setFrom("noreply@serchengine.ru");
-//        helper.setTo("d.harke@yandex.ru");
-        helper.setTo("dikdacksun@gmail.com");
-//        helper.setTo(to);
+        helper.setTo(to);
         helper.setSubject("Индексация завершена");
         message.setContent(mp);
         message.setFrom(new InternetAddress("no_reply@example.com", "NoReply-SearchEngine"));
@@ -98,10 +69,9 @@ public class EmailServiceImpl  {
         checkOk = false;
         checkError = false;
         System.out.println("Отправили письмо");
-        // ...
     }
 
-    private String createMessageText(Map<String, String> sites, int userId) throws ExecutionException, InterruptedException, JSONException, SQLException {
+    private String createMessageText(Map<String, String> sites, int userId) throws SQLException {
         int numberSites = sites.size();
         List<DetailedSite> detailedSites = getStatistics(userId);
         StringBuilder stat = new StringBuilder();
@@ -128,14 +98,13 @@ public class EmailServiceImpl  {
             String name = sites.get(url);
 
             stat.append("<div style=\"display: flex;\n").append("margin-top: 10px;\">\n")
-                    .append("<span style=\"width: 30vw;\"><b>").append(name).append("&nbsp;&mdash;</b>&nbsp;")
+                    .append("<span style=\"width: 25vw;\"><b>").append(name).append("&nbsp;&mdash;</b>&nbsp;")
                     .append(url).append("</span>\n").append("<div style=\"display: flex; align-items: center\">\n")
                     .append("<img alt=\"hui\" width=\"35\" height=\"35\" src=\"cid:").append(file).append("\">\n")
                     .append("<span style=\"margin-right: 3vw; margin-left:10px\"><b>").append(status).append("</b>")
                     .append(error).append("</span>\n").append("</div>\n").append("</div>\n");
         }
-        String siteInfo = numberSites + " веб-" + getNoun(numberSites, "ресурс", "ресурса", "ресурсов");
-        System.out.println(stat);
+        String siteInfo = numberSites + " веб-" + getNoun(numberSites);
         return
                 "<!DOCTYPE html>\n" +
                 "<html lang=\"en\">\n" +
@@ -204,20 +173,20 @@ public class EmailServiceImpl  {
                 "</html>";
     }
 
-    private String getNoun(int number, String one, String two, String five) {
+    private String getNoun(int number) {
         int n = Math.abs(number);
         n %= 100;
         if (n >= 5 && n <= 20) {
-            return five;
+            return "ресурсов";
         }
         n %= 10;
         if (n == 1) {
-            return one;
+            return "ресурс";
         }
         if (n >= 2 && n <= 4) {
-            return two;
+            return "ресурса";
         }
-        return five;
+        return "ресурсов";
     }
 
     private List<DetailedSite> getStatistics(int userId) throws SQLException {

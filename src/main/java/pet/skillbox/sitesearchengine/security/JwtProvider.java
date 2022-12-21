@@ -76,8 +76,6 @@ public class JwtProvider {
             log.error("Token expired", expEx);
         } catch (UnsupportedJwtException unsEx) {
             log.error("Unsupported jwt", unsEx);
-        } catch (MalformedJwtException mjEx) {
-            log.error("Malformed jwt", mjEx);
         } catch (SignatureException sEx) {
             log.error("Invalid signature", sEx);
         } catch (Exception e) {

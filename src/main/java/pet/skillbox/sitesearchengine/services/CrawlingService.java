@@ -76,18 +76,6 @@ public class CrawlingService {
         return lemmaList;
     }
 
-//    @Transactional
-//    public void addLemma(Lemma lemma) {
-//        System.out.println(lemma);
-//        Lemma oldLemma = lemmaRepository.getLemmaByLemmaAndIsDeleted(lemma.getLemma(), 0);
-//        System.out.println(oldLemma);
-//        if (oldLemma == null) {
-//            lemmaRepository.save(lemma);
-//        } else {
-//            lemmaRepository.updateLemma(lemma.getLemma(), lemma.getFrequency() + 1, lemma.getId());
-//        }
-//    }
-
     @Transactional
     public int addSite(Site site) {
         site.setIsDeleted(0);

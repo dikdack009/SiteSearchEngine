@@ -24,20 +24,23 @@ public class LinksGenerationSystem extends RecursiveAction {
     private final Config config;
     @Getter
     private String error;
+    private final int userId;
 
     public LinksGenerationSystem(String rootUrl, String url,
-                                 CopyOnWriteArraySet<String> allLinks, Map<String, Page> allLinksMap, Config config) {
+                                 CopyOnWriteArraySet<String> allLinks, Map<String, Page> allLinksMap, Config config, int userId) {
         this.rootUrl = rootUrl;
         this.url = url;
         this.allLinks = allLinks;
         this.allLinksMap = allLinksMap;
         this.config = config;
+        this.userId = userId;
         error = null;
     }
 
     @Override
     protected void compute() {
-        if (allLinks.size() > 40_000 || config.isStopIndexing()) {
+        System.out.println(config.getStopIndexing());
+        if (allLinks.size() > 40_000 || config.getStopIndexing().get(userId)) {
             return;
         }
         Set<LinksGenerationSystem> taskList = new HashSet<>();
@@ -72,7 +75,7 @@ public class LinksGenerationSystem extends RecursiveAction {
         }
 
         for (String link : list) {
-            LinksGenerationSystem task = new LinksGenerationSystem(rootUrl, link, allLinks, allLinksMap, config);
+            LinksGenerationSystem task = new LinksGenerationSystem(rootUrl, link, allLinks, allLinksMap, config, userId);
             task.fork();
             taskList.add(task);
         }
