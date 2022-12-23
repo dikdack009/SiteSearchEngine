@@ -8,7 +8,7 @@ org.springframework.context.ApplicationContextException: Unable to start web ser
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:316) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1260) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1248) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
-	at pet.skillbox.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:24) [classes/:?]
+	at pet.diploma.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:24) [classes/:?]
 	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
 	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
 	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
@@ -41,7 +41,7 @@ org.springframework.beans.factory.BeanDefinitionStoreException: Failed to read c
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:316) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1260) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1248) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
-	at pet.skillbox.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:31) [classes/:?]
+	at pet.diploma.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:31) [classes/:?]
 	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
 	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
 	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
@@ -85,7 +85,7 @@ org.springframework.beans.factory.BeanDefinitionStoreException: Failed to read c
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:316) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1260) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1248) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
-	at pet.skillbox.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:31) [classes/:?]
+	at pet.diploma.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:31) [classes/:?]
 	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
 	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
 	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
@@ -129,7 +129,7 @@ org.springframework.beans.factory.BeanDefinitionStoreException: Failed to read c
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:316) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1260) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1248) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
-	at pet.skillbox.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:31) [classes/:?]
+	at pet.diploma.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:31) [classes/:?]
 	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
 	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
 	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
@@ -173,7 +173,7 @@ org.springframework.beans.factory.BeanDefinitionStoreException: Failed to read c
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:316) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1260) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1248) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
-	at pet.skillbox.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:31) [classes/:?]
+	at pet.diploma.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:31) [classes/:?]
 	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
 	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
 	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
@@ -217,7 +217,7 @@ org.springframework.beans.factory.BeanDefinitionStoreException: Failed to read c
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:316) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1260) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1248) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
-	at pet.skillbox.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:31) [classes/:?]
+	at pet.diploma.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:31) [classes/:?]
 	at jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104) ~[?:?]
 	at java.lang.reflect.Method.invoke(Method.java:578) ~[?:?]
 	at org.springframework.boot.devtools.restart.RestartLauncher.run(RestartLauncher.java:49) [spring-boot-devtools-2.1.4.RELEASE.jar:2.1.4.RELEASE]
@@ -259,7 +259,7 @@ org.springframework.beans.factory.BeanDefinitionStoreException: Failed to read c
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:316) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1260) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1248) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
-	at pet.skillbox.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:31) [classes/:?]
+	at pet.diploma.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:31) [classes/:?]
 	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
 	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
 	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
@@ -303,7 +303,7 @@ org.springframework.beans.factory.BeanDefinitionStoreException: Failed to read c
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:316) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1260) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1248) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
-	at pet.skillbox.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:31) [classes/:?]
+	at pet.diploma.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:31) [classes/:?]
 	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
 	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
 	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
@@ -347,7 +347,7 @@ org.springframework.beans.factory.BeanDefinitionStoreException: Failed to read c
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:316) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1260) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1248) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
-	at pet.skillbox.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:31) [classes/:?]
+	at pet.diploma.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:31) [classes/:?]
 	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
 	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
 	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
@@ -391,7 +391,7 @@ org.springframework.beans.factory.BeanDefinitionStoreException: Failed to read c
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:316) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1260) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1248) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
-	at pet.skillbox.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:31) [classes/:?]
+	at pet.diploma.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:31) [classes/:?]
 	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
 	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
 	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
@@ -435,7 +435,7 @@ org.springframework.beans.factory.BeanDefinitionStoreException: Failed to read c
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:316) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1260) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1248) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
-	at pet.skillbox.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:31) [classes/:?]
+	at pet.diploma.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:31) [classes/:?]
 	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
 	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
 	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
@@ -479,7 +479,7 @@ org.springframework.beans.factory.BeanDefinitionStoreException: Failed to read c
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:316) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1260) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1248) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
-	at pet.skillbox.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:31) [classes/:?]
+	at pet.diploma.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:31) [classes/:?]
 	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
 	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
 	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
@@ -523,7 +523,7 @@ org.springframework.beans.factory.BeanDefinitionStoreException: Failed to read c
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:316) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1260) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1248) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
-	at pet.skillbox.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:31) [classes/:?]
+	at pet.diploma.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:31) [classes/:?]
 	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
 	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
 	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
@@ -559,7 +559,7 @@ java.lang.NoClassDefFoundError: javax/persistence/EntityManagerFactory
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:316) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1260) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1248) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
-	at pet.skillbox.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:31) [classes/:?]
+	at pet.diploma.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:31) [classes/:?]
 	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
 	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
 	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
@@ -584,7 +584,7 @@ java.lang.NoClassDefFoundError: javax/persistence/EntityManagerFactory
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:316) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1260) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
 	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1248) [spring-boot-2.1.4.RELEASE.jar:2.1.4.RELEASE]
-	at pet.skillbox.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:31) [classes/:?]
+	at pet.diploma.sitesearchengine.SiteSearchEngineApplication.main(SiteSearchEngineApplication.java:31) [classes/:?]
 Caused by: java.lang.ClassNotFoundException: javax.persistence.EntityManagerFactory
 	at jdk.internal.loader.BuiltinClassLoader.loadClass(BuiltinClassLoader.java:641) ~[?:?]
 	at jdk.internal.loader.ClassLoaders$AppClassLoader.loadClass(ClassLoaders.java:188) ~[?:?]
@@ -598,7 +598,7 @@ APPLICATION FAILED TO START
 
 Description:
 
-Parameter 0 of constructor in pet.skillbox.sitesearchengine.services.CrawlingService required a bean named 'entityManagerFactory' that could not be found.
+Parameter 0 of constructor in services.pet.diploma.sitesearchengine.CrawlingService required a bean named 'entityManagerFactory' that could not be found.
 
 
 Action:
@@ -613,7 +613,7 @@ APPLICATION FAILED TO START
 
 Description:
 
-Parameter 0 of constructor in pet.skillbox.sitesearchengine.services.CrawlingService required a bean named 'entityManagerFactory' that could not be found.
+Parameter 0 of constructor in services.pet.diploma.sitesearchengine.CrawlingService required a bean named 'entityManagerFactory' that could not be found.
 
 
 Action:
@@ -628,7 +628,7 @@ APPLICATION FAILED TO START
 
 Description:
 
-Parameter 0 of constructor in pet.skillbox.sitesearchengine.services.CrawlingService required a bean named 'entityManagerFactory' that could not be found.
+Parameter 0 of constructor in services.pet.diploma.sitesearchengine.CrawlingService required a bean named 'entityManagerFactory' that could not be found.
 
 
 Action:
@@ -643,7 +643,7 @@ APPLICATION FAILED TO START
 
 Description:
 
-Parameter 0 of constructor in pet.skillbox.sitesearchengine.services.CrawlingService required a bean named 'entityManagerFactory' that could not be found.
+Parameter 0 of constructor in services.pet.diploma.sitesearchengine.CrawlingService required a bean named 'entityManagerFactory' that could not be found.
 
 
 Action:
@@ -658,7 +658,7 @@ APPLICATION FAILED TO START
 
 Description:
 
-Parameter 0 of constructor in pet.skillbox.sitesearchengine.services.CrawlingService required a bean named 'entityManagerFactory' that could not be found.
+Parameter 0 of constructor in services.pet.diploma.sitesearchengine.CrawlingService required a bean named 'entityManagerFactory' that could not be found.
 
 
 Action:
@@ -673,7 +673,7 @@ APPLICATION FAILED TO START
 
 Description:
 
-Parameter 0 of constructor in pet.skillbox.sitesearchengine.services.CrawlingService required a bean named 'entityManagerFactory' that could not be found.
+Parameter 0 of constructor in services.pet.diploma.sitesearchengine.CrawlingService required a bean named 'entityManagerFactory' that could not be found.
 
 
 Action:
@@ -718,7 +718,7 @@ APPLICATION FAILED TO START
 
 Description:
 
-Parameter 0 of constructor in pet.skillbox.sitesearchengine.services.CrawlingService required a bean named 'entityManagerFactory' that could not be found.
+Parameter 0 of constructor in services.pet.diploma.sitesearchengine.CrawlingService required a bean named 'entityManagerFactory' that could not be found.
 
 
 Action:
