@@ -35,7 +35,7 @@ public class UserService implements UserDetailsService  {
     }
 
     public boolean saveUser(User user) {
-        User userFromDB = userRepository.findByLogin(user.getLogin());
+        User userFromDB = userRepository.getUserByLogin(user.getLogin());
         if (userFromDB != null) {
             return false;
         }
@@ -54,11 +54,11 @@ public class UserService implements UserDetailsService  {
     }
 
     public boolean validateUserPassword(String login, String password) {
-        return bCryptPasswordEncoder.matches(password, userRepository.findByLogin(login).getPassword());
+        return bCryptPasswordEncoder.matches(password, userRepository.getUserByLogin(login).getPassword());
     }
 
     public Optional<User> getByLogin(String login) {
-        return Optional.ofNullable(userRepository.findByLogin(login));
+        return Optional.ofNullable(userRepository.getUserByLogin(login));
     }
 
     public int getIdByLogin(String login) {
@@ -67,7 +67,7 @@ public class UserService implements UserDetailsService  {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return (UserDetails) userRepository.findByLogin(username);
+        return (UserDetails) userRepository.getUserByLogin(username);
     }
 
     @Bean
