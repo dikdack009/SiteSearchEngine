@@ -117,22 +117,22 @@ public class DBConnection {
         getConnection().createStatement().execute(sql);
     }
 
-    public static int countSites(int siteId, int userId) throws SQLException {
+    public static int countSites(int userId) throws SQLException {
         String sql = "SELECT COUNT(distinct id) AS c FROM site WHERE is_deleted = 0 and user_id = " + userId;
-        return sqlRequest(siteId, sql, userId);
+        return sqlRequest(0, sql);
     }
 
-    public static int countLemmas(int siteId, int userId) throws SQLException {
+    public static int countLemmas(int siteId) throws SQLException {
         String sql = "SELECT COUNT(distinct id) AS c FROM lemma WHERE is_deleted = 0";
-        return sqlRequest(siteId, sql, userId);
+        return sqlRequest(siteId, sql);
     }
 
-    public static int countPages(int siteId, int userId) throws SQLException {
+    public static int countPages(int siteId) throws SQLException {
         String sql = "SELECT COUNT(distinct id) AS c FROM page WHERE is_deleted = 0";
-        return sqlRequest(siteId, sql, userId);
+        return sqlRequest(siteId, sql);
     }
 
-    private static int sqlRequest(int siteId, String sql, int userId) throws SQLException {
+    private static int sqlRequest(int siteId, String sql) throws SQLException {
 //        System.out.println(sql);
         ResultSet rs = null;
         if (siteId > 0){
@@ -172,7 +172,7 @@ public class DBConnection {
         return site;
     }
 
-    public static List<DetailedSite> getDBStatistic(int userId) throws SQLException {
+    public static List<DetailedSite> getDBStatistic(int userId, List<Integer> siteIdList) throws SQLException {
         List<DetailedSite> stat = new ArrayList<>();
         System.out.println("Статистика из бд");
         ResultSet rs = null;
@@ -186,6 +186,7 @@ public class DBConnection {
             assert rs != null;
             if (!rs.next()) break;
             int id = rs.getInt("id");
+            siteIdList.add(id);
             String url = rs.getString("url");
             String dateTime = rs.getString("status_time");
             SimpleDateFormat simpleDateFormat =
@@ -203,7 +204,7 @@ public class DBConnection {
             String name = rs.getString("name");
             String error = rs.getString("last_error");
             stat.add(new DetailedSite(url, name, status, time,
-                    error, countPages(id, userId),  countLemmas(id, userId)));
+                    error, countPages(id),  countLemmas(id)));
         }
         System.out.println("Вернули статистику");
         return stat;

@@ -8,10 +8,8 @@ import java.sql.SQLException;
 public class Statistic {
     private final boolean result;
     private final Statistics statistics;
-    private final int userId;
 
     public Statistic(boolean isIndexing, int userId) throws SQLException {
-        this.userId = userId;
         result = true;
         statistics = new Statistics(isIndexing, userId);
     }
