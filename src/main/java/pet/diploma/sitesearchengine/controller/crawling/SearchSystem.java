@@ -200,20 +200,20 @@ public class SearchSystem {
             }
         }
         i = 0;
-        System.out.println("Пробелов в упрощенном тексте " + newCount);
-        System.out.print("Word = " + word);
+//        System.out.println("Пробелов в упрощенном тексте " + newCount);
+//        System.out.print("Word = " + word);
         for ( ; i <= tmp; ++i ) {
             if (textArray[i] == ' ') {
                 count++;
             }
         }
-        System.out.print(" Next word = ");
-        System.out.print(textArray[i]);
-        System.out.print(textArray[i+1]);
-        System.out.print(textArray[i+2]);
-        System.out.print(textArray[i+3]);
-        System.out.println(textArray[i+4]);
-        System.out.println(newText);
+//        System.out.print(" Next word = ");
+//        System.out.print(textArray[i]);
+//        System.out.print(textArray[i+1]);
+//        System.out.print(textArray[i+2]);
+//        System.out.print(textArray[i+3]);
+//        System.out.println(textArray[i+4]);
+//        System.out.println(newText);
         return count;
     }
 
@@ -221,14 +221,14 @@ public class SearchSystem {
         text = text.replaceAll("\\pP", " ");
         String newText = text.replaceAll("[^[a-zA-Zа-яА-Я0-9\\-/]]", " ").toLowerCase();
         char[] textArray = newText.toCharArray();
-        System.out.println(text);
+//        System.out.println(text);
         int i, spaceId = 0, newCount = 0;
         for (i = 0; i < textArray.length; ++i) {
             if (textArray[i] == ' ') {
                 newCount++;
             }
         }
-        System.out.println("Пробелов в обычном тексте " + newCount);
+//        System.out.println("Пробелов в обычном тексте " + newCount);
         newCount = 0;
         for (i = 0; i < textArray.length; ++i) {
             if(textArray[i] == ' ') {
@@ -241,12 +241,12 @@ public class SearchSystem {
                 break;
             }
         }
-        System.out.print("Next next word = ");
-        System.out.print(textArray[i]);
-        System.out.print(textArray[i+1]);
-        System.out.print(textArray[i+2]);
-        System.out.print(textArray[i+3]);
-        System.out.println(textArray[i+4]);
+//        System.out.print("Next next word = ");
+//        System.out.print(textArray[i]);
+//        System.out.print(textArray[i+1]);
+//        System.out.print(textArray[i+2]);
+//        System.out.print(textArray[i+3]);
+//        System.out.println(textArray[i+4]);
         return new Pair<>(spaceId, !Character.isLetterOrDigit(text.toCharArray()[i + 1]) ? ++i : i);
     }
 
