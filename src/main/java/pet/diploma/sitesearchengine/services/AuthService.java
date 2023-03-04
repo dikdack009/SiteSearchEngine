@@ -27,6 +27,9 @@ public class AuthService {
     public JwtResponse login(@NonNull JwtRequest authRequest) throws AuthException {
         final User user = userService.getByLogin(authRequest.getLogin())
                 .orElseThrow(() -> new AuthException("Пользователь не найден"));
+        if (user.isEmailChecked()) {
+            throw new AuthException("Аккаунт пользователя не подтверждён");
+        }
         if (userService.validateUserPassword(authRequest.getLogin(), authRequest.getPassword())) {
             final String accessToken = jwtProvider.generateAccessToken(user);
             final String refreshToken = jwtProvider.generateRefreshToken(user);

@@ -45,6 +45,16 @@ public class UserService implements UserDetailsService  {
         return true;
     }
 
+    public boolean updateCheckedUser(String email) {
+        User userFromDB = userRepository.getUserByLogin(email);
+        if (userFromDB == null) {
+            return false;
+        }
+        userFromDB.setEmailChecked(true);
+        userRepository.save(userFromDB);
+        return true;
+    }
+
     public boolean deleteUser(Long userId) {
         if (userRepository.findById(userId).isPresent()) {
             userRepository.deleteById(userId);

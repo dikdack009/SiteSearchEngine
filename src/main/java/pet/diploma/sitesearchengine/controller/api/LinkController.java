@@ -29,15 +29,19 @@ public class LinkController {
         this.authService = authService;
     }
 
+    private int getUserId() {
+        return userService.getIdByLogin(authService.getAuthInfo().getPrincipal().toString());
+    }
+
     @GetMapping(path="/api/getLinks", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
     public ResponseEntity<LinksResponse> getLinks() {
-        int userId = userService.getIdByLogin(authService.getAuthInfo().getPrincipal().toString());
+        int userId = getUserId();
         return new ResponseEntity<>(new LinksResponse(true, null, crawlingService.getLinks(userId)), HttpStatus.OK);
     }
 
     @PostMapping(path="/api/addLink", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
     public ResponseEntity<LinksResponse> saveLink(@RequestParam String url, @RequestParam String name, @RequestParam int isSelected) {
-        int userId = userService.getIdByLogin(authService.getAuthInfo().getPrincipal().toString());
+        int userId = getUserId();
         boolean result = crawlingService.saveLink(new Link(url, name, isSelected, userId));
         LinksResponse linksResponse = new LinksResponse(result, result ? null : "Ссылка уже добавлена", crawlingService.getLinks(userId));
         return new ResponseEntity<>(linksResponse, result ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
@@ -48,14 +52,14 @@ public class LinkController {
         Map<String, Object> tmp = new ObjectMapper().readValue(body, HashMap.class);
         Map<String, Integer> links  = new ObjectMapper().readValue(tmp.get("data").toString(), HashMap.class);
         System.out.println(links);
-        int userId = userService.getIdByLogin(authService.getAuthInfo().getPrincipal().toString());
+        int userId = getUserId();
         crawlingService.updateLinks(links, userId);
         return new ResponseEntity<>(new LinksResponse(true, null, null),  HttpStatus.OK);
     }
 
     @PostMapping(path="/api/updateLink", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
     public ResponseEntity<LinksResponse> updateLink(@RequestParam String url, @RequestParam Integer isSelected) {
-        int userId = userService.getIdByLogin(authService.getAuthInfo().getPrincipal().toString());
+        int userId = getUserId();
         crawlingService.updateLink(url, isSelected, userId);
         return new ResponseEntity<>(new LinksResponse(true, null, null),  HttpStatus.OK);
     }

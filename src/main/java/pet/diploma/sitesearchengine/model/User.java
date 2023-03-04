@@ -21,4 +21,7 @@ public class User {
     private String password;
     @Column(nullable = false, unique = true)
     private Role roles;
+    @Getter
+    @Column(name = "email_checked", nullable = false)
+    private boolean emailChecked;
 }

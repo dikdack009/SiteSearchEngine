@@ -1,5 +1,6 @@
 package pet.diploma.sitesearchengine.services;
 
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -24,8 +25,10 @@ public class EmailService {
     private final JavaMailSender emailSender;
     private boolean checkOk = false;
     private boolean checkError = false;
-    private final static String PATH_PICTURE_OK = "C:\\SiteSearchEngine\\src\\main\\resources\\img\\indexInfoOk.png";
-    private final static String PATH_PICTURE_ERROR = "C:\\SiteSearchEngine\\src\\main\\resources\\img\\indexInfoError.png";
+    private final static String PATH_PICTURE_OK = "C:\\pet\\SiteSearchEngine\\src\\main\\resources\\img\\indexInfoOk.png";
+    private final static String PATH_PICTURE_ERROR = "C:\\pet\\SiteSearchEngine\\src\\main\\resources\\img\\indexInfoError.png";
+    @Getter
+    private final Map<String, Integer> verification = new HashMap<>();
 
     @Autowired
     public EmailService(JavaMailSender emailSender) {
@@ -191,5 +194,35 @@ public class EmailService {
 
     private List<DetailedSite> getStatistics(int userId) throws SQLException {
         return new Statistic(false, userId).getStatistics().getDetailed();
+    }
+
+    public void sendCheckCode(String to) throws MessagingException, UnsupportedEncodingException {
+        String number1 = String.valueOf((int)(Math.random() * 10));
+        String number2 = String.valueOf((int)(Math.random() * 10));
+        String number3 = String.valueOf((int)(Math.random() * 10));
+        String number4 = String.valueOf((int)(Math.random() * 10));
+        String number5 = String.valueOf((int)(Math.random() * 10));
+        String number6 = String.valueOf((int)(Math.random() * 10));
+        String number = number1 + number2 + number3 + number4 + number5 + number6;
+        String text = "Добрый день!\n" +
+                "Ваш проверочный код - " + number + ".\n\n" +
+                "\n" +
+                "Введите этот код, чтобы активировать свою учетную запись.\n" +
+                "\n";
+        verification.put(to, Integer.valueOf(number));
+        MimeMessage message = emailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true);
+        helper.setTo(to);
+        helper.setSubject("Подтверждение аккаунта");
+        Multipart mp = new MimeMultipart();
+        MimeBodyPart htmlPart = new MimeBodyPart();
+        htmlPart.setContent(text, "text/html; charset = utf-8");
+        mp.addBodyPart(htmlPart);
+        message.setContent(mp);
+        message.setFrom(new InternetAddress("no_reply@example.com", "NoReply-SearchEngine"));
+        Address address = new NewsAddress("", "noreply@serchengine.ru");
+        message.setSender(address);
+
+        emailSender.send(message);
     }
 }
