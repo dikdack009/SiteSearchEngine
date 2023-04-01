@@ -49,7 +49,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter implements WebM
                 )
                 .and()
                 .authorizeRequests()
-                .antMatchers("/api/auth/login", "/api/auth/token", "/api/registration").permitAll()
+                .antMatchers("/api/auth/login", "/api/auth/token", "/api/registration", "/api/verification/*").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .addFilterAfter(jwtFilter, UsernamePasswordAuthenticationFilter.class);
@@ -61,16 +61,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter implements WebM
                 .allowedOrigins("http://localhost:3000")
                 .allowedMethods("*");
     }
-//
-//    @Override
-//    public void addViewControllers(ViewControllerRegistry registry) {
-//        registry.addViewController("/login").setViewName("login");
-//    }
-//
-//    @Autowired
-//    protected void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-//        auth.userDetailsService(userService).passwordEncoder(bCryptPasswordEncoder());
-//    }
 
     @Bean
     CorsConfigurationSource corsConfigurationSource() {

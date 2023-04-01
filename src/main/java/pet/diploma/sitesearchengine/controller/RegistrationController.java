@@ -17,6 +17,7 @@ import pet.diploma.sitesearchengine.model.response.RegistrationResponse;
 
 import javax.mail.MessagingException;
 import java.io.UnsupportedEncodingException;
+import java.util.Optional;
 
 @Controller
 public class RegistrationController {
@@ -47,12 +48,23 @@ public class RegistrationController {
         return new ResponseEntity<>(new RegistrationResponse(true, null), HttpStatus.OK);
     }
 
-    @GetMapping("/api/verification")
-    public ResponseEntity<String> checkCode(@RequestParam String email, @RequestParam int code) {
-        boolean checkCode = emailService.getVerification().get(email) == code;
-        if (checkCode) {
-            userService.updateCheckedUser(email);
+    @GetMapping("/api/verification/check")
+    public ResponseEntity<RegistrationResponse> checkCode(@RequestParam String login, @RequestParam int code) {
+        Optional<User> user = userService.getByLogin(login);
+        if (user.isPresent()) {
+            boolean checkCode = emailService.getVerification().get(login) == code;
+            if (checkCode) {
+                userService.updateCheckedUser(login);
+            }
+            return new ResponseEntity<>(new RegistrationResponse(checkCode, checkCode ? null :  "Неверный код"), checkCode ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
         }
-        return new ResponseEntity<>(checkCode ? HttpStatus.OK : HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(new RegistrationResponse(false, "Пользователь не найден"), HttpStatus.NOT_FOUND);
+    }
+
+    @GetMapping("/api/verification/status")
+    public ResponseEntity<RegistrationResponse> getVerificationStatus(@RequestParam String login) {
+        Optional<User> user = userService.getByLogin(login);
+        return user.map(value -> new ResponseEntity<>(new RegistrationResponse(value.isEmailChecked(), value.isEmailChecked() ? null : "Код не подтверждён"), value.isEmailChecked() ? HttpStatus.OK : HttpStatus.BAD_REQUEST))
+                .orElseGet(() -> new ResponseEntity<>(new RegistrationResponse(false, "Пользователь не найден"), HttpStatus.NOT_FOUND));
     }
 }
