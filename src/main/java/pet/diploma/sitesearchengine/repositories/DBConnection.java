@@ -177,7 +177,7 @@ public class DBConnection {
         System.out.println("Статистика из бд");
         ResultSet rs = null;
         try {
-            rs = getConnection().createStatement().executeQuery("SELECT * FROM site WHERE user_id = " + userId);
+            rs = getConnection().createStatement().executeQuery("SELECT * FROM site WHERE user_id = " + userId + " AND is_deleted = 0");
         } catch (SQLException e) {
             e.printStackTrace();
         }

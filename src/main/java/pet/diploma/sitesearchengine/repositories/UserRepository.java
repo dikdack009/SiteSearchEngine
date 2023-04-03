@@ -5,4 +5,5 @@ import pet.diploma.sitesearchengine.model.User;
 
 public interface UserRepository extends JpaRepository<User, Long> {
     User getUserByLogin(String username);
+    User getUserById (int id);
 }

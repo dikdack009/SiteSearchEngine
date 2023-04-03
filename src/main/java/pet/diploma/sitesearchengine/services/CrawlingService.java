@@ -79,6 +79,8 @@ public class CrawlingService {
     public int addSite(Site site) {
         site.setIsDeleted(0);
         siteRepository.save(site);
+        System.out.println("Все сайыты после жобавления");
+        System.out.println(siteRepository.findAll());
         return getSiteIdByUrl(site.getUrl(), site.getUserId());
     }
 
@@ -87,7 +89,7 @@ public class CrawlingService {
         int siteId = getSiteIdByUrl(site.getUrl(), site.getUserId());
         System.out.println(siteId + " " + site);
         if (siteId > 0) {
-            siteRepository.updateSiteStatus(site.getStatus(), site.getStatusTime(), site.getLastError(), siteId);
+            siteRepository.updateSiteStatus(site.getStatus(), site.getStatusTime(), site.getLastError(), siteId, site.getUserId());
 
         } else {
             siteId = addSite(site);
@@ -97,14 +99,14 @@ public class CrawlingService {
 
     @Transactional(readOnly = true)
     public Site getSiteByUrl(String url, int userId) {
-        return siteRepository.getByUrlAndUserId(url, userId) ;
+        return siteRepository.getByUrlAndUserIdAndIsDeleted(url, userId, 0) ;
     }
 
     @Transactional(readOnly = true)
     public int getSiteIdByUrl(String url, int userId) {
-        System.out.println("url = " + url);
-        System.out.println(siteRepository.findAll());
-        Site site = siteRepository.getByUrlAndUserId(url, userId);
+        System.out.println("url = " + url + " userid = " + userId);
+        Site site = siteRepository.getByUrlAndUserIdAndIsDeleted(url, userId, 0);
+        System.out.println("Найденный сайт = " + site);
         return site == null ? -1 : site.getId() ;
     }
 
@@ -119,7 +121,7 @@ public class CrawlingService {
 
     @Transactional
     public boolean saveLink(Link link) {
-        if (linkRepository.getLinkByLink(link.getLink()) == null) {
+        if (linkRepository.getLinkByLinkAndUserId(link.getLink(), link.getUserId()) == null) {
             linkRepository.save(link);
             return true;
         }
@@ -147,8 +149,8 @@ public class CrawlingService {
     }
 
     @Transactional
-    public boolean deleteSiteInfo(String url) {
-        Site site = siteRepository.getSiteByUrl(url);
+    public boolean deleteSiteInfo(String url, int userId) {
+        Site site = siteRepository.getSiteByUrlAndUserIdAndIsDeleted(url, userId, 0);
         System.out.println("Удаляемый сайт: " + site);
         Integer deleteIndex = indexDeleteRepository.getOne(1).getDeleteNumber();
         System.out.println("Индекс = " + deleteIndex);
@@ -196,17 +198,18 @@ public class CrawlingService {
     }
 
     @Transactional
-    public void deleteSite(String url) {
-        Site site = siteRepository.getSiteByUrl(url);
+    public void deleteSite(String url, int userId) {
+        Site site = siteRepository.getSiteByUrlAndUserIdAndIsDeleted(url, userId, 0);
+
         if (site != null) {
             siteRepository.updateSiteDelete(site.getId(), 1);
         }
     }
 
     @Transactional
-    public boolean deleteLink(String url) {
-        if (linkRepository.getLinkByLink(url) != null) {
-            linkRepository.deleteLinkByLink(url);
+    public boolean deleteLink(String url, int userId) {
+        if (linkRepository.getLinkByLinkAndUserId(url, userId) != null) {
+            linkRepository.deleteLinkByLinkAndUserId(url, userId);
             return true;
         }
         return false;

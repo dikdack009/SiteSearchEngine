@@ -49,12 +49,14 @@ public class IndexingController {
 
     @PostMapping(path="/api/startIndexing", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
     public ResponseEntity<IndexingResponse> startIndexing(@RequestBody String body) throws IOException, InterruptedException, ExecutionException, javax.mail.MessagingException, JSONException, SQLException {
-        System.out.println(body);
-        Map<String, Object> tmp = new ObjectMapper().readValue(body, HashMap.class);
-        Map<String, String> result  = new ObjectMapper().readValue(tmp.get("data").toString(), HashMap.class);
-        System.out.println(result);
-        AtomicReference<IndexingResponse> response = new AtomicReference<>();
+
         int userId = userService.getIdByLogin(authService.getAuthInfo().getPrincipal().toString());
+        return indexing(userId, authService.getAuthInfo().getPrincipal().toString(), body);
+    }
+
+    public ResponseEntity<IndexingResponse> indexing(int userId, String email, String body) throws InterruptedException, ExecutionException, MessagingException, SQLException, IOException, JSONException {
+        Map<String, Object> tmp = new ObjectMapper().readValue(body, HashMap.class);
+        Map<String, String> result  = new ObjectMapper().readValue(tmp.get("data").toString(), HashMap.class);AtomicReference<IndexingResponse> response = new AtomicReference<>();
         checkUserInfo(userId);
         if (config.getUserIndexing().get(userId)){
             response.set(new IndexingResponse(false, "Индексация уже запущена"));
@@ -78,8 +80,7 @@ public class IndexingController {
         es.shutdown();
         config.getUserIndexing().put(userId, false);
         config.getStopIndexing().put(userId, false);
-        System.out.println("Почта " + authService.getAuthInfo().getPrincipal().toString());
-        sendMessage(authService.getAuthInfo().getPrincipal().toString(), userId, result);
+        sendMessage(email, userId, result);
         System.out.println("Закончили индексацию !!!");
         return new ResponseEntity<>(response.get(), HttpStatus.OK);
     }

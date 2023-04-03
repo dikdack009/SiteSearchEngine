@@ -10,6 +10,7 @@ import pet.diploma.sitesearchengine.model.Site;
 import pet.diploma.sitesearchengine.services.CrawlingService;
 import pet.diploma.sitesearchengine.controller.api.IndexingController;
 import pet.diploma.sitesearchengine.model.Status;
+import pet.diploma.sitesearchengine.services.UserService;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -22,11 +23,13 @@ public class RunAfterStartup {
 
     private final CrawlingService crawlingService;
     private final IndexingController indexingController;
+    private final UserService userService;
 
     @Autowired
-    public RunAfterStartup(CrawlingService crawlingService, IndexingController indexingController) {
+    public RunAfterStartup(CrawlingService crawlingService, IndexingController indexingController, UserService userService) {
         this.crawlingService = crawlingService;
         this.indexingController = indexingController;
+        this.userService = userService;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -36,15 +39,20 @@ public class RunAfterStartup {
         }
         List<Site> failedIndexingSites = crawlingService.getSites().stream()
                 .filter(s -> s.getStatus().equals(Status.INDEXING)).collect(Collectors.toList());
-        System.out.println(failedIndexingSites);
-        StringJoiner stringJoiner = new StringJoiner("\\\",\\\"", "{\"data\":\"{\\\"", "\\\"}\"}");
-        for (Site site : failedIndexingSites) {
-            stringJoiner.add(site.getUrl() + "\\\":\\\"" + site.getName());
+        Map<Integer, List<Site>> sitesByUserId = failedIndexingSites.stream().collect(
+                Collectors.groupingBy(Site::getUserId));
+        System.out.println("--------------------------");
+        System.out.println(sitesByUserId);
+        System.out.println("--------------------------");
+        for (Integer userId : sitesByUserId.keySet()) {
+            StringJoiner stringJoiner = new StringJoiner("\\\",\\\"", "{\"data\":\"{\\\"", "\\\"}\"}");
+            for (Site site : sitesByUserId.get(userId)) {
+                stringJoiner.add(site.getUrl() + "\\\":\\\"" + site.getName());
+            }
+            if (!sitesByUserId.get(userId).isEmpty()) {
+                indexingController.indexing(userId, userService.findUserById(userId).getLogin(), stringJoiner.toString());
+            }
         }
-        if (!failedIndexingSites.isEmpty()) {
-            indexingController.startIndexing(stringJoiner.toString());
-        }
-//        DBConnection.addIndexes();
         crawlingService.setNewDeleteIndex();
         System.out.println("Yaaah, I am running........");
 

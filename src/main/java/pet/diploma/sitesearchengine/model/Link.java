@@ -11,15 +11,16 @@ import javax.persistence.*;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "link")
+@Table(name = "link", uniqueConstraints = {@UniqueConstraint(name = "UniqueLinkAndNameAndUserId",
+        columnNames = {"link", "name", "user_id"})})
 @Entity
 public class Link {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
-    @Column(length = 65535, columnDefinition = "TEXT", unique = true)
+    @Column(length = 65535, columnDefinition = "TEXT")
     private String link;
-    @Column(length = 65535, columnDefinition = "TEXT", unique = true)
+    @Column(length = 65535, columnDefinition = "TEXT")
     private String name;
     @Column(columnDefinition = "TINYINT(1)")
     private int isSelected;

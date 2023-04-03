@@ -13,12 +13,12 @@ import java.time.LocalDateTime;
 
 @Repository
 public interface SiteRepository extends JpaRepository<Site,Integer> {
-    Site getByUrlAndUserId(String url, int userId);
+    Site getByUrlAndUserIdAndIsDeleted(String url, int userId, int isDeleted);
     @Transactional
     @Modifying
-    @Query("UPDATE Site SET status = ?1, statusTime = ?2, lastError = ?3 WHERE id = ?4")
-    void updateSiteStatus(Status status, LocalDateTime dateTime, String lastError, Integer id);
-    Site getSiteByUrl(String url);
+    @Query("UPDATE Site SET status = ?1, statusTime = ?2, lastError = ?3 WHERE id = ?4 AND userId = ?5")
+    void updateSiteStatus(Status status, LocalDateTime dateTime, String lastError, Integer id, Integer userId);
+    Site getSiteByUrlAndUserIdAndIsDeleted(String url, Integer userId, int isDeleted);
     @Transactional
     @Modifying
     @Query("UPDATE Site SET isDeleted = isDeleted + ?1 WHERE id = ?1 and isDeleted = 0")

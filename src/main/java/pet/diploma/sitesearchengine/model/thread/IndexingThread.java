@@ -29,6 +29,7 @@ public class IndexingThread implements Callable<IndexingResponse> {
     @Override
     public IndexingResponse call() {
         Site site = new Site(Status.INDEXING, LocalDateTime.now(), null, url, name, userId);
+        System.out.println("Индексируемый сайт сейчас " + userId);
         crawlingService.updateStatus(site);
         CrawlingSystem crawlingSystem =  new CrawlingSystem(config, crawlingService, site, userId);
         try {
@@ -39,7 +40,7 @@ public class IndexingThread implements Callable<IndexingResponse> {
             }
             config.getUserIndexing().put(userId, true);
             System.out.println(site);
-            crawlingService.deleteSiteInfo(site.getUrl());
+            crawlingService.deleteSiteInfo(site.getUrl(), userId);
             System.out.println("Удалили");
             if (config.getStopIndexing().get(userId)){
                 site = new Site(Status.FAILED, LocalDateTime.now(), "Индексация остановлена пользователем", url, name, userId);

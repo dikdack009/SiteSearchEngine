@@ -11,8 +11,8 @@ import java.util.List;
 
 public interface LinkRepository extends JpaRepository<Link, Integer> {
     @NotNull List<Link> findAll();
-    Link getLinkByLink(String link);
-    void deleteLinkByLink(String link);
+    Link getLinkByLinkAndUserId(String link, int userId);
+    void deleteLinkByLinkAndUserId(String link, int userId);
     @Transactional
     @Modifying
     @Query("UPDATE Link SET isSelected = ?2 WHERE link= ?1 and userId = ?3")

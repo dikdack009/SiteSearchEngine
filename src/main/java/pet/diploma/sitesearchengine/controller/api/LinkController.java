@@ -66,7 +66,8 @@ public class LinkController {
 
     @DeleteMapping(path="/api/deleteLink", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
     public ResponseEntity<IndexingResponse> deleteLink(@RequestParam String url) {
-        boolean result = crawlingService.deleteLink(url);
+        int userId = getUserId();
+        boolean result = crawlingService.deleteLink(url, userId);
         IndexingResponse indexingResponse = new IndexingResponse(result, result ? null : "Ссылка не добавлена");
         return new ResponseEntity<>(indexingResponse, result ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
     }
