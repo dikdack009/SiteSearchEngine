@@ -12,6 +12,7 @@ import pet.diploma.sitesearchengine.services.AuthService;
 import pet.diploma.sitesearchengine.security.JwtRequest;
 import pet.diploma.sitesearchengine.security.JwtResponse;
 import pet.diploma.sitesearchengine.security.RefreshJwtRequest;
+import pet.diploma.sitesearchengine.services.UserService;
 
 @RestController
 @RequestMapping("api/auth")
@@ -19,7 +20,7 @@ import pet.diploma.sitesearchengine.security.RefreshJwtRequest;
 public class AuthController {
 
     private final AuthService authService;
-
+    private final UserService userService;
 
     @PostMapping("login")
     public ResponseEntity<JwtResponse> login(@RequestBody @NotNull JwtRequest authRequest) {
@@ -42,7 +43,13 @@ public class AuthController {
 
     @PostMapping("info")
     public ResponseEntity<String> getLoginByToken() {
-        return ResponseEntity.ok(authService.getAuthInfo().getPrincipal().toString());
+        String login = authService.getAuthInfo().getPrincipal().toString();
+        System.out.println("Login - " + login);
+        if (userService.getByLogin(login).isPresent()) {
+            return ResponseEntity.ok(login);
+        } else {
+            return new ResponseEntity<>("Пользователь не найден", HttpStatus.BAD_REQUEST);
+        }
 //        TODO: Проверить при неправильных токенах
     }
 }
