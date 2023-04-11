@@ -20,6 +20,7 @@ public class AuthController {
 
     private final AuthService authService;
 
+
     @PostMapping("login")
     public ResponseEntity<JwtResponse> login(@RequestBody @NotNull JwtRequest authRequest) {
         System.out.println("Пользователь " + authRequest.getLogin()  + " аутентифицируется в системе");
@@ -40,8 +41,8 @@ public class AuthController {
     }
 
     @PostMapping("info")
-    public ResponseEntity<String> getLoginByToken(@RequestBody @NotNull JwtRequest authRequest) {
-        return ResponseEntity.ok(authRequest.getLogin());
+    public ResponseEntity<String> getLoginByToken() {
+        return ResponseEntity.ok(authService.getAuthInfo().getPrincipal().toString());
 //        TODO: Проверить при неправильных токенах
     }
 }
