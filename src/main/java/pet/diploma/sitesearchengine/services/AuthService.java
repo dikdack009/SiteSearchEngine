@@ -31,7 +31,7 @@ public class AuthService {
             user = optionalUser.get();
         }
         else {
-            return new JwtResponse("Пользователь не найден");
+            return new JwtResponse("Неверный логин или пароль");
         }
 
         if (userService.validateUserPassword(authRequest.getLogin(), authRequest.getPassword())) {
@@ -43,7 +43,7 @@ public class AuthService {
             refreshStorage.put(user.getLogin(), refreshToken);
             return new JwtResponse(accessToken, refreshToken);
         } else {
-            return new JwtResponse("Неверный пароль");
+            return new JwtResponse("Неверный логин или пароль");
         }
 
     }
@@ -60,7 +60,7 @@ public class AuthService {
                     user = optionalUser.get();
                 }
                 else {
-                    return new JwtResponse("Пользователь не найден");
+                    return new JwtResponse("Неверный логин или пароль");
                 }
                 final String accessToken = jwtProvider.generateAccessToken(user);
                 return new JwtResponse(accessToken, null);
@@ -81,7 +81,7 @@ public class AuthService {
                     user = optionalUser.get();
                 }
                 else {
-                    return new JwtResponse("Пользователь не найден");
+                    return new JwtResponse("Неверный логин или пароль");
                 }
                 final String accessToken = jwtProvider.generateAccessToken(user);
                 final String newRefreshToken = jwtProvider.generateRefreshToken(user);
