@@ -17,6 +17,7 @@ import pet.diploma.sitesearchengine.services.UserService;
 
 import javax.mail.MessagingException;
 import java.io.UnsupportedEncodingException;
+import java.util.Objects;
 import java.util.Optional;
 
 @Controller
@@ -24,6 +25,9 @@ public class RegistrationController {
 
     private final UserService userService;
     private final EmailService emailService;
+
+    private final static String EMAIL_REGEX = "/^((([0-9A-Za-z]{1}[-0-9A-z\\.]{1,}[0-9A-Za-z]{1})|([0-9А-Яа-я]{1}[-0-9А-я\\.]" +
+            "{1,}[0-9А-Яа-я]{1}))@([-A-Za-z]{1,}\\.){1,2}[-A-Za-z]{2,})$/u";
 
     @Autowired
     public RegistrationController(UserService userService, EmailService emailService) {
@@ -34,12 +38,18 @@ public class RegistrationController {
     @PostMapping("/api/registration")
     public ResponseEntity<RegistrationResponse> addUser(@RequestBody JwtRequest authRequest) throws MessagingException, UnsupportedEncodingException {
         User newUser = new User();
+        if (checkFailedEmailFormat(authRequest.getLogin())) {
+            return new ResponseEntity<>(new RegistrationResponse(false, "Неверный формат почты"), HttpStatus.BAD_REQUEST);
+        }
         newUser.setLogin(authRequest.getLogin());
         newUser.setPassword(authRequest.getPassword());
         newUser.setRoles(Role.USER);
         newUser.setEmailChecked(false);
         RegistrationResponse registrationResponse;
         if (!userService.saveUser(newUser)){
+            if (!userService.getByLogin(authRequest.getLogin()).get().isEmailChecked()) {
+                return new ResponseEntity<>(new RegistrationResponse(true, null), HttpStatus.RESET_CONTENT);
+            }
             registrationResponse = new RegistrationResponse(false, "Пользователь с такой почтой уже существует");
             return new ResponseEntity<>(registrationResponse, HttpStatus.BAD_REQUEST);
         }
@@ -48,23 +58,25 @@ public class RegistrationController {
     }
 
     @GetMapping("/api/verification/check")
-    public ResponseEntity<RegistrationResponse> checkCode(@RequestParam String login, @RequestParam int code) {
+    public ResponseEntity<RegistrationResponse> checkCode(@RequestParam String login, @RequestParam Integer code) {
+        if (checkFailedEmailFormat(login)) {
+            return new ResponseEntity<>(new RegistrationResponse(false, "Неверный формат почты"), HttpStatus.BAD_REQUEST);
+        }
+        if (code == null) {
+            return new ResponseEntity<>(new RegistrationResponse(false, "Неверный формат кода подтверждения"), HttpStatus.BAD_REQUEST);
+        }
         Optional<User> user = userService.getByLogin(login);
         if (user.isPresent()) {
-            boolean checkCode = emailService.getVerification().get(login) == code;
+            boolean checkCode = Objects.equals(emailService.getVerification().get(login), code);
             if (checkCode) {
                 userService.updateCheckedUser(login);
             }
             return new ResponseEntity<>(new RegistrationResponse(checkCode, checkCode ? null :  "Неверный код"), checkCode ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
         }
-        return new ResponseEntity<>(new RegistrationResponse(false, "Пользователь не найден"), HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(new RegistrationResponse(false, "Неверный логин или пароль"), HttpStatus.NOT_FOUND);
     }
 
-    @GetMapping("/api/verification/status")
-    public ResponseEntity<RegistrationResponse> getVerificationStatus(@RequestParam String login) {
-        Optional<User> user = userService.getByLogin(login);
-        return user.map(value -> new ResponseEntity<>(new RegistrationResponse(value.isEmailChecked(), value.isEmailChecked() ? null : "Код не подтверждён"), value.isEmailChecked() ? HttpStatus.OK : HttpStatus.BAD_REQUEST))
-                .orElseGet(() -> new ResponseEntity<>(new RegistrationResponse(false, "Пользователь не найден"), HttpStatus.NOT_FOUND));
+    private boolean checkFailedEmailFormat(String email) {
+        return email.isEmpty() || !email.matches(EMAIL_REGEX);
     }
-
 }
