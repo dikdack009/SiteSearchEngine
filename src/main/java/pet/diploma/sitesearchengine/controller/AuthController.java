@@ -39,7 +39,9 @@ public class AuthController {
         return token.getError() == null ? ResponseEntity.ok(token) : new ResponseEntity<>(token, HttpStatus.FORBIDDEN);
     }
 
+    @PostMapping("getAuthInfo")
     public ResponseEntity<String> getLoginByToken(@RequestBody @NotNull JwtRequest authRequest) {
         return ResponseEntity.ok(authRequest.getLogin());
+//        TODO: Проверить при неправильных токенах
     }
 }
