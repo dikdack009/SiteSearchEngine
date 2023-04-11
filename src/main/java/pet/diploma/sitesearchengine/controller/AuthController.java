@@ -38,4 +38,8 @@ public class AuthController {
         final JwtResponse token = authService.refresh(request.getRefreshToken());
         return token.getError() == null ? ResponseEntity.ok(token) : new ResponseEntity<>(token, HttpStatus.FORBIDDEN);
     }
+
+    public ResponseEntity<String> getLoginByToken(@RequestBody @NotNull JwtRequest authRequest) {
+        return ResponseEntity.ok(authRequest.getLogin());
+    }
 }
