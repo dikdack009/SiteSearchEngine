@@ -7,13 +7,25 @@ import lombok.ToString;
 
 @Getter
 @ToString
-@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class JwtResponse {
 
-    private final String type = "Bearer";
-    private String accessToken;
-    private String refreshToken;
-    private String error;
+    private final String type;
+    private final String accessToken;
+    private final String refreshToken;
+    private final String error;
 
+    public JwtResponse(String accessToken, String refreshToken) {
+        this.type = "Bearer";
+        this.accessToken = accessToken;
+        this.refreshToken = refreshToken;
+        this.error = null;
+    }
+
+    public JwtResponse(String error) {
+        this.type = null;
+        this.accessToken = null;
+        this.refreshToken = null;
+        this.error = error;
+    }
 }

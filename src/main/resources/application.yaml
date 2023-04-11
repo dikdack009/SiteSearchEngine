@@ -19,7 +19,7 @@ spring:
     atomikos:
       properties:
         enable-logging: true
-#    prefix: classpath:/templates
+    prefix: classpath:/templates
   mail:
     host: smtp.gmail.com
     port: 587
@@ -39,17 +39,6 @@ local:
       refresh: zL1HB3Pch05Avfynovxrf/kpF9O2m4NCWKJUjEp27s9J2jEG3ifiKCGylaZ8fDeoONSTJP/wAzKawB8F9rOMNg==
   path: /admin
   user-agent: DuckSearchBot
-  sites:
-#      - url:  https://www.playback.ru
-#        name: PlayBack
-#      - url: https://lentgga.ru
-#        name: Ленggта.ру
-#      - url: https://www.svetlovka.ru
-#        name: Библиотека Светловка
-#      - url: https://www.lutherancathedral.ru
-#        name: Собор Петра и Павла
-#      - url: https://volochek.life
-#        name: Волчёк
 
 
 

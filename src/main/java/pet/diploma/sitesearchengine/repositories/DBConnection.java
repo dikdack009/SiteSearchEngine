@@ -1,6 +1,5 @@
 package pet.diploma.sitesearchengine.repositories;
 
-import lombok.Setter;
 import pet.diploma.sitesearchengine.model.Builder;
 import pet.diploma.sitesearchengine.model.Lemma;
 import pet.diploma.sitesearchengine.model.Page;
@@ -15,15 +14,12 @@ import java.util.Date;
 public class DBConnection {
     private static Connection connection;
 
-    private static String name = "search_engine";
-    private static String user = "root";
-    private static String pass = "89257044306mV";
-    @Setter
-    private static boolean createTables;
-
-    public static Connection getConnection() {
+    public static Connection getConnection() throws SQLException {
         if (connection == null) {
             try {
+                String name = "search_engine";
+                String user = "root";
+                String pass = "89257044306mV";
                 connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/" + name +
                         "?user=" + user + "&password=" + pass);
             } catch (SQLException e) {
@@ -33,22 +29,16 @@ public class DBConnection {
         return connection;
     }
 
+    public static void closeConnection() throws SQLException {
+        if (!connection.isClosed()) {
+            connection.close();
+        }
+    }
+
     public static void insert(Builder builder) throws SQLException {
 //        insertAllPages(builder.getPageBuilder().toString());
         insertAllLemmas(builder.getLemmaBuilder().toString());
         insertAllIndexes(builder.getIndexBuilder().toString());
-    }
-
-    public static void addIndexes() {
-        String sql = "CREATE INDEX index_lemma ON `index`(lemma); " +
-                "CREATE INDEX index_page_id ON `index`(page_id); " +
-                "CREATE INDEX lemma_lemma ON lemma(lemma); " +
-                "CREATE INDEX page_path ON page(path(100)); ";
-        try {
-            getConnection().createStatement().execute(sql);
-        } catch(SQLException e){
-            throw new RuntimeException(e);
-        }
     }
 
     public static List<Page> getPagesFromResultSet(ResultSet rs) throws SQLException {

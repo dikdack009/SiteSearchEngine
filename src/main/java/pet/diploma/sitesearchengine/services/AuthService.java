@@ -3,8 +3,6 @@ package pet.diploma.sitesearchengine.services;
 import io.jsonwebtoken.Claims;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import pet.diploma.sitesearchengine.security.JwtProvider;
@@ -13,7 +11,6 @@ import pet.diploma.sitesearchengine.security.JwtAuthentication;
 import pet.diploma.sitesearchengine.security.JwtRequest;
 import pet.diploma.sitesearchengine.security.JwtResponse;
 
-import javax.security.auth.message.AuthException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -33,20 +30,20 @@ public class AuthService {
         if (optionalUser.isPresent()) {
             user = optionalUser.get();
             if (!user.isEmailChecked()) {
-                return new JwtResponse(null, null, "Пользователь не подтверждён");
+                return new JwtResponse("Пользователь не подтверждён");
             }
         }
         else {
-            return new JwtResponse(null, null, "Пользователь не найден");
+            return new JwtResponse("Пользователь не найден");
         }
 
         if (userService.validateUserPassword(authRequest.getLogin(), authRequest.getPassword())) {
             final String accessToken = jwtProvider.generateAccessToken(user);
             final String refreshToken = jwtProvider.generateRefreshToken(user);
             refreshStorage.put(user.getLogin(), refreshToken);
-            return new JwtResponse(accessToken, refreshToken, null);
+            return new JwtResponse(accessToken, refreshToken);
         } else {
-            return new JwtResponse(null, null, "Неверный пароль");
+            return new JwtResponse("Неверный пароль");
         }
     }
 
@@ -62,13 +59,13 @@ public class AuthService {
                     user = optionalUser.get();
                 }
                 else {
-                    return new JwtResponse(null, null, "Пользователь не найден");
+                    return new JwtResponse("Пользователь не найден");
                 }
                 final String accessToken = jwtProvider.generateAccessToken(user);
-                return new JwtResponse(accessToken, null, null);
+                return new JwtResponse(accessToken, null);
             }
         }
-        return new JwtResponse(null, null, null);
+        return new JwtResponse(null, null);
     }
 
     public JwtResponse refresh(@NonNull String refreshToken)  {
@@ -83,15 +80,15 @@ public class AuthService {
                     user = optionalUser.get();
                 }
                 else {
-                    return new JwtResponse(null, null, "Пользователь не найден");
+                    return new JwtResponse("Пользователь не найден");
                 }
                 final String accessToken = jwtProvider.generateAccessToken(user);
                 final String newRefreshToken = jwtProvider.generateRefreshToken(user);
                 refreshStorage.put(user.getLogin(), newRefreshToken);
-                return new JwtResponse(accessToken, newRefreshToken, null);
+                return new JwtResponse(accessToken, newRefreshToken);
             }
         }
-        return new JwtResponse(null, null, "Невалидный JWT токен");
+        return new JwtResponse("Невалидный JWT токен");
     }
 
     public JwtAuthentication getAuthInfo() {
