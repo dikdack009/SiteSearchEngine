@@ -79,15 +79,12 @@ public class CrawlingService {
     public int addSite(Site site) {
         site.setIsDeleted(0);
         siteRepository.save(site);
-        System.out.println("Все сайыты после жобавления");
-        System.out.println(siteRepository.findAll());
         return getSiteIdByUrl(site.getUrl(), site.getUserId());
     }
 
     @Transactional
     public int updateStatus(Site site) {
         int siteId = getSiteIdByUrl(site.getUrl(), site.getUserId());
-        System.out.println(siteId + " " + site);
         if (siteId > 0) {
             siteRepository.updateSiteStatus(site.getStatus(), site.getStatusTime(), site.getLastError(), siteId, site.getUserId());
 
@@ -104,17 +101,12 @@ public class CrawlingService {
 
     @Transactional(readOnly = true)
     public int getSiteIdByUrl(String url, int userId) {
-        System.out.println("url = " + url + " userid = " + userId);
         Site site = siteRepository.getByUrlAndUserIdAndIsDeleted(url, userId, 0);
-        System.out.println("Найденный сайт = " + site);
         return site == null ? -1 : site.getId() ;
     }
 
     @Transactional
     public synchronized void savePage(Page page) {
-        System.out.println("saving page");
-        System.out.println("<" + page.getId() + ">");
-        System.out.println(" - " + page.getSite().getId() + " " + page.getSite().getUrl());
         page.setIsDeleted(0);
         pageRepository.save(page);
     }
@@ -151,23 +143,23 @@ public class CrawlingService {
     @Transactional
     public boolean deleteSiteInfo(String url, int userId) {
         Site site = siteRepository.getSiteByUrlAndUserIdAndIsDeleted(url, userId, 0);
-        System.out.println("Удаляемый сайт: " + site);
+        System.out.println("Удаляем информацию с сайта: " + site);
         Integer deleteIndex = indexDeleteRepository.getOne(1).getDeleteNumber();
-        System.out.println("Индекс = " + deleteIndex);
+        System.out.println("Индекс даления = " + deleteIndex);
         if (site != null) {
             int id = site.getId();
-            System.out.println("Удаление сайта с id = " + id);
+            System.out.println("Удаление сайта с id сайта = " + id);
             if (lemmaRepository.getFirstBySiteId(id) != null) {
                 lemmaRepository.updateLemmaDelete(site, deleteIndex);
-                System.out.println("Удалили леммы с id = " + id);
+                System.out.println("Удалили леммы с id сайта = " + id);
             }
             if (pageRepository.getFirstBySiteId(id) != null) {
                 pageRepository.updatePageDelete(site, deleteIndex);
-                System.out.println("Удалили странницы с id = " + id);
+                System.out.println("Удалили странницы с id сайта = " + id);
             }
             if (indexRepository.getFirstBySiteId(id) != null) {
                 indexRepository.updateIndexDelete(site, deleteIndex);
-                System.out.println("Удалили индексы с id = " + id);
+                System.out.println("Удалили индексы с id сайта = " + id);
             }
             indexDeleteRepository.updateIndexDeleteDelete(deleteIndex + 1);
             System.out.println("Обновили метку удаления");
@@ -175,7 +167,7 @@ public class CrawlingService {
         else {
             return false;
         }
-        System.out.println("ENNNNNNNNNNNNNNND");
+        System.out.println("Удаление данных сайта закончено");
         return true;
     }
 
@@ -186,15 +178,12 @@ public class CrawlingService {
 
     @Transactional
     public void deleteAllDeletedDataB() {
-        System.out.println("Удаление всех нужных данных " + LocalDateTime.now());
-        siteRepository.deleteByIsDeleted();
+        System.out.println("Удаление всех нужных данных ночью " + LocalDateTime.now());
         lemmaRepository.deleteByIsDeleted();
-        System.out.println(lemmaRepository.countAllByIsDeleted(1));
         pageRepository.deleteByIsDeleted();
-        System.out.println(pageRepository.countAllByIsDeleted(1));
         indexRepository.deleteByIsDeleted();
-        System.out.println(indexRepository.countAllByIsDeleted(1));
-        System.out.println("ENNNNNNNNNNNNNNND");
+        siteRepository.deleteByIsDeleted();
+        System.out.println("Закончили ночное удаление");
     }
 
     @Transactional

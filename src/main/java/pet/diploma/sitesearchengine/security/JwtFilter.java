@@ -31,10 +31,7 @@ public class JwtFilter extends GenericFilterBean {
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain fc) throws IOException, ServletException {
-        System.out.println("Зашли в ду фильтер");
-
         final String token = getTokenFromRequest((HttpServletRequest) request);
-        System.out.println("token " + token);
         if (token != null && jwtProvider.validateAccessToken(token)) {
             final Claims claims = jwtProvider.getAccessClaims(token);
             final JwtAuthentication jwtInfoToken = JwtUtils.generate(claims);

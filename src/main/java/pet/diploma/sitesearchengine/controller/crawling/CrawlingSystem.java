@@ -89,8 +89,6 @@ public class CrawlingSystem {
             return null;
         }
         allLinks = new HashMap<>(linksGenerator.getAllLinksMap());
-        System.out.println("Все найденные ссылки");
-        System.out.println(allLinks);
         if (allLinks.keySet().isEmpty()) {
             lastError = "Главная странница сайта недоступна";
             return null;
@@ -101,7 +99,6 @@ public class CrawlingSystem {
     }
 
     public void start(Config config) {
-        System.out.println(config.getStopIndexing());
         if (config.getStopIndexing().get(userId)) {
             return;
         }
@@ -148,7 +145,6 @@ public class CrawlingSystem {
         page.setSite(tmpSite);
         int siteId = site.getId();
         crawlingService.savePage(page);
-        System.out.println(site.getUrl() + path + " id = " + siteId);
         try {
             if (page.getCode() != 200) {
                 return;
@@ -200,11 +196,9 @@ public class CrawlingSystem {
 
     private void updateLemmaDB(Builder builder, Set<String> normalFormsSet, int siteId) throws SQLException {
         if (builder.getLemmaBuilder().length() > 2000000) {
-            System.out.println(builder.getLemmaBuilder());
             DBConnection.insertAllLemmas(builder.getLemmaBuilder().toString());
             builder.setLemmaBuilder(new StringBuilder());
         }
-        System.out.println("lemma_site_id = " + siteId);
         normalFormsSet.forEach(word -> builder.setLemmaBuilder(builder.getLemmaBuilder()
                         .append(builder.getLemmaBuilder().length() == 0 ? "" : ",")
                         .append("('").append(word).append("', 1, ").append(siteId).append(", 0)")));

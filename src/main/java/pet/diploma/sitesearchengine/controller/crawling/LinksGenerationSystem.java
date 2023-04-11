@@ -39,7 +39,6 @@ public class LinksGenerationSystem extends RecursiveAction {
 
     @Override
     protected void compute() {
-        System.out.println(config.getStopIndexing());
         if (allLinks.size() > 40_000 || config.getStopIndexing().get(userId)) {
             return;
         }

@@ -34,28 +34,26 @@ public class RunAfterStartup {
 
     @EventListener(ApplicationReadyEvent.class)
     public void runAfterStartup() throws IOException, ExecutionException, InterruptedException, javax.mail.MessagingException, JSONException, SQLException {
+        System.out.println("Yaaah, I am running........");
         if (crawlingService.getFields().isEmpty()) {
             crawlingService.insertBasicFields();
         }
         List<Site> failedIndexingSites = crawlingService.getSites().stream()
-                .filter(s -> s.getStatus().equals(Status.INDEXING)).collect(Collectors.toList());
+                .filter(s -> s.getStatus().equals(Status.INDEXING) && s.getIsDeleted() == 0).collect(Collectors.toList());
         Map<Integer, List<Site>> sitesByUserId = failedIndexingSites.stream().collect(
                 Collectors.groupingBy(Site::getUserId));
-        System.out.println("--------------------------");
-        System.out.println(sitesByUserId);
-        System.out.println("--------------------------");
-        for (Integer userId : sitesByUserId.keySet()) {
-            StringJoiner stringJoiner = new StringJoiner("\\\",\\\"", "{\"data\":\"{\\\"", "\\\"}\"}");
-            for (Site site : sitesByUserId.get(userId)) {
-                stringJoiner.add(site.getUrl() + "\\\":\\\"" + site.getName());
-            }
-            if (!sitesByUserId.get(userId).isEmpty()) {
-                indexingController.indexing(userId, userService.findUserById(userId).getLogin(), stringJoiner.toString());
+        if (!sitesByUserId.isEmpty()) {
+            System.out.println("Ссылки для переиндексации:");
+            sitesByUserId.forEach((k, v) -> System.out.println(k + " - " + v));
+            for (Integer userId : sitesByUserId.keySet()) {
+                StringJoiner stringJoiner = new StringJoiner("\\\",\\\"", "{\"data\":\"{\\\"", "\\\"}\"}");
+                for (Site site : sitesByUserId.get(userId)) {
+                    stringJoiner.add(site.getUrl() + "\\\":\\\"" + site.getName());
+                }
+                if (!sitesByUserId.get(userId).isEmpty()) {
+                    indexingController.indexing(userId, userService.findUserById(userId).getLogin(), stringJoiner.toString());
+                }
             }
         }
-        crawlingService.setNewDeleteIndex();
-        System.out.println("Yaaah, I am running........");
-
     }
-    //TODO: подмать как пользователя тут
 }

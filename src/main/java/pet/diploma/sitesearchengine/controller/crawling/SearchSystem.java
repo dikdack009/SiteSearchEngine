@@ -157,7 +157,6 @@ public class SearchSystem {
             int spaces = searchSpacesBefore(normalText, lemma.getLemma());
             Pair<Integer, Integer> pair = searchSpacesAfter(content, spaces);
             int i = pair.getValue();
-            System.out.println("\n\nHell = " + content.substring(i));
 
             String newContent = content.replaceAll("\\pP", "-").replaceAll("[^[a-zA-Zа-яА-Я0-9]]", "-").toLowerCase();
             int tmp = newContent.indexOf("-", i + 1);

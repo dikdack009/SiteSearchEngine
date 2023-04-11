@@ -17,12 +17,6 @@ import java.util.Map;
 public class Config {
     @Getter
     public List<SiteProperty> sites;
-
-//    @Value("${user-agent}")
-//    @Getter
-//    private String userAgent;
-//    vpgsbcogqgoyutsi
-
     @Getter
     private String path;
     @Getter

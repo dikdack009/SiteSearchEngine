@@ -1,6 +1,7 @@
 package pet.diploma.sitesearchengine.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -11,8 +12,6 @@ import pet.diploma.sitesearchengine.security.JwtRequest;
 import pet.diploma.sitesearchengine.security.JwtResponse;
 import pet.diploma.sitesearchengine.security.RefreshJwtRequest;
 
-import javax.security.auth.message.AuthException;
-
 @RestController
 @RequestMapping("api/auth")
 @RequiredArgsConstructor
@@ -21,22 +20,22 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("login")
-    public ResponseEntity<JwtResponse> login(@RequestBody JwtRequest authRequest) throws AuthException {
-        System.out.println("Делаем логин");
+    public ResponseEntity<JwtResponse> login(@RequestBody JwtRequest authRequest) {
+        System.out.println("Пользователь " + authRequest.getLogin()  + " аутентифицируется в системе");
         final JwtResponse token = authService.login(authRequest);
-        return ResponseEntity.ok(token);
+        return token.getError() == null ? ResponseEntity.ok(token) : new ResponseEntity<>(token, HttpStatus.FORBIDDEN);
     }
 
     @PostMapping("token")
-    public ResponseEntity<JwtResponse> getNewAccessToken(@RequestBody RefreshJwtRequest request) throws AuthException {
+    public ResponseEntity<JwtResponse> getNewAccessToken(@RequestBody RefreshJwtRequest request) {
         final JwtResponse token = authService.getAccessToken(request.getRefreshToken());
-        return ResponseEntity.ok(token);
+        return token.getError() == null ? ResponseEntity.ok(token) : new ResponseEntity<>(token, HttpStatus.FORBIDDEN);
     }
 
     @PostMapping("refresh")
-    public ResponseEntity<JwtResponse> getNewRefreshToken(@RequestBody RefreshJwtRequest request) throws AuthException {
+    public ResponseEntity<JwtResponse> getNewRefreshToken(@RequestBody RefreshJwtRequest request) {
         final JwtResponse token = authService.refresh(request.getRefreshToken());
-        return ResponseEntity.ok(token);
+        return token.getError() == null ? ResponseEntity.ok(token) : new ResponseEntity<>(token, HttpStatus.FORBIDDEN);
     }
 
 }

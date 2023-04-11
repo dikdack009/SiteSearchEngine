@@ -10,10 +10,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import pet.diploma.sitesearchengine.model.Role;
 import pet.diploma.sitesearchengine.model.User;
+import pet.diploma.sitesearchengine.model.response.RegistrationResponse;
 import pet.diploma.sitesearchengine.security.JwtRequest;
 import pet.diploma.sitesearchengine.services.EmailService;
 import pet.diploma.sitesearchengine.services.UserService;
-import pet.diploma.sitesearchengine.model.response.RegistrationResponse;
 
 import javax.mail.MessagingException;
 import java.io.UnsupportedEncodingException;
@@ -38,7 +38,6 @@ public class RegistrationController {
         newUser.setPassword(authRequest.getPassword());
         newUser.setRoles(Role.USER);
         newUser.setEmailChecked(false);
-        System.out.println(newUser);
         RegistrationResponse registrationResponse;
         if (!userService.saveUser(newUser)){
             registrationResponse = new RegistrationResponse(false, "Пользователь с такой почтой уже существует");
@@ -67,4 +66,5 @@ public class RegistrationController {
         return user.map(value -> new ResponseEntity<>(new RegistrationResponse(value.isEmailChecked(), value.isEmailChecked() ? null : "Код не подтверждён"), value.isEmailChecked() ? HttpStatus.OK : HttpStatus.BAD_REQUEST))
                 .orElseGet(() -> new ResponseEntity<>(new RegistrationResponse(false, "Пользователь не найден"), HttpStatus.NOT_FOUND));
     }
+
 }

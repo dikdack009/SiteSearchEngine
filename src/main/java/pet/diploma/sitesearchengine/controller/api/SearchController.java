@@ -36,7 +36,6 @@ public class SearchController {
     public ResponseEntity<SearchResponse> statistics(@RequestParam String query,
                                                      @RequestParam(required = false) Integer offset,
                                                      @RequestParam(required = false) Integer limit, @RequestBody String body) throws IOException {
-        System.out.println(body);
         Map<String, Object> tmp = new ObjectMapper().readValue(body, HashMap.class);
         Set<String> sites = new ObjectMapper().readValue(tmp.get("sites").toString(), HashSet.class);
 
@@ -51,7 +50,7 @@ public class SearchController {
         } catch (Exception exception) {
             exception.printStackTrace();
         }
-        System.out.println("Закончили");
+        System.out.println("Закончили поиск");
         System.out.println((double)(System.currentTimeMillis() - mm) / 1000 + " sec.");
         System.out.println((double)(System.currentTimeMillis() - mm) / 60000 + " min.");
         return result;

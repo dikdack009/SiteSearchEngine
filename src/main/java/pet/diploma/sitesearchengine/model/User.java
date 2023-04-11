@@ -19,7 +19,7 @@ public class User {
     private String login;
     @Column(nullable = false)
     private String password;
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private Role roles;
     @Getter
     @Column(name = "email_checked", nullable = false)
