@@ -29,15 +29,15 @@ public class AuthService {
         User user;
         if (optionalUser.isPresent()) {
             user = optionalUser.get();
-            if (!user.isEmailChecked()) {
-                return new JwtResponse("Пользователь не подтверждён");
-            }
         }
         else {
             return new JwtResponse("Пользователь не найден");
         }
 
         if (userService.validateUserPassword(authRequest.getLogin(), authRequest.getPassword())) {
+            if (!user.isEmailChecked()) {
+                return new JwtResponse("Пользователь не подтверждён");
+            }
             final String accessToken = jwtProvider.generateAccessToken(user);
             final String refreshToken = jwtProvider.generateRefreshToken(user);
             refreshStorage.put(user.getLogin(), refreshToken);
@@ -45,6 +45,7 @@ public class AuthService {
         } else {
             return new JwtResponse("Неверный пароль");
         }
+
     }
 
     public JwtResponse getAccessToken(@NonNull String refreshToken) {
