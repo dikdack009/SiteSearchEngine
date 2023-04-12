@@ -29,9 +29,6 @@ public class UserService implements UserDetailsService  {
         return userRepository.getUserById(userId);
     }
 
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
-    }
 
     public boolean saveUser(User user) {
         User userFromDB = userRepository.getUserByLogin(user.getLogin());
@@ -42,6 +39,10 @@ public class UserService implements UserDetailsService  {
         user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
         userRepository.save(user);
         return true;
+    }
+
+    public void updateUserByLogin(User user) {
+        userRepository.updateUserPassword(user.getLogin(), user.getPassword());
     }
 
     public boolean updateCheckedUser(String email) {

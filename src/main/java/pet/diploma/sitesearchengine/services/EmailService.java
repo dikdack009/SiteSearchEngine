@@ -223,7 +223,6 @@ public class EmailService {
         message.setFrom(new InternetAddress("no_reply@example.com", "NoReply-SearchEngine"));
         Address address = new NewsAddress("", "noreply@serchengine.ru");
         message.setSender(address);
-
         emailSender.send(message);
     }
 }

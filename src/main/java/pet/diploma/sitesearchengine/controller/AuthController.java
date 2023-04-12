@@ -49,11 +49,10 @@ public class AuthController {
             if (userService.getByLogin(login).isPresent()) {
                 return ResponseEntity.ok(login);
             } else {
-                return new ResponseEntity<>("Пользователь не найден", HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>("Пользователь не найден", HttpStatus.NOT_FOUND);
             }
         } catch (Exception e) {
-            return new ResponseEntity<>("Пользователь не найден", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("Пользователь не найден", HttpStatus.NOT_FOUND);
         }
-//        TODO: Проверить при неправильных токенах
     }
 }
