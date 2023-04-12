@@ -197,12 +197,13 @@ public class EmailService {
     }
 
     public void sendCheckCode(String to) throws MessagingException, UnsupportedEncodingException {
-        String number1 = String.valueOf((int)(Math.random() * 10));
-        String number2 = String.valueOf((int)(Math.random() * 10));
-        String number3 = String.valueOf((int)(Math.random() * 10));
-        String number4 = String.valueOf((int)(Math.random() * 10));
-        String number5 = String.valueOf((int)(Math.random() * 10));
-        String number6 = String.valueOf((int)(Math.random() * 10));
+        Random r = new Random();
+        String number1 = String.valueOf(r.nextInt(9) + 1);
+        String number2 = String.valueOf(r.nextInt(10));
+        String number3 = String.valueOf(r.nextInt(10));
+        String number4 = String.valueOf(r.nextInt(10));
+        String number5 = String.valueOf(r.nextInt(10));
+        String number6 = String.valueOf(r.nextInt(10));
         String number = number1 + number2 + number3 + number4 + number5 + number6;
         String text = "Добрый день!\n" +
                 "Ваш проверочный код - " + number + ".\n\n" +

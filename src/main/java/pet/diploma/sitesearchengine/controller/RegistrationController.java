@@ -25,8 +25,8 @@ public class RegistrationController {
 
     private final UserService userService;
     private final EmailService emailService;
-
     private final static String EMAIL_REGEX = "([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\\.[a-zA-Z0-9_-]+)";
+    private final static String PASSWORD_REGEX = "(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9@#$%]).{8,}";
 
     @Autowired
     public RegistrationController(UserService userService, EmailService emailService) {
@@ -41,12 +41,16 @@ public class RegistrationController {
             return new ResponseEntity<>(new RegistrationResponse(false, "Неверный формат почты"), HttpStatus.BAD_REQUEST);
         }
         newUser.setLogin(authRequest.getLogin());
+        if (checkFailedPasswordFormat(authRequest.getPassword())) {
+            return new ResponseEntity<>(new RegistrationResponse(false, "Неверный формат пароля"), HttpStatus.BAD_REQUEST);
+        }
         newUser.setPassword(authRequest.getPassword());
         newUser.setRoles(Role.USER);
         newUser.setEmailChecked(false);
         RegistrationResponse registrationResponse;
         if (!userService.saveUser(newUser)){
             if (!userService.getByLogin(authRequest.getLogin()).get().isEmailChecked()) {
+                emailService.sendCheckCode(authRequest.getLogin());
                 return new ResponseEntity<>(new RegistrationResponse(true, null), HttpStatus.RESET_CONTENT);
             }
             registrationResponse = new RegistrationResponse(false, "Пользователь с такой почтой уже существует");
@@ -57,11 +61,17 @@ public class RegistrationController {
     }
 
     @GetMapping("/api/verification/check")
-    public ResponseEntity<RegistrationResponse> checkCode(@RequestParam String login, @RequestParam Integer code) {
+    public ResponseEntity<RegistrationResponse> checkCode(@RequestParam String login, @RequestParam(name = "code") String codeString) {
         if (checkFailedEmailFormat(login)) {
             return new ResponseEntity<>(new RegistrationResponse(false, "Неверный формат почты"), HttpStatus.BAD_REQUEST);
         }
-        if (code == null) {
+        int code;
+        try {
+            code = Integer.parseInt(codeString.trim());
+        } catch (NumberFormatException e) {
+            return new ResponseEntity<>(new RegistrationResponse(false, "Неверный формат кода подтверждения"), HttpStatus.BAD_REQUEST);
+        }
+        if (code > 999999 || code < 100000) {
             return new ResponseEntity<>(new RegistrationResponse(false, "Неверный формат кода подтверждения"), HttpStatus.BAD_REQUEST);
         }
         Optional<User> user = userService.getByLogin(login);
@@ -77,5 +87,9 @@ public class RegistrationController {
 
     private boolean checkFailedEmailFormat(String email) {
         return email.isEmpty() || !email.matches(EMAIL_REGEX);
+    }
+
+    private boolean checkFailedPasswordFormat(String password) {
+        return password.isEmpty() || !password.matches(PASSWORD_REGEX);
     }
 }
