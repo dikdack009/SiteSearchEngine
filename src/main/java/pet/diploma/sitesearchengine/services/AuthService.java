@@ -73,7 +73,7 @@ public class AuthService {
                 return new JwtResponse(accessToken, null);
             }
         }
-        return new JwtResponse(null, null);
+        return new JwtResponse("Неверный refresh токен");
     }
 
     public JwtResponse refresh(@NonNull String refreshToken)  {

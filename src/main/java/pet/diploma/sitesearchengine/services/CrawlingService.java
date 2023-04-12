@@ -179,9 +179,9 @@ public class CrawlingService {
     @Transactional
     public void deleteAllDeletedDataB() {
         System.out.println("Удаление всех нужных данных ночью " + LocalDateTime.now());
+        indexRepository.deleteByIsDeleted();
         lemmaRepository.deleteByIsDeleted();
         pageRepository.deleteByIsDeleted();
-        indexRepository.deleteByIsDeleted();
         siteRepository.deleteByIsDeleted();
         System.out.println("Закончили ночное удаление");
     }

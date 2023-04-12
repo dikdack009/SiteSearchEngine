@@ -30,7 +30,7 @@ public class DBConnection {
     }
 
     public static void closeConnection() throws SQLException {
-        if (!connection.isClosed()) {
+        if (!connection.isClosed() || connection != null) {
             connection.close();
         }
     }
