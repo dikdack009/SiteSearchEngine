@@ -50,6 +50,7 @@ public class RegistrationController {
         RegistrationResponse registrationResponse;
         if (!userService.saveUser(newUser)){
             if (!userService.getByLogin(authRequest.getLogin()).get().isEmailChecked()) {
+                userService.updateUserByLogin(newUser);
                 emailService.sendCheckCode(authRequest.getLogin());
                 return new ResponseEntity<>(new RegistrationResponse(true, null), HttpStatus.RESET_CONTENT);
             }
