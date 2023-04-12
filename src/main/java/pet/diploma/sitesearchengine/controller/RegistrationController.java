@@ -51,6 +51,7 @@ public class RegistrationController {
         if (!userService.saveUser(newUser)){
             if (!userService.getByLogin(authRequest.getLogin()).get().isEmailChecked()) {
                 userService.updateUserByLogin(newUser);
+                System.out.println(newUser);
                 emailService.sendCheckCode(authRequest.getLogin());
                 return new ResponseEntity<>(new RegistrationResponse(true, null), HttpStatus.RESET_CONTENT);
             }

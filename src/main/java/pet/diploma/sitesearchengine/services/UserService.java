@@ -42,7 +42,8 @@ public class UserService implements UserDetailsService  {
     }
 
     public void updateUserByLogin(User user) {
-        userRepository.updateUserPassword(user.getLogin(), user.getPassword());
+        System.out.println(user);
+        userRepository.updateUserPasswordByLogin(bCryptPasswordEncoder.encode(user.getPassword()), user.getLogin());
     }
 
     public boolean updateCheckedUser(String email) {
