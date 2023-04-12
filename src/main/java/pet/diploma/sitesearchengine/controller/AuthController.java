@@ -43,11 +43,15 @@ public class AuthController {
 
     @PostMapping("info")
     public ResponseEntity<String> getLoginByToken() {
-        String login = authService.getAuthInfo().getPrincipal().toString();
-        System.out.println("Login - " + login);
-        if (userService.getByLogin(login).isPresent()) {
-            return ResponseEntity.ok(login);
-        } else {
+        try {
+            String login = authService.getAuthInfo().getPrincipal().toString();
+            System.out.println("Login - " + login);
+            if (userService.getByLogin(login).isPresent()) {
+                return ResponseEntity.ok(login);
+            } else {
+                return new ResponseEntity<>("Пользователь не найден", HttpStatus.BAD_REQUEST);
+            }
+        } catch (Exception e) {
             return new ResponseEntity<>("Пользователь не найден", HttpStatus.BAD_REQUEST);
         }
 //        TODO: Проверить при неправильных токенах
