@@ -8,11 +8,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import pet.diploma.sitesearchengine.model.User;
 import pet.diploma.sitesearchengine.services.AuthService;
 import pet.diploma.sitesearchengine.security.JwtRequest;
 import pet.diploma.sitesearchengine.security.JwtResponse;
 import pet.diploma.sitesearchengine.security.RefreshJwtRequest;
 import pet.diploma.sitesearchengine.services.UserService;
+
+import java.util.Optional;
 
 @RestController
 @RequestMapping("api/auth")
@@ -53,6 +56,20 @@ public class AuthController {
             }
         } catch (Exception e) {
             return new ResponseEntity<>("Пользователь не найден", HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @PostMapping("change")
+    public ResponseEntity<JwtResponse> changePassword(@RequestBody @NotNull JwtRequest authRequest, @RequestBody String newPassword) {
+        final JwtResponse token = authService.login(authRequest);
+        Optional<User> optionalUser = userService.getByLogin(authRequest.getLogin());
+        if (token.getError() == null && optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            user.setPassword(newPassword);
+            userService.updateUserByLogin(user);
+            return new ResponseEntity<>(token, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(new JwtResponse("Пользователь не найден"), HttpStatus.NOT_FOUND);
         }
     }
 }
