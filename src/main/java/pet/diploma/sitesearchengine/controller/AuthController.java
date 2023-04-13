@@ -4,10 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import pet.diploma.sitesearchengine.model.User;
 import pet.diploma.sitesearchengine.services.AuthService;
 import pet.diploma.sitesearchengine.security.JwtRequest;
@@ -59,7 +56,7 @@ public class AuthController {
         }
     }
 
-    @PostMapping("change")
+    @PatchMapping ("change")
     public ResponseEntity<JwtResponse> changePassword(@RequestBody @NotNull JwtRequest authRequest, @RequestBody String newPassword) {
         final JwtResponse token = authService.login(authRequest);
         Optional<User> optionalUser = userService.getByLogin(authRequest.getLogin());
