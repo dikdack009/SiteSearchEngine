@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pet.diploma.sitesearchengine.model.User;
+import pet.diploma.sitesearchengine.security.JwtChangeRequest;
 import pet.diploma.sitesearchengine.services.AuthService;
 import pet.diploma.sitesearchengine.security.JwtRequest;
 import pet.diploma.sitesearchengine.security.JwtResponse;
@@ -57,12 +58,16 @@ public class AuthController {
     }
 
     @PatchMapping ("change")
-    public ResponseEntity<JwtResponse> changePassword(@RequestBody @NotNull JwtRequest authRequest, @RequestBody String newPassword) {
-        final JwtResponse token = authService.login(authRequest);
+    public ResponseEntity<JwtResponse> changePassword(@RequestBody @NotNull JwtChangeRequest authRequest) {
+        System.out.println(authRequest.getLogin());
+        System.out.println(authRequest.getPassword());
+        System.out.println(authRequest.getNewPassword());
+
+        final JwtResponse token = authService.login(new JwtRequest(authRequest.getLogin(), authRequest.getPassword()));
         Optional<User> optionalUser = userService.getByLogin(authRequest.getLogin());
         if (token.getError() == null && optionalUser.isPresent()) {
             User user = optionalUser.get();
-            user.setPassword(newPassword);
+            user.setPassword(authRequest.getNewPassword());
             userService.updateUserByLogin(user);
             return new ResponseEntity<>(token, HttpStatus.OK);
         } else {
