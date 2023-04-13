@@ -30,8 +30,9 @@ spring:
         smtp:
           auth: true
           starttls:
+            required: true
             enable: true
-    password: ivdvuyxxskxidlee
+    password: ngetqmzyqplstbjz
 local:
   jwt:
     secret:

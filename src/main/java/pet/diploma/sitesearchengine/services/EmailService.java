@@ -25,7 +25,7 @@ public class EmailService {
     private final JavaMailSender emailSender;
     private boolean checkOk = false;
     private boolean checkError = false;
-    private final static String PATH_PICTURE_OK = "src/main/resources/img/indexInfoError.png";
+    private final static String PATH_PICTURE_OK = "src/main/resources/img/indexInfoOk.png";
     private final static String PATH_PICTURE_ERROR = "src/main/resources/img/indexInfoError.png";
     @Getter
     private final Map<String, Integer> verification = new HashMap<>();
