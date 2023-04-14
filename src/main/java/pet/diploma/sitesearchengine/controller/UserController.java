@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pet.diploma.sitesearchengine.model.User;
+import pet.diploma.sitesearchengine.model.response.InfoResponse;
 import pet.diploma.sitesearchengine.model.response.NotifyRequest;
 import pet.diploma.sitesearchengine.model.response.RecoverRequest;
 import pet.diploma.sitesearchengine.model.response.RegistrationResponse;
@@ -34,17 +35,15 @@ public class UserController {
     }
 
     @PostMapping("info")
-    public ResponseEntity<String> getLoginByToken() {
+    public ResponseEntity<InfoResponse> getLoginByToken() {
         try {
             String login = authService.getAuthInfo().getPrincipal().toString();
             System.out.println("Login - " + login);
-            if (userService.getByLogin(login).isPresent()) {
-                return ResponseEntity.ok(login);
-            } else {
-                return new ResponseEntity<>("Пользователь не найден", HttpStatus.NOT_FOUND);
-            }
+            Optional<User> optionalUser = userService.getByLogin(login);
+            return optionalUser.map(user -> ResponseEntity.ok(new InfoResponse(login, user.isNotify(), null)))
+                    .orElseGet(() -> new ResponseEntity<>(new InfoResponse(null, null, "Пользователь не найден"), HttpStatus.NOT_FOUND));
         } catch (Exception e) {
-            return new ResponseEntity<>("Пользователь не найден", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new InfoResponse(null, null, "Пользователь не найден"), HttpStatus.NOT_FOUND);
         }
     }
 
