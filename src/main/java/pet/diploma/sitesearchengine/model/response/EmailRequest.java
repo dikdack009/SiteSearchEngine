@@ -1,15 +1,10 @@
 package pet.diploma.sitesearchengine.model.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
-@Setter
-@Getter
-@AllArgsConstructor
+@Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class NotifyRequest {
+public class EmailRequest {
     private String login;
-    private boolean flag;
 }

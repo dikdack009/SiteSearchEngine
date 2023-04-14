@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import pet.diploma.sitesearchengine.model.User;
+import pet.diploma.sitesearchengine.model.response.EmailRequest;
 import pet.diploma.sitesearchengine.model.response.RegistrationResponse;
 import pet.diploma.sitesearchengine.services.EmailService;
 import pet.diploma.sitesearchengine.services.UserService;
@@ -31,14 +32,16 @@ public class EmailController {
     }
 
     @PostMapping("/recover")
-    public ResponseEntity<RegistrationResponse> sendRecoverEmail(@NotNull @RequestBody String login) throws UnsupportedEncodingException {
-        if (checkFailedEmailFormat(login)) {
+    public ResponseEntity<RegistrationResponse> sendRecoverEmail(@NotNull @RequestBody EmailRequest re) throws UnsupportedEncodingException {
+        System.out.println(re);
+        System.out.println(re.getLogin().matches(EMAIL_REGEX));
+        if (checkFailedEmailFormat(re.getLogin())) {
             return new ResponseEntity<>(new RegistrationResponse(false, "Неверный формат почты"), HttpStatus.BAD_REQUEST);
         }
-        Optional<User> optionalUser = userService.getByLogin(login);
+        Optional<User> optionalUser = userService.getByLogin(re.getLogin());
         if (optionalUser.isPresent()) {
             try {
-                emailService.sendRecoverCode(login);
+                emailService.sendRecoverCode(re.getLogin());
                 return new ResponseEntity<>(new RegistrationResponse(true, null), HttpStatus.OK);
             } catch (MessagingException e) {
                 return new ResponseEntity<>(new RegistrationResponse(false, "Письмо не отправлено"), HttpStatus.BAD_REQUEST);
