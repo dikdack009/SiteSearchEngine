@@ -49,7 +49,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter implements WebM
                 )
                 .and()
                 .authorizeRequests()
-                .antMatchers("/api/auth/login", "/api/auth/token", "/api/auth/info", "/api/registration", "/api/auth/change", "/api/verification/*").permitAll()
+                .antMatchers("/api/auth/login", "/api/auth/token", "/api/user/info",
+                        "/api/registration", "/api/user/change", "/api/verification/*",
+                        "/api/user/notify", "/api/user/recover").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .addFilterAfter(jwtFilter, UsernamePasswordAuthenticationFilter.class);

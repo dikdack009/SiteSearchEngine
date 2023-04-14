@@ -37,10 +37,10 @@ public class RegistrationController {
     @PostMapping("/api/registration")
     public ResponseEntity<RegistrationResponse> addUser(@RequestBody JwtRequest authRequest) throws MessagingException, UnsupportedEncodingException {
         User newUser = new User();
-        if (checkFailedEmailFormat(authRequest.getLogin())) {
+        if (checkFailedEmailFormat(authRequest.getLogin().trim())) {
             return new ResponseEntity<>(new RegistrationResponse(false, "Неверный формат почты"), HttpStatus.BAD_REQUEST);
         }
-        newUser.setLogin(authRequest.getLogin());
+        newUser.setLogin(authRequest.getLogin().trim());
         if (checkFailedPasswordFormat(authRequest.getPassword())) {
             return new ResponseEntity<>(new RegistrationResponse(false, "Неверный формат пароля"), HttpStatus.BAD_REQUEST);
         }
@@ -49,8 +49,9 @@ public class RegistrationController {
         newUser.setEmailChecked(false);
         RegistrationResponse registrationResponse;
         if (!userService.saveUser(newUser)){
-            if (!userService.getByLogin(authRequest.getLogin()).get().isEmailChecked()) {
-                userService.updateUserByLogin(newUser);
+            Optional<User> optionalUser = userService.getByLogin(authRequest.getLogin());
+            if (optionalUser.isPresent() && !optionalUser.get().isEmailChecked()) {
+                userService.updateUserPasswordByLogin(newUser);
                 System.out.println(newUser);
                 emailService.sendCheckCode(authRequest.getLogin());
                 return new ResponseEntity<>(new RegistrationResponse(true, null), HttpStatus.RESET_CONTENT);
@@ -64,6 +65,7 @@ public class RegistrationController {
 
     @GetMapping("/api/verification/check")
     public ResponseEntity<RegistrationResponse> checkCode(@RequestParam String login, @RequestParam(name = "code") String codeString) {
+        login = login.trim();
         if (checkFailedEmailFormat(login)) {
             return new ResponseEntity<>(new RegistrationResponse(false, "Неверный формат почты"), HttpStatus.BAD_REQUEST);
         }
@@ -80,6 +82,7 @@ public class RegistrationController {
         if (user.isPresent()) {
             boolean checkCode = Objects.equals(emailService.getVerification().get(login), code);
             if (checkCode) {
+                emailService.getVerification().remove(login);
                 userService.updateCheckedUser(login);
             }
             return new ResponseEntity<>(new RegistrationResponse(checkCode, checkCode ? null :  "Неверный код"), checkCode ? HttpStatus.OK : HttpStatus.BAD_REQUEST);

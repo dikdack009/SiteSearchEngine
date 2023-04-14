@@ -29,6 +29,8 @@ public class EmailService {
     private final static String PATH_PICTURE_ERROR = "src/main/resources/img/indexInfoError.png";
     @Getter
     private final Map<String, Integer> verification = new HashMap<>();
+    @Getter
+    private final Map<String, Integer> recover = new HashMap<>();
 
     @Autowired
     public EmailService(JavaMailSender emailSender) {
@@ -196,7 +198,17 @@ public class EmailService {
         return new Statistic(false, userId).getStatistics().getDetailed();
     }
 
-    public void sendCheckCode(String to) throws MessagingException, UnsupportedEncodingException {
+    public void sendRecoverCode(String to) throws MessagingException, UnsupportedEncodingException {
+        String number = getRandomSixNumber();
+        String text = "Добрый день!\n" +
+                "Ваш проверочный код - " + number + ".\n\n" +
+                "\n" +
+                "Введите этот код, чтобы сбросить пароль вашей учетной записи.\n" +
+                "\n";
+        code(to, number, text, recover, "Сброс пароля");
+    }
+
+    private String getRandomSixNumber() {
         Random r = new Random();
         String number1 = String.valueOf(r.nextInt(9) + 1);
         String number2 = String.valueOf(r.nextInt(10));
@@ -204,17 +216,15 @@ public class EmailService {
         String number4 = String.valueOf(r.nextInt(10));
         String number5 = String.valueOf(r.nextInt(10));
         String number6 = String.valueOf(r.nextInt(10));
-        String number = number1 + number2 + number3 + number4 + number5 + number6;
-        String text = "Добрый день!\n" +
-                "Ваш проверочный код - " + number + ".\n\n" +
-                "\n" +
-                "Введите этот код, чтобы активировать свою учетную запись.\n" +
-                "\n";
-        verification.put(to, Integer.valueOf(number));
+        return number1 + number2 + number3 + number4 + number5 + number6;
+    }
+
+    private void code(String to, String number, String text, Map<String, Integer> data, String subject) throws MessagingException, UnsupportedEncodingException {
+        data.put(to, Integer.valueOf(number));
         MimeMessage message = emailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true);
         helper.setTo(to);
-        helper.setSubject("Подтверждение аккаунта");
+        helper.setSubject(subject);
         Multipart mp = new MimeMultipart();
         MimeBodyPart htmlPart = new MimeBodyPart();
         htmlPart.setContent(text, "text/html; charset = utf-8");
@@ -224,5 +234,15 @@ public class EmailService {
         Address address = new NewsAddress("", "noreply@serchengine.ru");
         message.setSender(address);
         emailSender.send(message);
+    }
+
+    public void sendCheckCode(String to) throws MessagingException, UnsupportedEncodingException {
+        String number = getRandomSixNumber();
+        String text = "Добрый день!\n" +
+                "Ваш проверочный код - " + number + ".\n\n" +
+                "\n" +
+                "Введите этот код, чтобы активировать свою учетную запись.\n" +
+                "\n";
+        code(to, number, text, verification, "Подтверждение аккаунта");
     }
 }

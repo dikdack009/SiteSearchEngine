@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import pet.diploma.sitesearchengine.model.User;
 import pet.diploma.sitesearchengine.services.AuthService;
 import pet.diploma.sitesearchengine.services.CrawlingService;
 import pet.diploma.sitesearchengine.services.EmailService;
@@ -56,9 +57,10 @@ public class IndexingController {
 
     public ResponseEntity<IndexingResponse> indexing(int userId, String email, String body) throws InterruptedException, ExecutionException, MessagingException, SQLException, IOException, JSONException {
         Map<String, Object> tmp = new ObjectMapper().readValue(body, HashMap.class);
-        Map<String, String> result  = new ObjectMapper().readValue(tmp.get("data").toString(), HashMap.class);AtomicReference<IndexingResponse> response = new AtomicReference<>();
+        Map<String, String> result = new ObjectMapper().readValue(tmp.get("data").toString(), HashMap.class);
+        AtomicReference<IndexingResponse> response = new AtomicReference<>();
         checkUserInfo(userId);
-        if (config.getUserIndexing().get(userId)){
+        if (config.getUserIndexing().get(userId)) {
             response.set(new IndexingResponse(false, "Индексация уже запущена"));
             return new ResponseEntity<>(response.get(), HttpStatus.BAD_REQUEST);
         }
@@ -72,7 +74,7 @@ public class IndexingController {
         List<Future<IndexingResponse>> futures;
 
         futures = es.invokeAll(tasks);
-        for(Future<IndexingResponse> f : futures) {
+        for (Future<IndexingResponse> f : futures) {
             if (f.get().getError() != null) {
                 response.set(f.get());
             }
@@ -80,7 +82,10 @@ public class IndexingController {
         es.shutdown();
         config.getUserIndexing().put(userId, false);
         config.getStopIndexing().put(userId, false);
-        sendMessage(email, userId, result);
+        Optional<User> optionalUser = userService.getByLogin(email);
+        if (optionalUser.isPresent() && optionalUser.get().isNotify()) {
+            sendMessage(email, userId, result);
+        }
         System.out.println("Закончили индексацию !!!");
         return new ResponseEntity<>(response.get(), HttpStatus.OK);
     }

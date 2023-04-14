@@ -7,8 +7,8 @@ import javax.persistence.*;
 @Getter
 @Setter
 @ToString
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "user")
 public class User {
@@ -25,4 +25,16 @@ public class User {
     @Getter
     @Column(name = "email_checked", nullable = false)
     private boolean emailChecked;
+    @Getter
+    @Column(nullable = false, columnDefinition = "DEFAULT true")
+    private boolean notify;
+
+    public User(int id, String login, String password, Role roles, boolean emailChecked) {
+        this.id = id;
+        this.login = login;
+        this.password = password;
+        this.roles = roles;
+        this.emailChecked = emailChecked;
+        this.notify = true;
+    }
 }

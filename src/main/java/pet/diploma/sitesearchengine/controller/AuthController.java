@@ -5,15 +5,10 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import pet.diploma.sitesearchengine.model.User;
-import pet.diploma.sitesearchengine.security.JwtChangeRequest;
 import pet.diploma.sitesearchengine.services.AuthService;
 import pet.diploma.sitesearchengine.security.JwtRequest;
 import pet.diploma.sitesearchengine.security.JwtResponse;
 import pet.diploma.sitesearchengine.security.RefreshJwtRequest;
-import pet.diploma.sitesearchengine.services.UserService;
-
-import java.util.Optional;
 
 @RestController
 @RequestMapping("api/auth")
@@ -21,7 +16,6 @@ import java.util.Optional;
 public class AuthController {
 
     private final AuthService authService;
-    private final UserService userService;
 
     @PostMapping("login")
     public ResponseEntity<JwtResponse> login(@RequestBody @NotNull JwtRequest authRequest) {
@@ -40,38 +34,5 @@ public class AuthController {
     public ResponseEntity<JwtResponse> getNewRefreshToken(@RequestBody @NotNull RefreshJwtRequest request) {
         final JwtResponse token = authService.refresh(request.getRefreshToken());
         return token.getError() == null ? ResponseEntity.ok(token) : new ResponseEntity<>(token, HttpStatus.FORBIDDEN);
-    }
-
-    @PostMapping("info")
-    public ResponseEntity<String> getLoginByToken() {
-        try {
-            String login = authService.getAuthInfo().getPrincipal().toString();
-            System.out.println("Login - " + login);
-            if (userService.getByLogin(login).isPresent()) {
-                return ResponseEntity.ok(login);
-            } else {
-                return new ResponseEntity<>("Пользователь не найден", HttpStatus.NOT_FOUND);
-            }
-        } catch (Exception e) {
-            return new ResponseEntity<>("Пользователь не найден", HttpStatus.NOT_FOUND);
-        }
-    }
-
-    @PatchMapping ("change")
-    public ResponseEntity<JwtResponse> changePassword(@RequestBody @NotNull JwtChangeRequest authRequest) {
-        System.out.println(authRequest.getLogin());
-        System.out.println(authRequest.getPassword());
-        System.out.println(authRequest.getNewPassword());
-
-        final JwtResponse token = authService.login(new JwtRequest(authRequest.getLogin(), authRequest.getPassword()));
-        Optional<User> optionalUser = userService.getByLogin(authRequest.getLogin());
-        if (token.getError() == null && optionalUser.isPresent()) {
-            User user = optionalUser.get();
-            user.setPassword(authRequest.getNewPassword());
-            userService.updateUserByLogin(user);
-            return new ResponseEntity<>(token, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(new JwtResponse("Пользователь не найден"), HttpStatus.NOT_FOUND);
-        }
     }
 }

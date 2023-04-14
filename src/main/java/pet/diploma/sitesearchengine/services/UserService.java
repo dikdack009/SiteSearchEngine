@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import pet.diploma.sitesearchengine.repositories.UserRepository;
 import pet.diploma.sitesearchengine.model.User;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -41,9 +40,14 @@ public class UserService implements UserDetailsService  {
         return true;
     }
 
-    public void updateUserByLogin(User user) {
-        System.out.println(user);
+    public void updateUserPasswordByLogin(User user) {
+        System.out.println("Смена пароля - " + user);
         userRepository.updateUserPasswordByLogin(bCryptPasswordEncoder.encode(user.getPassword()), user.getLogin());
+    }
+
+    public void updateUserNotifyByLogin(User user) {
+        System.out.println("Смена флага уведомлений - " + user);
+        userRepository.updateUserNotifyByLogin(user.isNotify(), user.getLogin());
     }
 
     public boolean updateCheckedUser(String email) {

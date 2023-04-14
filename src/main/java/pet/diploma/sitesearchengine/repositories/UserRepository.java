@@ -10,8 +10,12 @@ import pet.diploma.sitesearchengine.model.User;
 public interface UserRepository extends JpaRepository<User, Long> {
     @Transactional
     @Modifying
+    @Query("update User u set u.notify = ?1 where u.login = ?2")
+    void updateUserNotifyByLogin(@NonNull boolean notify, @NonNull String login);
+    @Transactional
+    @Modifying
     @Query("update User set password = ?1 where login = ?2")
-    void updateUserPasswordByLogin(String password, @NonNull String login);
+    void updateUserPasswordByLogin(@NonNull String password, @NonNull String login);
     User getUserByLogin(String username);
     User getUserById (int id);
 }
