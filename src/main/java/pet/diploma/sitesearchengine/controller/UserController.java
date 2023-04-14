@@ -26,6 +26,8 @@ public class UserController {
     private final AuthService authService;
     private final UserService userService;
     private final EmailService emailService;
+    private final static String EMAIL_REGEX = "([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\\.[a-zA-Z0-9_-]+)";
+    private final static String PASSWORD_REGEX = "(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9@#$%]).{8,}";
 
     @Autowired
     public UserController(AuthService authService, UserService userService, EmailService emailService) {
@@ -70,6 +72,12 @@ public class UserController {
         } catch (NumberFormatException e) {
             return new ResponseEntity<>(new RegistrationResponse(false, "Неверный формат кода подтверждения"), HttpStatus.BAD_REQUEST);
         }
+        if (checkFailedEmailFormat(authRequest.getLogin().trim())) {
+            return new ResponseEntity<>(new RegistrationResponse(false, "Неверный формат почты"), HttpStatus.BAD_REQUEST);
+        }
+        if (checkFailedPasswordFormat(authRequest.getPassword())) {
+            return new ResponseEntity<>(new RegistrationResponse(false, "Неверный формат пароля"), HttpStatus.BAD_REQUEST);
+        }
         if (optionalUser.isPresent()) {
             if ((codeNumber > 999999 || codeNumber < 100000)) {
                 return new ResponseEntity<>(new RegistrationResponse(false, "Неверный формат кода подтверждения"), HttpStatus.BAD_REQUEST);
@@ -98,5 +106,13 @@ public class UserController {
         } else {
             return new ResponseEntity<>(new RegistrationResponse(true,"Пользователь не найден"), HttpStatus.NOT_FOUND);
         }
+    }
+
+    private boolean checkFailedEmailFormat(String email) {
+        return email.isEmpty() || !email.matches(EMAIL_REGEX);
+    }
+
+    private boolean checkFailedPasswordFormat(String password) {
+        return password.isEmpty() || !password.matches(PASSWORD_REGEX);
     }
 }
