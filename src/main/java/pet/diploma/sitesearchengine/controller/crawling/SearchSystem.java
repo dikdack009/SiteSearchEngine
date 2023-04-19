@@ -31,7 +31,7 @@ public class SearchSystem {
     @Getter
     private String error;
     private final CrawlingService crawlingService;
-    private int userId;
+    private final int userId;
 
     public SearchSystem(String query, Set<String> links, Integer offset, Integer limit, CrawlingService crawlingService, int userId) {
         this.query = query;
@@ -40,7 +40,8 @@ public class SearchSystem {
         this.crawlingService = crawlingService;
         this.links = links;
         this.userId = userId;
-        linkIdList = new HashSet<>();
+        this.linkIdList = new HashSet<>();
+        this.error = null;
     }
 
     public ResponseEntity<SearchResponse> request() throws IOException, SQLException, InterruptedException {

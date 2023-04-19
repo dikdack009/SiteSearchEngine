@@ -82,7 +82,7 @@ public class MorphologyServiceImpl {
                 break;
             }
         }
-//        System.out.println(word + " - " + russianMorphology.getNormalForms(word));
+
         String normalWord = russianMorphology.getNormalForms(word).get(0);
         boolean check = russianMorphology.getMorphInfo(word).stream()
                 .anyMatch(w -> w.contains("СОЮЗ") || w.contains("МЕЖД") ||
@@ -102,9 +102,8 @@ public class MorphologyServiceImpl {
         String[] russianWords = text.replaceAll("[^[а-яА-Я\\-]]", "^").toLowerCase().split("\\^");
 
         int j;
-        int razn = 0;
+        int div = 0;
         char[] textArray = text.replaceAll("[^[а-яА-Я]]", "^").toLowerCase().toCharArray();
-//        System.out.println(textArray);
 
         for (int i = 0; i < textArray.length; ++i){
             if (textArray[i] != '^') {
@@ -117,38 +116,21 @@ public class MorphologyServiceImpl {
                             word = pair.getKey();
                         }
                     }
-                    text = text.substring(0, i - razn) + word;
+                    text = text.substring(0, i - div) + word;
                     break;
                 }
                 j = tmp;
                 String word = new String(textArray).substring(i, j);
                 int size = word.length();
                 j--;
-//                System.out.print(word + " - ");
                 if (Arrays.asList(russianWords).contains(word)) {
                     word = russianMorphology.getNormalForms(word).get(0);
-//                    System.out.println(word);
                 }
-//                System.out.println(text);
-                text = text.substring(0, i - razn) + word + text.substring(j + 1 - razn);
-//                System.out.println(text);
-                razn += - word.length() + size;
+                text = text.substring(0, i - div) + word + text.substring(j + 1 - div);
+                div += - word.length() + size;
                 i = j + 1 ;
             }
         }
-//        System.out.println(text);
-//        System.out.println(Arrays.toString(russianWords));
-//        for (String word : russianWords)  {
-//            if (!word.isEmpty()) {
-//                Pair<String, Boolean> pair = check(russianMorphology, word);
-//                Boolean check = pair.getValue();
-//                String normalWord = pair.getKey();
-//                if (!check && !word.contains("-")) {
-//                    text = text.replace(word, normalWord);
-//                    System.out.println(text);
-//                }
-//            }
-//        }
         return text;
     }
 
@@ -156,9 +138,9 @@ public class MorphologyServiceImpl {
         LuceneMorphology englishMorphology = new EnglishLuceneMorphology();
         String[] englishWords = text.replaceAll("[^[a-zA-Z\\-]]", "^")
                 .toLowerCase().split("\\^");
-        int j = 0;
+        int j;
         char[] textArray = text.replaceAll("[^[a-zA-Z\\-]]", "^").toLowerCase().toCharArray();
-        int razn = 0;
+        int div = 0;
 
         for (int i = 0; i < textArray.length; ++i){
             if (textArray[i] != '^') {
@@ -169,7 +151,7 @@ public class MorphologyServiceImpl {
                     if (Arrays.asList(englishWords).contains(word)) {
                         word = englishMorphology.getNormalForms(word).get(0);
                     }
-                    text = text.substring(0, i - razn) + word;
+                    text = text.substring(0, i - div) + word;
                     break;
                 }
                 j = tmp;
@@ -179,26 +161,11 @@ public class MorphologyServiceImpl {
                 if (Arrays.asList(englishWords).contains(word)) {
                     word = englishMorphology.getNormalForms(word).get(0);
                 }
-                text = text.substring(0, i - razn) + word + text.substring(j + 1 - razn);
-                razn += - word.length() + size;
+                text = text.substring(0, i - div) + word + text.substring(j + 1 - div);
+                div += - word.length() + size;
                 i = j + 1 ;
             }
         }
-//        for (String word : englishWords)  {
-//            if (!word.isEmpty()) {
-////                List<String> normalWordL = englishMorphology.getNormalForms(word);
-////                for (String s : normalWordL) {
-////                    if (!s.equals(word)) {
-////                        word = s;
-////                        break;
-////                    }
-////                }
-//                String normalWord = englishMorphology.getNormalForms(word).get(0);
-//                System.out.println(word + " - " + englishMorphology.getNormalForms(word));
-//                text = text.replace(word, normalWord);
-//                System.out.println(text);
-//            }
-//        }
         return text;
     }
 }

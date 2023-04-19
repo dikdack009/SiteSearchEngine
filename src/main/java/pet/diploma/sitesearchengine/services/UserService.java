@@ -41,12 +41,10 @@ public class UserService implements UserDetailsService  {
     }
 
     public void updateUserPasswordByLogin(User user) {
-        System.out.println("Смена пароля - " + user);
         userRepository.updateUserPasswordByLogin(bCryptPasswordEncoder.encode(user.getPassword()), user.getLogin());
     }
 
     public void updateUserNotifyByLogin(User user) {
-        System.out.println("Смена флага уведомлений - " + user);
         userRepository.updateUserNotifyByLogin(user.isNotify(), user.getLogin());
     }
 

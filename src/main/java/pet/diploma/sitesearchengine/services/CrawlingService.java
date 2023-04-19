@@ -1,5 +1,6 @@
 package pet.diploma.sitesearchengine.services;
 
+import org.apache.logging.log4j.LogManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -7,7 +8,6 @@ import pet.diploma.sitesearchengine.model.*;
 import pet.diploma.sitesearchengine.repositories.*;
 import pet.diploma.sitesearchengine.model.response.LinkModel;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -48,18 +48,6 @@ public class CrawlingService {
     @Transactional(readOnly = true)
     public List<Field> gelAllFields() {
         return fieldRepository.findAll();
-    }
-
-    @Transactional
-    public Page addPage(Page page) {
-        Page pageFromDB = pageRepository.getByPath(page.getPath());
-
-        if (pageFromDB != null) {
-            return null;
-        }
-
-        pageRepository.save(page);
-        return pageRepository.getByPath(page.getPath());
     }
 
     @Transactional(readOnly = true)
@@ -143,31 +131,25 @@ public class CrawlingService {
     @Transactional
     public boolean deleteSiteInfo(String url, int userId) {
         Site site = siteRepository.getSiteByUrlAndUserIdAndIsDeleted(url, userId, 0);
-        System.out.println("Удаляем информацию с сайта: " + site);
         Integer deleteIndex = indexDeleteRepository.getOne(1).getDeleteNumber();
-        System.out.println("Индекс даления = " + deleteIndex);
         if (site != null) {
             int id = site.getId();
-            System.out.println("Удаление сайта с id сайта = " + id);
+            LogManager.getLogger("index").info("Удаляем информацию с сайта: " + id);
             if (lemmaRepository.getFirstBySiteId(id) != null) {
                 lemmaRepository.updateLemmaDelete(site, deleteIndex);
-                System.out.println("Удалили леммы с id сайта = " + id);
             }
             if (pageRepository.getFirstBySiteId(id) != null) {
                 pageRepository.updatePageDelete(site, deleteIndex);
-                System.out.println("Удалили странницы с id сайта = " + id);
             }
             if (indexRepository.getFirstBySiteId(id) != null) {
                 indexRepository.updateIndexDelete(site, deleteIndex);
-                System.out.println("Удалили индексы с id сайта = " + id);
             }
             indexDeleteRepository.updateIndexDeleteDelete(deleteIndex + 1);
-            System.out.println("Обновили метку удаления");
         }
         else {
             return false;
         }
-        System.out.println("Удаление данных сайта закончено");
+        LogManager.getLogger("index").info("Удаление данных сайта " + site.getId() + " закончено");
         return true;
     }
 
@@ -178,12 +160,12 @@ public class CrawlingService {
 
     @Transactional
     public void deleteAllDeletedDataB() {
-        System.out.println("Удаление всех нужных данных ночью " + LocalDateTime.now());
-        indexRepository.deleteByIsDeleted();
+        LogManager.getLogger("index").info("Удаление всех нужных данных ночью");
         lemmaRepository.deleteByIsDeleted();
         pageRepository.deleteByIsDeleted();
+        indexRepository.deleteByIsDeleted();
         siteRepository.deleteByIsDeleted();
-        System.out.println("Закончили ночное удаление");
+        LogManager.getLogger("index").info("Закончили ночное удаление");
     }
 
     @Transactional

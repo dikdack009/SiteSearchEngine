@@ -1,5 +1,7 @@
 package pet.diploma.sitesearchengine.controller;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -26,6 +28,7 @@ public class UserController {
     private final AuthService authService;
     private final UserService userService;
     private final EmailService emailService;
+    private final Logger rootLogger;
     private final static String EMAIL_REGEX = "([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\\.[a-zA-Z0-9_-]+)";
     private final static String PASSWORD_REGEX = "(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9@#$%]).{8,}";
 
@@ -34,13 +37,13 @@ public class UserController {
         this.authService = authService;
         this.userService = userService;
         this.emailService = emailService;
+        this.rootLogger = LogManager.getLogger("index");
     }
 
     @PostMapping("info")
     public ResponseEntity<InfoResponse> getLoginByToken() {
         try {
             String login = authService.getAuthInfo().getPrincipal().toString();
-            System.out.println("Login - " + login);
             Optional<User> optionalUser = userService.getByLogin(login);
             return optionalUser.map(user -> ResponseEntity.ok(new InfoResponse(login, user.isNotify(), null)))
                     .orElseGet(() -> new ResponseEntity<>(new InfoResponse(null, null, "Пользователь не найден"), HttpStatus.NOT_FOUND));
@@ -51,35 +54,47 @@ public class UserController {
 
     @PatchMapping("change")
     public ResponseEntity<JwtResponse> changePassword(@RequestBody @NotNull JwtChangeRequest authRequest) {
+        rootLogger.info(authRequest.getLogin() + ":\tПользователь меняет пароль");
         final JwtResponse token = authService.login(new JwtRequest(authRequest.getLogin(), authRequest.getPassword()));
         Optional<User> optionalUser = userService.getByLogin(authRequest.getLogin());
         if (token.getError() == null && optionalUser.isPresent()) {
             User user = optionalUser.get();
             user.setPassword(authRequest.getNewPassword());
             userService.updateUserPasswordByLogin(user);
+            rootLogger.info(authRequest.getLogin() + ":\tПользователь успешно изменён");
             return new ResponseEntity<>(token, HttpStatus.OK);
-        } else {
+        }
+        if (token.getError() != null) {
+            rootLogger.error(authRequest.getLogin() + ":\tПароль не изменён: Неверный старый пароль");
+            return new ResponseEntity<>(new JwtResponse("Неверный старый пароль"), HttpStatus.FORBIDDEN);
+        }  else {
+            rootLogger.error(authRequest.getLogin() + ":\tПароль не изменён: Пользователь не найден");
             return new ResponseEntity<>(new JwtResponse("Пользователь не найден"), HttpStatus.NOT_FOUND);
         }
     }
 
     @PatchMapping ("recover")
     public ResponseEntity<RegistrationResponse> recoverPassword(@RequestBody @NotNull RecoverRequest authRequest) {
+        rootLogger.info(authRequest.getLogin() + ":\tПользователь восстанавливает пароль");
         Optional<User> optionalUser = userService.getByLogin(authRequest.getLogin());
         int codeNumber;
-        try {
-            codeNumber = Integer.parseInt(authRequest.getCode().trim());
-        } catch (NumberFormatException e) {
-            return new ResponseEntity<>(new RegistrationResponse(false, "Неверный формат кода подтверждения"), HttpStatus.BAD_REQUEST);
-        }
         if (checkFailedEmailFormat(authRequest.getLogin().trim())) {
+            rootLogger.error(authRequest.getLogin() + ":\tОшибка восстановления пароля: Неверный формат почты");
             return new ResponseEntity<>(new RegistrationResponse(false, "Неверный формат почты"), HttpStatus.BAD_REQUEST);
         }
         if (checkFailedPasswordFormat(authRequest.getPassword())) {
+            rootLogger.error(authRequest.getLogin() + ":\tОшибка восстановления пароля: Неверный формат пароля");
             return new ResponseEntity<>(new RegistrationResponse(false, "Неверный формат пароля"), HttpStatus.BAD_REQUEST);
         }
         if (optionalUser.isPresent()) {
-            if ((codeNumber > 999999 || codeNumber < 100000)) {
+            try {
+                codeNumber = Integer.parseInt(authRequest.getCode().trim());
+                if ((codeNumber > 999999 || codeNumber < 100000)) {
+                    rootLogger.error(authRequest.getLogin() + ":\tОшибка восстановления пароля: Неверный формат кода подтверждения");
+                    return new ResponseEntity<>(new RegistrationResponse(false, "Неверный формат кода подтверждения"), HttpStatus.BAD_REQUEST);
+                }
+            } catch (NumberFormatException e) {
+                rootLogger.error(authRequest.getLogin() + ":\tОшибка восстановления пароля: Неверный формат кода подтверждения");
                 return new ResponseEntity<>(new RegistrationResponse(false, "Неверный формат кода подтверждения"), HttpStatus.BAD_REQUEST);
             }
             if (Objects.equals(emailService.getRecover().get(authRequest.getLogin()), codeNumber)) {
@@ -89,9 +104,12 @@ public class UserController {
                 userService.updateUserPasswordByLogin(user);
                 return new ResponseEntity<>(new RegistrationResponse(true, null), HttpStatus.OK);
             } else {
+                rootLogger.error(authRequest.getLogin() + ":\tОшибка восстановления пароля: Неверный код");
                 return new ResponseEntity<>(new RegistrationResponse(false, "Неверный код"), HttpStatus.BAD_REQUEST);
             }
         } else {
+            rootLogger.error(authRequest.getLogin() + ":\tОшибка восстановления пароля: Пользователь не найден");
+
             return new ResponseEntity<>(new RegistrationResponse(true,"Пользователь не найден"), HttpStatus.NOT_FOUND);
         }
     }
@@ -102,8 +120,10 @@ public class UserController {
             User user = optionalUser.get();
             user.setNotify(notifyRequest.isFlag());
             userService.updateUserNotifyByLogin(user);
+            rootLogger.info(notifyRequest.getLogin() + ":\tСтатус уведомлений изменён");
             return new ResponseEntity<>(new RegistrationResponse(true, null), HttpStatus.OK);
         } else {
+            rootLogger.error(notifyRequest.getLogin() + ":\tСтатус не изменён: Пользователь не найден");
             return new ResponseEntity<>(new RegistrationResponse(true,"Пользователь не найден"), HttpStatus.NOT_FOUND);
         }
     }

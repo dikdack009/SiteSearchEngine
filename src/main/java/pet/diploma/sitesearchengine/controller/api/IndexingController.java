@@ -1,6 +1,9 @@
 package pet.diploma.sitesearchengine.controller.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Getter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.http.HttpStatus;
@@ -34,6 +37,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @RestController
 public class IndexingController {
     private final Config config;
+    private final Logger rootLogger;
     private final CrawlingService crawlingService;
     private final EmailService emailService;
     private final UserService userService;
@@ -46,6 +50,7 @@ public class IndexingController {
         this.emailService = emailService;
         this.userService = userService;
         this.authService = authService;
+        rootLogger = LogManager.getRootLogger();
     }
 
     @PostMapping(path="/api/startIndexing", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
@@ -56,19 +61,22 @@ public class IndexingController {
     }
 
     public ResponseEntity<IndexingResponse> indexing(int userId, String email, String body) throws InterruptedException, ExecutionException, MessagingException, SQLException, IOException, JSONException {
+        long start = System.currentTimeMillis();
         Map<String, Object> tmp = new ObjectMapper().readValue(body, HashMap.class);
-        Map<String, String> result = new ObjectMapper().readValue(tmp.get("data").toString(), HashMap.class);
+        Map<String, String> sites = new ObjectMapper().readValue(tmp.get("data").toString(), HashMap.class);
+        rootLogger.info(email + ":\tЗапуск индексации " + sites.size() + " сайтов.");
         AtomicReference<IndexingResponse> response = new AtomicReference<>();
         checkUserInfo(userId);
         if (config.getUserIndexing().get(userId)) {
+            rootLogger.error(email + ":\tОшибка индексации: " + "Индексация уже запущена");
             response.set(new IndexingResponse(false, "Индексация уже запущена"));
             return new ResponseEntity<>(response.get(), HttpStatus.BAD_REQUEST);
         }
         ExecutorService es = Executors.newFixedThreadPool(100);
         List<IndexingThread> tasks = new ArrayList<>();
 
-        for (String url : result.keySet()) {
-            SiteProperty site = new SiteProperty(url, result.get(url));
+        for (String url : sites.keySet()) {
+            SiteProperty site = new SiteProperty(url, sites.get(url), email);
             tasks.add(new IndexingThread(site, config, crawlingService, userId));
         }
         List<Future<IndexingResponse>> futures;
@@ -84,9 +92,10 @@ public class IndexingController {
         config.getStopIndexing().put(userId, false);
         Optional<User> optionalUser = userService.getByLogin(email);
         if (optionalUser.isPresent() && optionalUser.get().isNotify()) {
-            sendMessage(email, userId, result);
+            sendMessage(email, userId, sites);
+            rootLogger.info(email + ":\tПисьмо отправлено");
         }
-        System.out.println("Закончили индексацию !!!");
+        rootLogger.info(email + ":\tЗакончили индексацию за " + (double)(System.currentTimeMillis() - start) / 1000 + " сек.");
         return new ResponseEntity<>(response.get(), HttpStatus.OK);
     }
 
@@ -94,31 +103,38 @@ public class IndexingController {
         emailService.sendMessage(username, userId, sites);
     }
 
-    @GetMapping(path="/api/stopIndexing", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
+    @GetMapping(path="/api/stopIndexing", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public ResponseEntity<IndexingResponse> stopIndexing() {
-        int userId = userService.getIdByLogin(authService.getAuthInfo().getPrincipal().toString());
+        long start = System.currentTimeMillis();
+        String email = authService.getAuthInfo().getPrincipal().toString();
+        rootLogger.info(email + ":\tОстанавливаем индексацию");
+        int userId = userService.getIdByLogin(email);
         checkUserInfo(userId);
         IndexingResponse response;
         if (!config.getUserIndexing().get(userId)){
             response = new IndexingResponse(false, "Индексация не запущена");
+            rootLogger.error(email + ":\tОшибка индексации: " + "Индексация не запущена");
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
         config.getStopIndexing().put(userId, true);
         config.getUserIndexing().put(userId, false);
         response = new IndexingResponse(true, null);
+        rootLogger.info(email + ":\tОстановили за " + (double)(System.currentTimeMillis() - start) / 1000 + " сек.");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @GetMapping(path="/api/statistics", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
     public ResponseEntity<Statistic> statistics() throws ExecutionException, InterruptedException {
-        int userId = userService.getIdByLogin(authService.getAuthInfo().getPrincipal().toString());
+        long start = System.currentTimeMillis();
+        String email = authService.getAuthInfo().getPrincipal().toString();
+        int userId = userService.getIdByLogin(email);
         checkUserInfo(userId);
-        System.out.println("Зашли в статистику");
         ExecutorService es = Executors.newFixedThreadPool(10);
         List<StatisticThread> tasks = new ArrayList<>();
         tasks.add(new StatisticThread(config.getUserIndexing().get(userId), userId));
         ResponseEntity<Statistic> statistic = es.invokeAny(tasks);
         es.shutdown();
+        rootLogger.info(email + ":\tВернули сатистику за " + (double)(System.currentTimeMillis() - start) / 1000 + " сек.");
         return statistic;
     }
 

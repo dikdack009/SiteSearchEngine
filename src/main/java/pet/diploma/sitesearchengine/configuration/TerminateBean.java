@@ -1,5 +1,6 @@
 package pet.diploma.sitesearchengine.configuration;
 
+import org.apache.logging.log4j.LogManager;
 import pet.diploma.sitesearchengine.repositories.DBConnection;
 
 import javax.annotation.PreDestroy;
@@ -10,6 +11,6 @@ public class TerminateBean {
     @PreDestroy
     public void onDestroy() throws SQLException {
         DBConnection.closeConnection();
-        System.out.println("Spring Application is destroyed (");
+        LogManager.getLogger("index").info("I am destroyed..");
     }
 }

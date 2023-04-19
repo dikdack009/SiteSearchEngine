@@ -1,5 +1,6 @@
 package pet.diploma.sitesearchengine.configuration;
 
+import org.apache.logging.log4j.LogManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -20,9 +21,9 @@ public class ScheduledTasks {
     }
 
 
-    @Scheduled(cron = "0 0 3 * * *")
+    @Scheduled(cron = "0 29 16 * * *")
     public void deleteData() {
-        System.out.println("SCHEDULE");
+        LogManager.getLogger("index").info("Метод по расписанию запущен");
         crawlingService.deleteAllDeletedDataB();
         crawlingService.setNewDeleteIndex();
     }

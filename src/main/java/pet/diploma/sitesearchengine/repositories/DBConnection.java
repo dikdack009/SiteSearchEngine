@@ -30,7 +30,7 @@ public class DBConnection {
     }
 
     public static void closeConnection() throws SQLException {
-        if (!connection.isClosed() || connection != null) {
+        if (connection != null && !connection.isClosed()) {
             connection.close();
         }
     }
@@ -123,12 +123,10 @@ public class DBConnection {
     }
 
     private static int sqlRequest(int siteId, String sql) throws SQLException {
-//        System.out.println(sql);
         ResultSet rs = null;
         if (siteId > 0){
             sql += " and site_id = " + siteId;
         }
-//        System.out.println(sql);
         try {
             rs = getConnection().createStatement().executeQuery(sql);
         } catch (SQLException e) {
@@ -164,14 +162,12 @@ public class DBConnection {
 
     public static List<DetailedSite> getDBStatistic(int userId, List<Integer> siteIdList) throws SQLException {
         List<DetailedSite> stat = new ArrayList<>();
-        System.out.println("Статистика из бд");
         ResultSet rs = null;
         try {
             rs = getConnection().createStatement().executeQuery("SELECT * FROM site WHERE user_id = " + userId + " AND is_deleted = 0");
         } catch (SQLException e) {
             e.printStackTrace();
         }
-//        System.out.println("SELECT id FROM site WHERE site.url = '" + path + "'");
         while (true) {
             assert rs != null;
             if (!rs.next()) break;
@@ -181,7 +177,6 @@ public class DBConnection {
             String dateTime = rs.getString("status_time");
             SimpleDateFormat simpleDateFormat =
                     new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-//            simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
             Date date = new Date();
             try {
                 date =  simpleDateFormat.parse(dateTime);
@@ -196,7 +191,6 @@ public class DBConnection {
             stat.add(new DetailedSite(url, name, status, time,
                     error, countPages(id),  countLemmas(id)));
         }
-        System.out.println("Вернули статистику");
         return stat;
     }
 

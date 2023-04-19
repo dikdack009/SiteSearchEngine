@@ -34,7 +34,7 @@ public class JwtProvider {
 
     public String generateAccessToken(@NonNull User user) {
         final LocalDateTime now = LocalDateTime.now();
-        final Instant accessExpirationInstant = now.plusMinutes(15).atZone(ZoneId.systemDefault()).toInstant();
+        final Instant accessExpirationInstant = now.plusMinutes(1).atZone(ZoneId.systemDefault()).toInstant();
         final Date accessExpiration = Date.from(accessExpirationInstant);
         return Jwts.builder()
                 .setSubject(user.getLogin())
@@ -71,13 +71,13 @@ public class JwtProvider {
                     .parseClaimsJws(token);
             return true;
         } catch (ExpiredJwtException expEx) {
-            log.error("Token expired");
+            log.error("Срок действия токена истек");
         } catch (UnsupportedJwtException unsEx) {
-            log.error("Unsupported jwt");
+            log.error("Неподдерживаемый jwt");
         } catch (SignatureException sEx) {
-            log.error("Invalid signature");
+            log.error("Неверная подпись");
         } catch (Exception e) {
-            log.error("invalid token");
+            log.error("Недействительный токен");
         }
         return false;
     }

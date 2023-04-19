@@ -73,7 +73,6 @@ public class EmailService {
         emailSender.send(message);
         checkOk = false;
         checkError = false;
-        System.out.println("Отправили письмо");
     }
 
     private String createMessageText(Map<String, String> sites, int userId) throws SQLException {

@@ -1,5 +1,6 @@
 package pet.diploma.sitesearchengine.controller;
 
+import org.apache.logging.log4j.LogManager;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -33,17 +34,19 @@ public class EmailController {
 
     @PostMapping("/recover")
     public ResponseEntity<RegistrationResponse> sendRecoverEmail(@NotNull @RequestBody EmailRequest re) throws UnsupportedEncodingException {
-        System.out.println(re);
-        System.out.println(re.getLogin().matches(EMAIL_REGEX));
+        LogManager.getLogger("index").info(re.getLogin() + ":\tОтправляем письмо восстановления на почту");
         if (checkFailedEmailFormat(re.getLogin())) {
+            LogManager.getLogger("index").error(re.getLogin() + ":\tОшибка отправки письма: Неверный формат почты");
             return new ResponseEntity<>(new RegistrationResponse(false, "Неверный формат почты"), HttpStatus.BAD_REQUEST);
         }
         Optional<User> optionalUser = userService.getByLogin(re.getLogin());
         if (optionalUser.isPresent()) {
             try {
                 emailService.sendRecoverCode(re.getLogin());
+                LogManager.getLogger("index").info(re.getLogin() + ":\tПисьмо восстановления отправлено");
                 return new ResponseEntity<>(new RegistrationResponse(true, null), HttpStatus.OK);
             } catch (MessagingException e) {
+                LogManager.getLogger("index").debug(re.getLogin() + ":\tВнутренняя ошибка: " + e.getMessage());
                 return new ResponseEntity<>(new RegistrationResponse(false, "Письмо не отправлено"), HttpStatus.BAD_REQUEST);
             }
         } else {

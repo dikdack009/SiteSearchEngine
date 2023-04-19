@@ -26,7 +26,7 @@ public class User {
     @Column(name = "email_checked", nullable = false)
     private boolean emailChecked;
     @Getter
-    @Column(nullable = false, columnDefinition = "DEFAULT true")
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT true")
     private boolean notify;
 
     public User(int id, String login, String password, Role roles, boolean emailChecked) {

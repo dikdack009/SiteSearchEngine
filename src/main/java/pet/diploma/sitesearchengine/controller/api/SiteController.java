@@ -36,8 +36,6 @@ public class SiteController {
     @DeleteMapping(path="/api/deleteSite", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
     public ResponseEntity<IndexingResponse> deleteSite(@RequestParam String url) {
         int userId = userService.getIdByLogin(authService.getAuthInfo().getPrincipal().toString());
-        System.out.println("ID пользователя при удалении сайта = " + userId);
-        System.out.println("Статус индексации пользователя при удалении сайта = " + config.getUserIndexing().get(userId));
         if (config.getUserIndexing().get(userId)){
             return new ResponseEntity<>(new IndexingResponse(false, "Запущена индексация"), HttpStatus.BAD_REQUEST);
         }

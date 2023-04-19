@@ -5,8 +5,6 @@ import pet.diploma.sitesearchengine.controller.crawling.CrawlingSystem;
 import pet.diploma.sitesearchengine.model.Builder;
 
 import java.sql.SQLException;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class CrawlingThread extends Thread{
@@ -36,6 +34,6 @@ public class CrawlingThread extends Thread{
             crawlingSystem.getRootLogger().debug("Ошибка - " + e.getMessage().substring(e.getMessage().indexOf(":") + 2));
             throw new RuntimeException(e.getMessage().substring(e.getMessage().indexOf(":") + 2));
         }
-        crawlingSystem.getRootLogger().info(siteId + " Done " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
+        crawlingSystem.getRootLogger().info(Thread.currentThread().getId() +  " поток сайта " + siteId + " завершен ");
     }
 }

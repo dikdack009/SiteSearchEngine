@@ -53,7 +53,7 @@ public class CrawlingSystem {
         this.site = new Site();
         this.config = config;
         this.crawlingService = crawlingService;
-        rootLogger = LogManager.getRootLogger();
+        rootLogger = LogManager.getLogger("index");
     }
 
     public CrawlingSystem(CrawlingSystem newCrawlingSystem, int userId) {
@@ -71,21 +71,20 @@ public class CrawlingSystem {
         this.config = config;
         this.crawlingService = crawlingService;
         this.userId = userId;
-        rootLogger = LogManager.getRootLogger();
+        rootLogger = LogManager.getLogger("index");
         fieldList = crawlingService.gelAllFields();
         site.setId(crawlingService.updateStatus(site));
         this.site = site;
     }
 
-    private Collection<List<String>> parsing() {
-        long mm = System.currentTimeMillis();
+    private Collection<List<String>> parsing(String email) {
         CopyOnWriteArraySet<String> links = new CopyOnWriteArraySet<>();
         Map<String, Page> allLinksMap = Collections.synchronizedMap(new HashMap<>());
         LinksGenerationSystem linksGenerator = new LinksGenerationSystem(site.getUrl(), site.getUrl(), links, allLinksMap, config, userId);
         new ForkJoinPool().invoke(linksGenerator);
 
         if (config.getStopIndexing().get(userId)) {
-            rootLogger.info("Остановили - " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")));
+            rootLogger.info(email + ":\tОстановили - " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")));
             return null;
         }
         allLinks = new HashMap<>(linksGenerator.getAllLinksMap());
@@ -93,24 +92,23 @@ public class CrawlingSystem {
             lastError = "Главная странница сайта недоступна";
             return null;
         }
-        System.out.println((double)(System.currentTimeMillis() - mm) / 60000 + " min.");
-        System.out.println("Индексация...");
+        rootLogger.info(email + ":\tИндексация...");
         return chunked(allLinks.keySet().stream(), allLinks.keySet().size() / 50 == 0 ? allLinks.keySet().size() : allLinks.keySet().size() / 50).values();
     }
 
-    public void start(Config config) {
+    public void start(String email, Config config) {
         if (config.getStopIndexing().get(userId)) {
             return;
         }
-        rootLogger.info("Новый запуск id = " + site.getId() + " - " + site.getUrl());
-        System.out.println("Парсинг...");
-        Collection<List<String>> chunked = parsing();
+        rootLogger.info(email + ":\tНовый запуск индексации сайта с id = " + site.getId() + " - " + site.getUrl());
+        rootLogger.info(email + ":\tПарсинг...");
+        Collection<List<String>> chunked = parsing(email);
         if (chunked == null || chunked.isEmpty()) {
             lastError = "Главная странница сайта недоступна";
             return;
         }
 
-        rootLogger.info("На сайте " + site.getUrl() + " Кол-во ссылок: " + allLinks.keySet().size());
+        rootLogger.info(email + ":\tНа сайте " + site.getUrl() + " Кол-во ссылок: " + allLinks.keySet().size());
         List<CrawlingThread> threadList = new ArrayList<>();
         int finalSiteId = site.getId();
         chunked.forEach(c -> threadList.add(new CrawlingThread(c, this, finalSiteId, userId)));

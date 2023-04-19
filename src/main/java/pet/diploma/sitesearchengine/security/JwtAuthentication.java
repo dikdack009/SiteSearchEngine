@@ -1,6 +1,7 @@
 package pet.diploma.sitesearchengine.security;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -11,6 +12,7 @@ import java.util.Set;
 
 @Getter
 @Setter
+@NoArgsConstructor
 public class JwtAuthentication implements Authentication {
 
     private boolean authenticated;

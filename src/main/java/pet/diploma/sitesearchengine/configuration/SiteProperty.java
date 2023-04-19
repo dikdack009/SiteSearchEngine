@@ -8,4 +8,5 @@ import lombok.Data;
 public class SiteProperty {
     private String url;
     private String name;
+    private String email;
 }

@@ -1,6 +1,7 @@
 package pet.diploma.sitesearchengine.configuration;
 
 
+import org.apache.logging.log4j.LogManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.boot.context.event.ApplicationFailedEvent;
@@ -35,7 +36,7 @@ public class RunAfterStartup {
 
     @EventListener(ApplicationReadyEvent.class)
     public void runAfterStartup() throws IOException, ExecutionException, InterruptedException, javax.mail.MessagingException, JSONException, SQLException {
-        System.out.println("Yaaah, I am running........");
+        LogManager.getLogger("index").info("Yaaah, I am running........");
         if (crawlingService.getFields().isEmpty()) {
             crawlingService.insertBasicFields();
         }
@@ -44,8 +45,6 @@ public class RunAfterStartup {
         Map<Integer, List<Site>> sitesByUserId = failedIndexingSites.stream().collect(
                 Collectors.groupingBy(Site::getUserId));
         if (!sitesByUserId.isEmpty()) {
-            System.out.println("Ссылки для переиндексации:");
-            sitesByUserId.forEach((k, v) -> System.out.println(k + " - " + v));
             for (Integer userId : sitesByUserId.keySet()) {
                 StringJoiner stringJoiner = new StringJoiner("\\\",\\\"", "{\"data\":\"{\\\"", "\\\"}\"}");
                 for (Site site : sitesByUserId.get(userId)) {

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
@@ -41,14 +42,21 @@ public class SearchController {
 
         Logger rootLogger = LogManager.getLogger("search");
         rootLogger.info("Поиск - <" + query + ">");
-        int userId = userService.getIdByLogin(authService.getAuthInfo().getPrincipal().toString());
+        String email = authService.getAuthInfo().getPrincipal().toString();
+        int userId = userService.getIdByLogin(email);
         long mm = System.currentTimeMillis();
         ResponseEntity<SearchResponse> result = null;
         try {
             result = new SearchSystem(query, sites, offset, limit, crawlingService, userId).request();
-            rootLogger.info("Нашли за " + (double)(System.currentTimeMillis() - mm) / 1000 + " сек.");
+            rootLogger.info(email + ":\tНашли фразу <" + query + "> за " + (double)(System.currentTimeMillis() - mm) / 1000 + " сек.");
+            if (result.getStatusCode() != HttpStatus.OK) {
+                rootLogger.info(email + ":\tОшибка поиска фразы <" + query + "> Ошибка: "
+                        + Objects.requireNonNull(result.getBody()).getError());
+            }
         } catch (Exception exception) {
             exception.printStackTrace();
+            rootLogger.info(email + ":\tОшибка поиска фразы <" + query + "> за " + (double)(System.currentTimeMillis() - mm) / 1000 + " сек."
+             + " Внутренняя ошибка: " + exception.getMessage());
         }
         System.out.println("Закончили поиск");
         System.out.println((double)(System.currentTimeMillis() - mm) / 1000 + " sec.");
