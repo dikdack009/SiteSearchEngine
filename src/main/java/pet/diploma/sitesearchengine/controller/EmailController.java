@@ -41,14 +41,9 @@ public class EmailController {
         }
         Optional<User> optionalUser = userService.getByLogin(re.getLogin());
         if (optionalUser.isPresent()) {
-            try {
-                emailService.sendRecoverCode(re.getLogin());
-                LogManager.getLogger("index").info(re.getLogin() + ":\tПисьмо восстановления отправлено");
-                return new ResponseEntity<>(new RegistrationResponse(true, null), HttpStatus.OK);
-            } catch (MessagingException e) {
-                LogManager.getLogger("index").debug(re.getLogin() + ":\tВнутренняя ошибка: " + e.getMessage());
-                return new ResponseEntity<>(new RegistrationResponse(false, "Письмо не отправлено"), HttpStatus.BAD_REQUEST);
-            }
+            emailService.sendRecoverCode(re.getLogin());
+            LogManager.getLogger("index").info(re.getLogin() + ":\tПисьмо восстановления отправлено");
+            return new ResponseEntity<>(new RegistrationResponse(true, null), HttpStatus.OK);
         } else {
             return new ResponseEntity<>(new RegistrationResponse(false, "Пользователь не найден"), HttpStatus.NOT_FOUND);
         }

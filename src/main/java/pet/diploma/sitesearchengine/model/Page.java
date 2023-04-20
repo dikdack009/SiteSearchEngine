@@ -16,7 +16,7 @@ import java.util.Objects;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "page", uniqueConstraints = {@UniqueConstraint(name = "UniquePathAndDeleted",
+@Table(name = "`page`", uniqueConstraints = {@UniqueConstraint(name = "UniquePathAndDeleted",
         columnNames = {"path", "is_deleted", "site_id"})})
 public class Page implements Comparable<Page>{
     @Id

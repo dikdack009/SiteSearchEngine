@@ -28,7 +28,7 @@ public class RegistrationController {
     private final UserService userService;
     private final EmailService emailService;
     private final static String EMAIL_REGEX = "([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\\.[a-zA-Z0-9_-]+)";
-    private final static String PASSWORD_REGEX = "(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9@#$%]).{8,}";
+    private final static String PASSWORD_REGEX = "(?=.*[0-9])(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z!@#$%^&*]{8,}";
 
     @Autowired
     public RegistrationController(UserService userService, EmailService emailService) {
@@ -38,39 +38,53 @@ public class RegistrationController {
     }
 
     @PostMapping("/api/registration")
-    public ResponseEntity<RegistrationResponse> addUser(@RequestBody JwtRequest authRequest) throws MessagingException, UnsupportedEncodingException {
+    public ResponseEntity<RegistrationResponse> addUser(@RequestBody JwtRequest authRequest)  {
         rootLogger.info(authRequest.getLogin() + ":\tПользователь регистрируется в системе");
         User newUser = new User();
         if (checkFailedEmailFormat(authRequest.getLogin().trim())) {
             rootLogger.error(authRequest.getLogin().trim() + ":\tНеверный формат почты");
             return new ResponseEntity<>(new RegistrationResponse(false, "Неверный формат почты"), HttpStatus.BAD_REQUEST);
         }
-        newUser.setLogin(authRequest.getLogin().trim());
         if (checkFailedPasswordFormat(authRequest.getPassword())) {
             rootLogger.error(authRequest.getLogin() + ":\tНеверный формат пароля");
             return new ResponseEntity<>(new RegistrationResponse(false, "Неверный формат пароля"), HttpStatus.BAD_REQUEST);
         }
-        newUser.setPassword(authRequest.getPassword());
-        newUser.setRoles(Role.USER);
-        newUser.setEmailChecked(false);
-        newUser.setNotify(true);
+        setUserInfo(newUser, authRequest);
         RegistrationResponse registrationResponse;
         if (!userService.saveUser(newUser)){
             Optional<User> optionalUser = userService.getByLogin(authRequest.getLogin());
             if (optionalUser.isPresent() && !optionalUser.get().isEmailChecked()) {
-                userService.updateUserPasswordByLogin(newUser);
-                emailService.sendCheckCode(authRequest.getLogin());
-                rootLogger.info(authRequest.getLogin() + ":\tПовторная регистрация (не подтверждена почта)");
-                return new ResponseEntity<>(new RegistrationResponse(true, null), HttpStatus.RESET_CONTENT);
+                return reRegistration(newUser, authRequest);
             }
             registrationResponse = new RegistrationResponse(false, "Пользователь с такой почтой уже существует");
             rootLogger.error(authRequest.getLogin() + ":\tПользователь с такой почтой уже существует");
             return new ResponseEntity<>(registrationResponse, HttpStatus.BAD_REQUEST);
         }
-        emailService.sendCheckCode(authRequest.getLogin());
+        if (emailService.trySendCheckCode(authRequest.getLogin())) {
+            registrationResponse = new RegistrationResponse(false, "Ошибка отправления письма, подтверждения");
+            return new ResponseEntity<>(registrationResponse, HttpStatus.BAD_REQUEST);
+        }
         rootLogger.info(authRequest.getLogin() + ":\tПисьмо подтверждения почты отправлено");
         rootLogger.info(authRequest.getLogin() + ":\tПользователь зарегистрирован");
         return new ResponseEntity<>(new RegistrationResponse(true, null), HttpStatus.OK);
+    }
+
+    private void setUserInfo(User newUser, JwtRequest authRequest) {
+        newUser.setLogin(authRequest.getLogin().trim());
+        newUser.setPassword(authRequest.getPassword());
+        newUser.setRoles(Role.USER);
+        newUser.setEmailChecked(false);
+        newUser.setNotify(true);
+    }
+
+    private ResponseEntity<RegistrationResponse> reRegistration(User newUser, JwtRequest authRequest) {
+        userService.updateUserPasswordByLogin(newUser);
+        if (emailService.trySendCheckCode(authRequest.getLogin())) {
+            RegistrationResponse registrationResponse = new RegistrationResponse(false, "Ошибка отправки письма подтверждения");
+            return new ResponseEntity<>(registrationResponse, HttpStatus.BAD_REQUEST);
+        }
+        rootLogger.info(authRequest.getLogin() + ":\tПовторная регистрация (не подтверждена почта)");
+        return new ResponseEntity<>(new RegistrationResponse(true, null), HttpStatus.RESET_CONTENT);
     }
 
     @GetMapping("/api/verification/check")
@@ -98,8 +112,6 @@ public class RegistrationController {
             if (checkCode) {
                 emailService.getVerification().remove(login);
                 userService.updateCheckedUser(login);
-            }
-            if (checkCode) {
                 rootLogger.info(login + ":\tКод подтверждён");
             } else {
                 rootLogger.error(login + ":\tНеверный код");

@@ -23,7 +23,7 @@ public class User {
     @Column(nullable = false)
     private Role roles;
     @Getter
-    @Column(name = "email_checked", nullable = false)
+    @Column(name = "email_checked", columnDefinition = "BOOLEAN DEFAULT false", nullable = false)
     private boolean emailChecked;
     @Getter
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT true")

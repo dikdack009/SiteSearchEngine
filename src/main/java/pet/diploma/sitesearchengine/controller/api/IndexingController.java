@@ -9,6 +9,7 @@ import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 import pet.diploma.sitesearchengine.model.User;
 import pet.diploma.sitesearchengine.services.AuthService;
@@ -28,10 +29,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 @RestController
@@ -137,6 +135,7 @@ public class IndexingController {
         rootLogger.info(email + ":\tВернули сатистику за " + (double)(System.currentTimeMillis() - start) / 1000 + " сек.");
         return statistic;
     }
+
 
     private void checkUserInfo(int userId) {
         if (Objects.isNull(config.getUserIndexing().get(userId))) {

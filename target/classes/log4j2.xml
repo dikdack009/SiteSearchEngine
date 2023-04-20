@@ -3,31 +3,31 @@
     <appenders>
         <Console name="ConsoleLog" target="SYSTEM_OUT">
             <PatternLayout disableAnsi="false"
-                           pattern="%d{dd-MM-yyyy HH:mm:ss.SSS} --- %highlight{%-5level} [%-34.40t] -- %highlight{%.50l}{INFO=Cyan, ERROR=Cyan, WARN=Cyan, DEBUG=Cyan} : %highlight{%msg%n}{ERROR=red, INFO=gray, WARN=gray}"/>
+                           pattern="%d{dd-MM-yyyy HH:mm:ss.SSS} --- %highlight{%-5level} [%-25.35t] -- %highlight{%.50l}{INFO=Cyan, ERROR=Cyan, WARN=Cyan, DEBUG=Cyan} : %highlight{%msg%n}{ERROR=red, INFO=gray, WARN=gray}"/>
         </Console>
 
         <File name="SearchFile" fileName="logs/search.log">
-            <PatternLayout disableAnsi="false" pattern="%d{dd-MM-yyyy HH:mm:ss.SSS} --- [%t] %-5level %M() - %msg%n"/>
+            <PatternLayout disableAnsi="false"  pattern="%d{dd-MM-yyyy HH:mm:ss.SSS} --- %-5level [%-10.20t] -- %.30l : %msg%n"/>
             <LevelRangeFilter minLevel="info" maxLevel="info" onMatch="ACCEPT" onMismatch="DENY"/>
         </File>
 
         <File name="WarningsFile" fileName="logs/warnings.log">
-            <PatternLayout disableAnsi="false" pattern="%d{dd-MM-yyyy HH:mm:ss.SSS} --- [%t] %-5level %M() - %msg%n"/>
+            <PatternLayout disableAnsi="false"  pattern="%d{dd-MM-yyyy HH:mm:ss.SSS} --- %-5level [%-10.20t] -- %.30l : %msg%n"/>
             <LevelRangeFilter minLevel="warn" maxLevel="warn" onMatch="ACCEPT" onMismatch="DENY"/>
         </File>
 
         <File name="ExceptionsFile" fileName="logs/exceptions.log">
-            <PatternLayout disableAnsi="false" pattern="%d{dd-MM-yyyy HH:mm:ss.SSS} --- [%t] %-5level %M() - %msg%n"/>
-            <LevelRangeFilter minLevel="error" maxLevel="error" onMatch="ACCEPT" onMismatch="DENY"/>
-        </File>
-
-        <File name="ErrorsFile" fileName="logs/input_errors.log">
-            <PatternLayout disableAnsi="false"  pattern="%d{dd-MM-yyyy HH:mm:ss.SSS} --- [%t] %-5level %M() - %msg%n"/>
+            <PatternLayout disableAnsi="false"  pattern="%d{dd-MM-yyyy HH:mm:ss.SSS} --- %-5level [%-10.20t] -- %.30l : %msg%n"/>
             <LevelRangeFilter minLevel="debug" maxLevel="debug" onMatch="ACCEPT" onMismatch="DENY"/>
         </File>
 
+        <File name="ErrorsFile" fileName="logs/errors.log">
+            <PatternLayout disableAnsi="false"  pattern="%d{dd-MM-yyyy HH:mm:ss.SSS} --- %-5level [%-10.20t] -- %.30l : %msg%n"/>
+            <LevelRangeFilter minLevel="error" maxLevel="error" onMatch="ACCEPT" onMismatch="DENY"/>
+        </File>
+
         <File name="IndexFile" fileName="logs/index.log">
-            <PatternLayout disableAnsi="false"  pattern="%d{dd-MM-yyyy HH:mm:ss.SSS} --- [%t] %-5level %M() - %msg%n"/>
+            <PatternLayout disableAnsi="false"  pattern="%d{dd-MM-yyyy HH:mm:ss.SSS} --- %-5level [%-10.20t] -- %.30l : %msg%n"/>
             <LevelRangeFilter minLevel="info" maxLevel="info" onMatch="ACCEPT" onMismatch="DENY"/>
         </File>
 
@@ -37,9 +37,9 @@
     <loggers>
         <root level="info" includeLocation="true">
             <appender-ref ref="WarningsFile" level="warn"/>
-            <appender-ref ref="ErrorsFile" level="debug"/>
+            <appender-ref ref="ErrorsFile" level="error"/>
             <appender-ref ref="IndexFile" level="info"/>
-            <appender-ref ref="ExceptionsFile" level="error"/>
+            <appender-ref ref="ExceptionsFile" level="debug"/>
             <appender-ref ref="ConsoleLog" level="info"/>
         </root>
         <logger name="search" level="info" includeLocation="true">

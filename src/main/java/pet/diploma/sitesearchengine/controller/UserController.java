@@ -109,7 +109,6 @@ public class UserController {
             }
         } else {
             rootLogger.error(authRequest.getLogin() + ":\tОшибка восстановления пароля: Пользователь не найден");
-
             return new ResponseEntity<>(new RegistrationResponse(true,"Пользователь не найден"), HttpStatus.NOT_FOUND);
         }
     }

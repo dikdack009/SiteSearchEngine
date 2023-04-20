@@ -1,7 +1,9 @@
 package pet.diploma.sitesearchengine.services;
 
 import lombok.Getter;
+import org.apache.logging.log4j.LogManager;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
@@ -197,14 +199,14 @@ public class EmailService {
         return new Statistic(false, userId).getStatistics().getDetailed();
     }
 
-    public void sendRecoverCode(String to) throws MessagingException, UnsupportedEncodingException {
+    public boolean sendRecoverCode(String to) {
         String number = getRandomSixNumber();
         String text = "Добрый день!\n" +
                 "Ваш проверочный код - " + number + ".\n\n" +
                 "\n" +
                 "Введите этот код, чтобы сбросить пароль вашей учетной записи.\n" +
                 "\n";
-        code(to, number, text, recover, "Сброс пароля");
+        return code(to, number, text, recover, "Сброс пароля");
     }
 
     private String getRandomSixNumber() {
@@ -218,30 +220,36 @@ public class EmailService {
         return number1 + number2 + number3 + number4 + number5 + number6;
     }
 
-    private void code(String to, String number, String text, Map<String, Integer> data, String subject) throws MessagingException, UnsupportedEncodingException {
+    private boolean code(String to, String number, String text, Map<String, Integer> data, String subject) {
         data.put(to, Integer.valueOf(number));
-        MimeMessage message = emailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true);
-        helper.setTo(to);
-        helper.setSubject(subject);
-        Multipart mp = new MimeMultipart();
-        MimeBodyPart htmlPart = new MimeBodyPart();
-        htmlPart.setContent(text, "text/html; charset = utf-8");
-        mp.addBodyPart(htmlPart);
-        message.setContent(mp);
-        message.setFrom(new InternetAddress("no_reply@example.com", "NoReply-SearchEngine"));
-        Address address = new NewsAddress("", "noreply@serchengine.ru");
-        message.setSender(address);
-        emailSender.send(message);
+        try {
+            MimeMessage message = emailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            Multipart mp = new MimeMultipart();
+            MimeBodyPart htmlPart = new MimeBodyPart();
+            htmlPart.setContent(text, "text/html; charset = utf-8");
+            mp.addBodyPart(htmlPart);
+            message.setContent(mp);
+            message.setFrom(new InternetAddress("no_reply@example.com", "NoReply-SearchEngine"));
+            Address address = new NewsAddress("", "noreply@serchengine.ru");
+            message.setSender(address);
+            emailSender.send(message);
+            return true;
+        } catch (MailSendException | MessagingException | UnsupportedEncodingException e) {
+            LogManager.getLogger("index").error(to + ":\tОшибка отправки сообщения: " + e.getMessage());
+        }
+        return false;
     }
 
-    public void sendCheckCode(String to) throws MessagingException, UnsupportedEncodingException {
+    public boolean trySendCheckCode(String to) {
         String number = getRandomSixNumber();
         String text = "Добрый день!\n" +
                 "Ваш проверочный код - " + number + ".\n\n" +
                 "\n" +
                 "Введите этот код, чтобы активировать свою учетную запись.\n" +
                 "\n";
-        code(to, number, text, verification, "Подтверждение аккаунта");
+        return !code(to, number, text, verification, "Подтверждение аккаунта");
     }
 }
