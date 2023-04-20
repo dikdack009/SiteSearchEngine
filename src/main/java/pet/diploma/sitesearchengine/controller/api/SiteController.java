@@ -36,10 +36,10 @@ public class SiteController {
     @DeleteMapping(path="/api/deleteSite", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
     public ResponseEntity<IndexingResponse> deleteSite(@RequestParam String url) {
         int userId = userService.getIdByLogin(authService.getAuthInfo().getPrincipal().toString());
-        if (config.getUserIndexing().get(userId)){
+        Site site = crawlingService.getSiteByUrl(url, userId);
+        if (site.getStatus().equals(Status.INDEXING)){
             return new ResponseEntity<>(new IndexingResponse(false, "Запущена индексация"), HttpStatus.BAD_REQUEST);
         }
-        Site site = crawlingService.getSiteByUrl(url, userId);
         site.setStatus(Status.DELETING);
         crawlingService.updateStatus(site);
         boolean result = crawlingService.deleteSiteInfo(url, userId);

@@ -22,8 +22,6 @@ import pet.diploma.sitesearchengine.configuration.Config;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ForkJoinPool;
@@ -84,7 +82,7 @@ public class CrawlingSystem {
         new ForkJoinPool().invoke(linksGenerator);
 
         if (config.getStopIndexing().get(userId)) {
-            rootLogger.info(email + ":\tОстановили - " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")));
+            rootLogger.info(email + ":\tОстановили индексацию" + " - " + site.getUrl() );
             return null;
         }
         allLinks = new HashMap<>(linksGenerator.getAllLinksMap());
@@ -92,7 +90,7 @@ public class CrawlingSystem {
             lastError = "Главная странница сайта недоступна";
             return null;
         }
-        rootLogger.info(email + ":\tИндексация...");
+        rootLogger.info(email + ":\tИндексация..." + " - " + site.getUrl());
         return chunked(allLinks.keySet().stream(), allLinks.keySet().size() / 50 == 0 ? allLinks.keySet().size() : allLinks.keySet().size() / 50).values();
     }
 
@@ -101,13 +99,12 @@ public class CrawlingSystem {
             return;
         }
         rootLogger.info(email + ":\tНовый запуск индексации сайта с id = " + site.getId() + " - " + site.getUrl());
-        rootLogger.info(email + ":\tПарсинг...");
+        rootLogger.info(email + ":\tПарсинг..." + " - " + site.getUrl());
         Collection<List<String>> chunked = parsing(email);
         if (chunked == null || chunked.isEmpty()) {
             lastError = "Главная странница сайта недоступна";
             return;
         }
-
         rootLogger.info(email + ":\tНа сайте " + site.getUrl() + " Кол-во ссылок: " + allLinks.keySet().size());
         List<CrawlingThread> threadList = new ArrayList<>();
         int finalSiteId = site.getId();
@@ -167,7 +164,7 @@ public class CrawlingSystem {
                 tagNormalForms = new MorphologyServiceImpl().getNormalFormsList(tagContent);
                 allWords.addAll(tagNormalForms.keySet());
             } catch (IOException e) {
-                rootLogger.debug("Ошибка лемантизатора - " + e.getMessage());
+                rootLogger.debug("Ошибка лемантизатора " + " - " + site.getUrl() + " - " + e.getMessage());
                 lastError = e.getMessage();
                 return;
             }
