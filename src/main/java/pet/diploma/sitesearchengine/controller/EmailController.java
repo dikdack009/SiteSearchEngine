@@ -10,12 +10,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import pet.diploma.sitesearchengine.model.User;
-import pet.diploma.sitesearchengine.model.response.EmailRequest;
+import pet.diploma.sitesearchengine.model.request.EmailRequest;
 import pet.diploma.sitesearchengine.model.response.RegistrationResponse;
 import pet.diploma.sitesearchengine.services.EmailService;
 import pet.diploma.sitesearchengine.services.UserService;
 
-import javax.mail.MessagingException;
 import java.io.UnsupportedEncodingException;
 import java.util.Optional;
 

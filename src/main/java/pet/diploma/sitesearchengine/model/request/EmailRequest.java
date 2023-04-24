@@ -1,4 +1,4 @@
-package pet.diploma.sitesearchengine.model.response;
+package pet.diploma.sitesearchengine.model.request;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;

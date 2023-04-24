@@ -1,17 +1,14 @@
 package pet.diploma.sitesearchengine.controller.api;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.Getter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.*;
 import pet.diploma.sitesearchengine.model.User;
+import pet.diploma.sitesearchengine.model.request.IndexingRequest;
 import pet.diploma.sitesearchengine.services.AuthService;
 import pet.diploma.sitesearchengine.services.CrawlingService;
 import pet.diploma.sitesearchengine.services.EmailService;
@@ -52,16 +49,13 @@ public class IndexingController {
     }
 
     @PostMapping(path="/api/startIndexing", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
-    public ResponseEntity<IndexingResponse> startIndexing(@RequestBody String body) throws IOException, InterruptedException, ExecutionException, javax.mail.MessagingException, JSONException, SQLException {
-
+    public ResponseEntity<IndexingResponse> startIndexing(@RequestBody IndexingRequest body) throws IOException, InterruptedException, ExecutionException, javax.mail.MessagingException, SQLException {
         int userId = userService.getIdByLogin(authService.getAuthInfo().getPrincipal().toString());
-        return indexing(userId, authService.getAuthInfo().getPrincipal().toString(), body);
+        return indexing(userId, authService.getAuthInfo().getPrincipal().toString(), body.getData());
     }
 
-    public ResponseEntity<IndexingResponse> indexing(int userId, String email, String body) throws InterruptedException, ExecutionException, MessagingException, SQLException, IOException, JSONException {
+    public ResponseEntity<IndexingResponse> indexing(int userId, String email, Map<String,String> sites) throws InterruptedException, ExecutionException, MessagingException, SQLException, IOException {
         long start = System.currentTimeMillis();
-        Map<String, Object> tmp = new ObjectMapper().readValue(body, HashMap.class);
-        Map<String, String> sites = new ObjectMapper().readValue(tmp.get("data").toString(), HashMap.class);
         rootLogger.info(email + ":\tЗапуск индексации " + sites.size() + " сайтов.");
         AtomicReference<IndexingResponse> response = new AtomicReference<>();
         checkUserInfo(userId);
@@ -97,7 +91,7 @@ public class IndexingController {
         return new ResponseEntity<>(response.get(), HttpStatus.OK);
     }
 
-    private void sendMessage(String username, int userId, Map<String, String> sites) throws MessagingException, UnsupportedEncodingException, JSONException, ExecutionException, InterruptedException, SQLException {
+    private void sendMessage(String username, int userId, Map<String, String> sites) throws MessagingException, UnsupportedEncodingException, SQLException {
         emailService.sendMessage(username, userId, sites);
     }
 

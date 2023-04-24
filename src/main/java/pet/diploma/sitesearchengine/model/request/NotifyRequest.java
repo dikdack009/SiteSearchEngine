@@ -1,4 +1,4 @@
-package pet.diploma.sitesearchengine.model.response;
+package pet.diploma.sitesearchengine.model.request;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
@@ -11,8 +11,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class RecoverRequest {
+public class NotifyRequest {
     private String login;
-    private String password;
-    private String code;
+    private boolean flag;
 }

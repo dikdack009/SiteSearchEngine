@@ -46,12 +46,12 @@ public class RunAfterStartup {
                 Collectors.groupingBy(Site::getUserId));
         if (!sitesByUserId.isEmpty()) {
             for (Integer userId : sitesByUserId.keySet()) {
-                StringJoiner stringJoiner = new StringJoiner("\\\",\\\"", "{\"data\":\"{\\\"", "\\\"}\"}");
+                Map<String, String> sites = new HashMap<>();
                 for (Site site : sitesByUserId.get(userId)) {
-                    stringJoiner.add(site.getUrl() + "\\\":\\\"" + site.getName());
+                    sites.put(site.getUrl(), site.getName());
                 }
                 if (!sitesByUserId.get(userId).isEmpty()) {
-                    indexingController.indexing(userId, userService.findUserById(userId).getLogin(), stringJoiner.toString());
+                    indexingController.indexing(userId, userService.findUserById(userId).getLogin(), sites);
                 }
             }
         }

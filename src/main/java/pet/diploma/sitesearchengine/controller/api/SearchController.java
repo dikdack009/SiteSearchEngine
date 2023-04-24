@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.bind.annotation.*;
+import pet.diploma.sitesearchengine.model.request.SearchRequest;
 import pet.diploma.sitesearchengine.services.AuthService;
 import pet.diploma.sitesearchengine.services.CrawlingService;
 import pet.diploma.sitesearchengine.controller.crawling.SearchSystem;
@@ -34,11 +35,9 @@ public class SearchController {
 
     @PostMapping(path="/api/search", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
     @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
-    public ResponseEntity<SearchResponse> statistics(@RequestParam String query,
-                                                     @RequestParam(required = false) Integer offset,
-                                                     @RequestParam(required = false) Integer limit, @RequestBody String body) throws IOException {
-        Map<String, Object> tmp = new ObjectMapper().readValue(body, HashMap.class);
-        Set<String> sites = new ObjectMapper().readValue(tmp.get("sites").toString(), HashSet.class);
+    public ResponseEntity<SearchResponse> search(@RequestParam String query,
+                                                 @RequestParam(required = false) Integer offset,
+                                                 @RequestParam(required = false) Integer limit, @RequestBody SearchRequest sites) {
 
         Logger rootLogger = LogManager.getLogger("search");
         rootLogger.info("Поиск - <" + query + ">");
@@ -47,20 +46,17 @@ public class SearchController {
         long mm = System.currentTimeMillis();
         ResponseEntity<SearchResponse> result = null;
         try {
-            result = new SearchSystem(query, sites, offset, limit, crawlingService, userId).request();
-            rootLogger.info(email + ":\tНашли фразу <" + query + "> за " + (double)(System.currentTimeMillis() - mm) / 1000 + " сек.");
+            result = new SearchSystem(query, sites.getSites(), offset, limit, crawlingService, userId).request();
+            rootLogger.info(email + ":\tНашли фразу < " + query + " > за " + (double)(System.currentTimeMillis() - mm) / 1000 + " сек.");
             if (result.getStatusCode() != HttpStatus.OK) {
-                rootLogger.info(email + ":\tОшибка поиска фразы <" + query + "> Ошибка: "
+                rootLogger.info(email + ":\tОшибка поиска фразы < " + query + " > Ошибка: "
                         + Objects.requireNonNull(result.getBody()).getError());
             }
         } catch (Exception exception) {
             exception.printStackTrace();
-            rootLogger.info(email + ":\tОшибка поиска фразы <" + query + "> за " + (double)(System.currentTimeMillis() - mm) / 1000 + " сек."
+            rootLogger.info(email + ":\tОшибка поиска фразы < " + query + " > за " + (double)(System.currentTimeMillis() - mm) / 1000 + " сек."
              + " Внутренняя ошибка: " + exception.getMessage());
         }
-        System.out.println("Закончили поиск");
-        System.out.println((double)(System.currentTimeMillis() - mm) / 1000 + " sec.");
-        System.out.println((double)(System.currentTimeMillis() - mm) / 60000 + " min.");
         return result;
     }
 }
