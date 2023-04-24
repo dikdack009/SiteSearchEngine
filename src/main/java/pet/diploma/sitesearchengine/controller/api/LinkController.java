@@ -50,8 +50,9 @@ public class LinkController {
 
     @PostMapping(path="/api/updateLinks", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
     public ResponseEntity<LinksResponse> updateLinks(@RequestBody LinkRequest data) {
+        System.out.println(data);
         int userId = getUserId();
-        crawlingService.updateLinks(data.getLinks(), userId);
+        crawlingService.updateLinks(data.getData(), userId);
         return new ResponseEntity<>(new LinksResponse(true, null, null),  HttpStatus.OK);
     }
 

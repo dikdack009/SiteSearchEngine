@@ -6,5 +6,5 @@ import java.util.Map;
 
 @Data
 public class LinkRequest {
-    private Map<String, Integer> links;
+    private Map<String, Integer> data;
 }
