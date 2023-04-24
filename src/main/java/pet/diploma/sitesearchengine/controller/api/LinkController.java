@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import pet.diploma.sitesearchengine.model.request.LinkRequest;
 import pet.diploma.sitesearchengine.services.AuthService;
 import pet.diploma.sitesearchengine.services.CrawlingService;
 import pet.diploma.sitesearchengine.services.UserService;
@@ -48,11 +49,9 @@ public class LinkController {
     }
 
     @PostMapping(path="/api/updateLinks", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
-    public ResponseEntity<LinksResponse> updateLinks(@RequestBody String body) throws IOException {
-        Map<String, Object> tmp = new ObjectMapper().readValue(body, HashMap.class);
-        Map<String, Integer> links  = new ObjectMapper().readValue(tmp.get("data").toString(), HashMap.class);
+    public ResponseEntity<LinksResponse> updateLinks(@RequestBody LinkRequest body) throws IOException {
         int userId = getUserId();
-        crawlingService.updateLinks(links, userId);
+        crawlingService.updateLinks(body.getLinks(), userId);
         return new ResponseEntity<>(new LinksResponse(true, null, null),  HttpStatus.OK);
     }
 
