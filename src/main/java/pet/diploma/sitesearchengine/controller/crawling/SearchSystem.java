@@ -140,7 +140,7 @@ public class SearchSystem {
         });
         es.shutdown();
         Collections.sort(searchResults);
-        return new ResponseEntity<>(new SearchResponse(true, pageDoubleMap.size(), searchResults, null), HttpStatus.OK);//subList(offset, Math.min((int) (offset + limit), searchResults.size()));
+        return new ResponseEntity<>(new SearchResponse(true, pageDoubleMap.size(), searchResults, null), HttpStatus.OK);
     }
 
     public synchronized String getSnippetFirstStep(List<Lemma> lemmaList, String content) throws IOException {
