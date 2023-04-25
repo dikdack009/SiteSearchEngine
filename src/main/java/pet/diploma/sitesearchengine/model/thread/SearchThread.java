@@ -34,7 +34,7 @@ public class SearchThread implements Callable<Data> {
         String contentWithoutTags = title + " " + d.select("body").text();
         Site site = DBConnection.getSiteById(page.getSite().getId());
         return new Data(site.getUrl(), site.getName(), page.getPath(), title,
-                /*searchSystem.getSnippetFirstStep(requestLemmas, contentWithoutTags)*/"",
+                searchSystem.getSnippetFirstStep(requestLemmas, contentWithoutTags),
                 value/max);
     }
 }

@@ -25,6 +25,7 @@ import java.util.*;
 public class EmailService {
 
     private final JavaMailSender emailSender;
+    private final CrawlingService crawlingService;
     private boolean checkOk = false;
     private boolean checkError = false;
     private final static String PATH_PICTURE_OK = "src/main/resources/img/indexInfoOk.png";
@@ -35,8 +36,9 @@ public class EmailService {
     private final Map<String, Integer> recover = new HashMap<>();
 
     @Autowired
-    public EmailService(JavaMailSender emailSender) {
+    public EmailService(JavaMailSender emailSender, CrawlingService crawlingService) {
         this.emailSender = emailSender;
+        this.crawlingService = crawlingService;
     }
 
     public void sendMessage(String to, int userId, Map<String, String> sites) throws UnsupportedEncodingException, MessagingException, SQLException {
@@ -195,8 +197,8 @@ public class EmailService {
         return "ресурсов";
     }
 
-    private List<DetailedSite> getStatistics(int userId) throws SQLException {
-        return new Statistic(false, userId).getStatistics().getDetailed();
+    private List<DetailedSite> getStatistics(int userId) {
+        return new Statistic(false, userId, crawlingService).getStatistics().getDetailed();
     }
 
     public boolean sendRecoverCode(String to) {

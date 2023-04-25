@@ -22,7 +22,7 @@ public class ScheduledTasks {
     }
 
 
-    @Scheduled(cron = "0 0 3 * * *")
+    @Scheduled(cron = "0 2 18 * * *")
     @Async
     public void deleteData() {
         LogManager.getLogger("index").info("Метод по расписанию запущен");

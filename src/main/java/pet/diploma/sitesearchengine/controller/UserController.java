@@ -74,44 +74,49 @@ public class UserController {
     }
 
     @PatchMapping ("recover")
-    public ResponseEntity<RegistrationResponse> recoverPassword(@RequestBody @NotNull RecoverRequest authRequest) {
-        rootLogger.info(authRequest.getLogin() + ":\tПользователь восстанавливает пароль");
-        Optional<User> optionalUser = userService.getByLogin(authRequest.getLogin());
+    public ResponseEntity<RegistrationResponse> recoverPassword(@RequestBody @NotNull RecoverRequest recoverRequest) {
+        String email = recoverRequest.getLogin();
+        rootLogger.info(email + ":\tПользователь восстанавливает пароль");
+        String mainError = ":\tОшибка восстановления пароля: ";
+        Optional<User> optionalUser = userService.getByLogin(email);
         int codeNumber;
-        if (checkFailedEmailFormat(authRequest.getLogin().trim())) {
-            rootLogger.error(authRequest.getLogin() + ":\tОшибка восстановления пароля: Неверный формат почты");
+        if (checkFailedEmailFormat(email.trim())) {
+            rootLogger.error(email + mainError + "Неверный формат почты");
             return new ResponseEntity<>(new RegistrationResponse(false, "Неверный формат почты"), HttpStatus.BAD_REQUEST);
         }
-        if (checkFailedPasswordFormat(authRequest.getPassword())) {
-            rootLogger.error(authRequest.getLogin() + ":\tОшибка восстановления пароля: Неверный формат пароля");
+        if (checkFailedPasswordFormat(recoverRequest.getPassword())) {
+            rootLogger.error(email + mainError + "Неверный формат пароля");
             return new ResponseEntity<>(new RegistrationResponse(false, "Неверный формат пароля"), HttpStatus.BAD_REQUEST);
         }
         if (optionalUser.isPresent()) {
             try {
-                codeNumber = Integer.parseInt(authRequest.getCode().trim());
+                codeNumber = Integer.parseInt(recoverRequest.getCode().trim());
                 if ((codeNumber > 999999 || codeNumber < 100000)) {
-                    rootLogger.error(authRequest.getLogin() + ":\tОшибка восстановления пароля: Неверный формат кода подтверждения");
+                    rootLogger.error(email + mainError + "Неверный формат кода подтверждения");
                     return new ResponseEntity<>(new RegistrationResponse(false, "Неверный формат кода подтверждения"), HttpStatus.BAD_REQUEST);
                 }
             } catch (NumberFormatException e) {
-                rootLogger.error(authRequest.getLogin() + ":\tОшибка восстановления пароля: Неверный формат кода подтверждения");
+                rootLogger.error(email + mainError + "Неверный формат кода подтверждения");
                 return new ResponseEntity<>(new RegistrationResponse(false, "Неверный формат кода подтверждения"), HttpStatus.BAD_REQUEST);
             }
-            if (Objects.equals(emailService.getRecover().get(authRequest.getLogin()), codeNumber)) {
-                emailService.getRecover().remove(authRequest.getLogin());
-                User user = optionalUser.get();
-                user.setPassword(authRequest.getPassword());
-                userService.updateUserPasswordByLogin(user);
-                return new ResponseEntity<>(new RegistrationResponse(true, null), HttpStatus.OK);
-            } else {
-                rootLogger.error(authRequest.getLogin() + ":\tОшибка восстановления пароля: Неверный код");
-                return new ResponseEntity<>(new RegistrationResponse(false, "Неверный код"), HttpStatus.BAD_REQUEST);
-            }
+            return checkAndRecover(recoverRequest, codeNumber, optionalUser.get());
         } else {
-            rootLogger.error(authRequest.getLogin() + ":\tОшибка восстановления пароля: Пользователь не найден");
+            rootLogger.error(email + mainError + "Пользователь не найден");
             return new ResponseEntity<>(new RegistrationResponse(true,"Пользователь не найден"), HttpStatus.NOT_FOUND);
         }
     }
+    private ResponseEntity<RegistrationResponse> checkAndRecover(RecoverRequest recoverRequest, int code, User user) {
+        if (Objects.equals(emailService.getRecover().get(recoverRequest.getLogin()), code)) {
+            emailService.getRecover().remove(recoverRequest.getLogin());
+            user.setPassword(recoverRequest.getPassword());
+            userService.updateUserPasswordByLogin(user);
+            return new ResponseEntity<>(new RegistrationResponse(true, null), HttpStatus.OK);
+        } else {
+            rootLogger.error(recoverRequest.getLogin() + ":\tОшибка восстановления пароля: Неверный код");
+            return new ResponseEntity<>(new RegistrationResponse(false, "Неверный код"), HttpStatus.BAD_REQUEST);
+        }
+    }
+
     @PostMapping("/notify")
     public ResponseEntity<RegistrationResponse> changeNotification(@NotNull @RequestBody NotifyRequest notifyRequest) {
         Optional<User> optionalUser = userService.getByLogin(notifyRequest.getLogin());

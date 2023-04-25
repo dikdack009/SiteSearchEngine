@@ -1,6 +1,21 @@
 {
-  "data": {
-    "fdgffgg.ur": "fdgffgg",
-    "gfdgdfg.ri": "gfdgdfg"
+  "result": true,
+  "statistics": {
+    "total": {
+      "sites": 1,
+      "pages": 333,
+      "lemmas": 77882,
+      "indexing": false
+    },
+    "detailed": [
+      {
+        "url": "https://pythonworld.ru",
+        "name": "pythonworld",
+        "status": "INDEXED",
+        "statusTime": 1682420575000,
+        "pages": 333,
+        "lemmas": 77882
+      }
+    ]
   }
 }

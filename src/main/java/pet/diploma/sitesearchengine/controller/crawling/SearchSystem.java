@@ -27,28 +27,21 @@ public class SearchSystem {
     private final int offset;
     private final int limit;
     private final Set<Integer> linkIdList;
-    private final Set<String> links;
     @Getter
     private String error;
     private final CrawlingService crawlingService;
-    private final int userId;
 
     public SearchSystem(String query, Set<String> links, Integer offset, Integer limit, CrawlingService crawlingService, int userId) {
         this.query = query;
         this.offset = offset == null ? 0 : offset;
         this.limit = limit == null ? 20 : limit;
         this.crawlingService = crawlingService;
-        this.links = links;
-        this.userId = userId;
         this.linkIdList = new HashSet<>();
+        links.forEach(l -> linkIdList.add(crawlingService.getSiteByUrl(l.trim(), userId).getId()));
         this.error = null;
     }
 
     public ResponseEntity<SearchResponse> request() throws IOException, SQLException, InterruptedException {
-        links.forEach(l -> {
-            linkIdList.add(crawlingService.getSiteByUrl(l.trim(), userId).getId());
-        });
-
         if (query.isEmpty()){
             error = "Задан пустой поисковый запрос";
             return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.BAD_REQUEST);
@@ -151,7 +144,7 @@ public class SearchSystem {
     }
 
     public synchronized String getSnippetFirstStep(List<Lemma> lemmaList, String content) throws IOException {
-
+        long m = System.currentTimeMillis();
         List<Integer> indexes = new ArrayList<>();
         String normalText = new MorphologyServiceImpl().getNormalText(content).toLowerCase();
         for (Lemma lemma : lemmaList) {
@@ -164,6 +157,7 @@ public class SearchSystem {
             content = content.substring(0, i + 1) + "<b>" + content.substring(i + 1, tmp) + "</b>" + content.substring(tmp);
             indexes.add(pair.getKey());
         }
+        System.out.println("Время части сниппета " + (double)(System.currentTimeMillis() - m) / 1000 + " сек.");
         return getSnippetSecondStep(indexes, content);
     }
 
@@ -198,20 +192,11 @@ public class SearchSystem {
             }
         }
         i = 0;
-//        System.out.println("Пробелов в упрощенном тексте " + newCount);
-//        System.out.print("Word = " + word);
         for ( ; i <= tmp; ++i ) {
             if (textArray[i] == ' ') {
                 count++;
             }
         }
-//        System.out.print(" Next word = ");
-//        System.out.print(textArray[i]);
-//        System.out.print(textArray[i+1]);
-//        System.out.print(textArray[i+2]);
-//        System.out.print(textArray[i+3]);
-//        System.out.println(textArray[i+4]);
-//        System.out.println(newText);
         return count;
     }
 
@@ -219,14 +204,12 @@ public class SearchSystem {
         text = text.replaceAll("\\pP", " ");
         String newText = text.replaceAll("[^[a-zA-Zа-яА-Я0-9\\-/]]", " ").toLowerCase();
         char[] textArray = newText.toCharArray();
-//        System.out.println(text);
         int i, spaceId = 0, newCount = 0;
         for (i = 0; i < textArray.length; ++i) {
             if (textArray[i] == ' ') {
                 newCount++;
             }
         }
-//        System.out.println("Пробелов в обычном тексте " + newCount);
         newCount = 0;
         for (i = 0; i < textArray.length; ++i) {
             if(textArray[i] == ' ') {
@@ -239,12 +222,6 @@ public class SearchSystem {
                 break;
             }
         }
-//        System.out.print("Next next word = ");
-//        System.out.print(textArray[i]);
-//        System.out.print(textArray[i+1]);
-//        System.out.print(textArray[i+2]);
-//        System.out.print(textArray[i+3]);
-//        System.out.println(textArray[i+4]);
         return new Pair<>(spaceId, !Character.isLetterOrDigit(text.toCharArray()[i + 1]) ? ++i : i);
     }
 

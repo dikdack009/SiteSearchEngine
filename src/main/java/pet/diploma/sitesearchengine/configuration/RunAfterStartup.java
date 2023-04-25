@@ -40,6 +40,9 @@ public class RunAfterStartup {
         if (crawlingService.getFields().isEmpty()) {
             crawlingService.insertBasicFields();
         }
+        if (crawlingService.checkDeleteIndex()) {
+            crawlingService.insertBasicDeleteIndex();
+        }
         List<Site> failedIndexingSites = crawlingService.getSites().stream()
                 .filter(s -> s.getStatus().equals(Status.INDEXING) && s.getIsDeleted() == 0).collect(Collectors.toList());
         Map<Integer, List<Site>> sitesByUserId = failedIndexingSites.stream().collect(

@@ -21,5 +21,5 @@ public interface PageRepository extends JpaRepository<Page, Integer> {
     @Modifying
     @Query("UPDATE Page SET isDeleted = ?2 WHERE site = ?1 and isDeleted = 0")
     void updatePageDelete(Site site, Integer newNumber);
-    Integer countAllByIsDeleted(Integer isDeleted);
+    Integer countAllByIsDeletedAndSite(Integer isDeleted, Site site);
 }

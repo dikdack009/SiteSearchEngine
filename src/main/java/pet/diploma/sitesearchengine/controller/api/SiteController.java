@@ -1,6 +1,7 @@
 package pet.diploma.sitesearchengine.controller.api;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +34,7 @@ public class SiteController {
         this.userService = userService;
     }
 
+    @CacheEvict(value = "statistic")
     @DeleteMapping(path="/api/deleteSite", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
     public ResponseEntity<IndexingResponse> deleteSite(@RequestParam String url) {
         int userId = userService.getIdByLogin(authService.getAuthInfo().getPrincipal().toString());

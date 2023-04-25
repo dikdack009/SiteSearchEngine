@@ -7,7 +7,7 @@ spring:
     hikari:
       maximum-pool-size: 100
   jpa:
-    database-platform: org.hibernate.dialect.MySQL5Dialect
+    database-platform: org.hibernate.dialect.MySQL8Dialect
     database: MYSQL
     show-sql: false
     generate-ddl: false

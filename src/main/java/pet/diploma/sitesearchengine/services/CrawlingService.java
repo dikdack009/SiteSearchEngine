@@ -98,7 +98,7 @@ public class CrawlingService {
         page.setIsDeleted(0);
         pageRepository.save(page);
     }
-//TODO: отловить и проверить почему некоторые недобавляются
+//TODO: отловить и проверить почему некоторые недобавляются 4 байта
     @Transactional
     public boolean saveLink(Link link) {
         if (linkRepository.getLinkByLinkAndUserId(link.getLink(), link.getUserId()) == null) {
@@ -131,7 +131,7 @@ public class CrawlingService {
     @Transactional
     public boolean deleteSiteInfo(String url, int userId) {
         Site site = siteRepository.getSiteByUrlAndUserIdAndIsDeleted(url, userId, 0);
-        Integer deleteIndex = indexDeleteRepository.getOne(1).getDeleteNumber();
+        Integer deleteIndex = indexDeleteRepository.findAll().get(0).getDeleteNumber();
         if (site != null) {
             int id = site.getId();
             LogManager.getLogger("index").info("Удаляем информацию с сайта: " + id);
@@ -205,5 +205,30 @@ public class CrawlingService {
     public void insertBasicFields() {
         fieldRepository.save(new Field("title", "title", 1.5f));
         fieldRepository.save(new Field("body", "body", 0.8f));
+    }
+
+    @Transactional(readOnly = true)
+    public boolean checkDeleteIndex() {
+        return indexDeleteRepository.findAll().isEmpty();
+    }
+
+    @Transactional
+    public void insertBasicDeleteIndex() {
+        indexDeleteRepository.save(new DeleteIndex(1, 1));
+    }
+
+    @Transactional(readOnly = true)
+    public List<Site> getSitesByUserAndDelete(int userId) {
+        return siteRepository.getSitesByUserIdAndIsDeleted(userId, 0);
+    }
+
+    @Transactional(readOnly = true)
+    public int countPagesByIsDeletedAndSite(Site site) {
+        return pageRepository.countAllByIsDeletedAndSite(0, site);
+    }
+
+    @Transactional(readOnly = true)
+    public int countLemmasByIsDeletedAndSite(Site site) {
+        return lemmaRepository.countAllByIsDeletedAndSite(0, site);
     }
 }

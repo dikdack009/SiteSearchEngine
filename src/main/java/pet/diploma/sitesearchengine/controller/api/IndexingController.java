@@ -3,6 +3,8 @@ package pet.diploma.sitesearchengine.controller.api;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -51,7 +53,7 @@ public class IndexingController {
     @PostMapping(path="/api/startIndexing", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
     public ResponseEntity<IndexingResponse> startIndexing(@RequestBody IndexingRequest body) throws IOException, InterruptedException, ExecutionException, javax.mail.MessagingException, SQLException {
         int userId = userService.getIdByLogin(authService.getAuthInfo().getPrincipal().toString());
-        return indexing(userId, authService.getAuthInfo().getPrincipal().toString(), body.getData());
+        return indexing(userId, getLogin(), body.getData());
     }
 
     public ResponseEntity<IndexingResponse> indexing(int userId, String email, Map<String,String> sites) throws InterruptedException, ExecutionException, MessagingException, SQLException, IOException {
@@ -91,14 +93,18 @@ public class IndexingController {
         return new ResponseEntity<>(response.get(), HttpStatus.OK);
     }
 
-    private void sendMessage(String username, int userId, Map<String, String> sites) throws MessagingException, UnsupportedEncodingException, SQLException {
-        emailService.sendMessage(username, userId, sites);
+    private void sendMessage(String username, int userId, Map<String, String> sites) {
+        try {
+            emailService.sendMessage(username, userId, sites);
+        } catch (UnsupportedEncodingException | MessagingException | SQLException e) {
+            rootLogger.error(username + ":\tВнутренняя ошибка отправки письма индексации: " + e.getMessage());
+        }
     }
 
     @GetMapping(path="/api/stopIndexing", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public ResponseEntity<IndexingResponse> stopIndexing() {
         long start = System.currentTimeMillis();
-        String email = authService.getAuthInfo().getPrincipal().toString();
+        String email = getLogin();
         rootLogger.info(email + ":\tОстанавливаем индексацию");
         int userId = userService.getIdByLogin(email);
         checkUserInfo(userId);
@@ -118,18 +124,17 @@ public class IndexingController {
     @GetMapping(path="/api/statistics", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
     public ResponseEntity<Statistic> statistics() throws ExecutionException, InterruptedException {
         long start = System.currentTimeMillis();
-        String email = authService.getAuthInfo().getPrincipal().toString();
+        String email = getLogin();
         int userId = userService.getIdByLogin(email);
         checkUserInfo(userId);
         ExecutorService es = Executors.newFixedThreadPool(10);
         List<StatisticThread> tasks = new ArrayList<>();
-        tasks.add(new StatisticThread(config.getUserIndexing().get(userId), userId));
+        tasks.add(new StatisticThread(config.getUserIndexing().get(userId), userId, crawlingService));
         ResponseEntity<Statistic> statistic = es.invokeAny(tasks);
         es.shutdown();
-        rootLogger.info(email + ":\tВернули сатистику за " + (double)(System.currentTimeMillis() - start) / 1000 + " сек.");
+        rootLogger.info(email + ":\tВернули статистику за " + (double)(System.currentTimeMillis() - start) / 1000 + " сек.");
         return statistic;
     }
-
 
     private void checkUserInfo(int userId) {
         if (Objects.isNull(config.getUserIndexing().get(userId))) {
@@ -138,5 +143,9 @@ public class IndexingController {
         if (Objects.isNull(config.getStopIndexing().get(userId))) {
             config.getStopIndexing().put(userId, false);
         }
+    }
+
+    private String getLogin() {
+        return authService.getAuthInfo().getPrincipal().toString();
     }
 }

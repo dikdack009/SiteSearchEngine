@@ -4,12 +4,9 @@ import pet.diploma.sitesearchengine.model.Builder;
 import pet.diploma.sitesearchengine.model.Lemma;
 import pet.diploma.sitesearchengine.model.Page;
 import pet.diploma.sitesearchengine.model.Site;
-import pet.diploma.sitesearchengine.model.response.DetailedSite;
 
 import java.sql.*;
-import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.Date;
 
 public class DBConnection {
     private static Connection connection;
@@ -36,7 +33,6 @@ public class DBConnection {
     }
 
     public static void insert(Builder builder) throws SQLException {
-//        insertAllPages(builder.getPageBuilder().toString());
         insertAllLemmas(builder.getLemmaBuilder().toString());
         insertAllIndexes(builder.getIndexBuilder().toString());
     }
@@ -107,38 +103,6 @@ public class DBConnection {
         getConnection().createStatement().execute(sql);
     }
 
-    public static int countSites(int userId) throws SQLException {
-        String sql = "SELECT COUNT(distinct id) AS c FROM site WHERE is_deleted = 0 and user_id = " + userId;
-        return sqlRequest(0, sql);
-    }
-
-    public static int countLemmas(int siteId) throws SQLException {
-        String sql = "SELECT COUNT(distinct id) AS c FROM lemma WHERE is_deleted = 0";
-        return sqlRequest(siteId, sql);
-    }
-
-    public static int countPages(int siteId) throws SQLException {
-        String sql = "SELECT COUNT(distinct id) AS c FROM page WHERE is_deleted = 0";
-        return sqlRequest(siteId, sql);
-    }
-
-    private static int sqlRequest(int siteId, String sql) throws SQLException {
-        ResultSet rs = null;
-        if (siteId > 0){
-            sql += " and site_id = " + siteId;
-        }
-        try {
-            rs = getConnection().createStatement().executeQuery(sql);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        assert rs != null;
-        int c = 0;
-        while (rs.next()) {
-            c = rs.getInt("c");
-        }
-        return c;
-    }
 
     public static Site getSiteById(int id) throws SQLException {
         ResultSet rs = null;
@@ -159,40 +123,4 @@ public class DBConnection {
         }
         return site;
     }
-
-    public static List<DetailedSite> getDBStatistic(int userId, List<Integer> siteIdList) throws SQLException {
-        List<DetailedSite> stat = new ArrayList<>();
-        ResultSet rs = null;
-        try {
-            rs = getConnection().createStatement().executeQuery("SELECT * FROM site WHERE user_id = " + userId + " AND is_deleted = 0");
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        while (true) {
-            assert rs != null;
-            if (!rs.next()) break;
-            int id = rs.getInt("id");
-            siteIdList.add(id);
-            String url = rs.getString("url");
-            String dateTime = rs.getString("status_time");
-            SimpleDateFormat simpleDateFormat =
-                    new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            Date date = new Date();
-            try {
-                date =  simpleDateFormat.parse(dateTime);
-            } catch (java.text.ParseException e) {
-                e.printStackTrace();
-            }
-            Long time = date.getTime();
-
-            String status = rs.getString("status");
-            String name = rs.getString("name");
-            String error = rs.getString("last_error");
-            stat.add(new DetailedSite(url, name, status, time,
-                    error, countPages(id),  countLemmas(id)));
-        }
-        return stat;
-    }
-
-
 }
