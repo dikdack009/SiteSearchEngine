@@ -129,19 +129,18 @@ public class MorphologyServiceImpl {
                 String word = new String(textArray).substring(i, nextSpaceIndex);
                 String oldWord = word;
                 if (Arrays.asList(russianWords).contains(word)) {
-                    word = russianMorphology.getNormalForms(word).get(0);
                     Pair<String, Boolean> pair = check(russianMorphology, word);
                     if (!pair.getValue()) {
                         word = pair.getKey();
                         String finalWord = word;
                         if (lemmaList.stream().anyMatch(lemma -> lemma.getLemma().equals(finalWord))) {
-                            copy = copy.substring(0, i + div) + "<b>" + oldWord + "</b>" + copy.substring( Math.min(i + div + oldWord.length(), textArray.length));
+                            copy = copy.substring(0, i + div) + "<b>" + oldWord + "</b>" + copy.substring(Math.min(i + div + oldWord.length(), textArray.length));
                             if (newWordIndex.containsKey(word)) {
                                 newWordIndex.get(word).add(i);
                             } else {
                                 newWordIndex.put(word, new ArrayList<>(List.of(i)));
                             }
-                            div += 7 + Math.max(oldWord.length(), word.length()) - Math.min(oldWord.length(), word.length());
+                            div += 7;
                         }
                     }
                 }
@@ -202,7 +201,7 @@ public class MorphologyServiceImpl {
                         } else {
                             newWordIndex.put(word, new ArrayList<>(List.of(i)));
                         }
-                        div += 7 + Math.max(oldWord.length(), word.length()) - Math.min(oldWord.length(), word.length());
+                        div += 7 ;
                     }
                 }
                 i = nextSpaceIndex + 1 ;
