@@ -44,7 +44,7 @@ public class SearchSystem {
     public ResponseEntity<SearchResponse> request() throws IOException, SQLException, InterruptedException {
         if (query.isEmpty()) {
             error = "Задан пустой поисковый запрос";
-            return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.NOT_FOUND);
         }
 
         long m = System.currentTimeMillis();
@@ -61,7 +61,7 @@ public class SearchSystem {
         });
         if (lemmaList.isEmpty()) {
             error = "Нет результатов";
-            return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.NOT_FOUND);
         }
 
         AtomicReference<Double> quantityPages = new AtomicReference<>((double) 0);
@@ -69,7 +69,7 @@ public class SearchSystem {
 
         if (quantityPages.get() == 0) {
             error = "Нет результатов";
-            return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.NOT_FOUND);
         }
         for(String re : requestNormalForms) {
             if (lemmaList.stream().anyMatch(lemma -> lemma.getLemma().equals(re))) {
@@ -89,12 +89,12 @@ public class SearchSystem {
             }
             else {
                 error = "Слово \"" + re + "\" не найдено";
-                return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.NOT_FOUND);
             }
         }
         if (requestLemmas.isEmpty()){
             error = "Нет результатов";
-            return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.NOT_FOUND);
         }
         requestLemmas.sort(Comparator.comparingInt(Lemma::getFrequency));
         System.out.println("Время получения лемм из БД: " + (double)(System.currentTimeMillis() - m) / 1000 + " sec.");
