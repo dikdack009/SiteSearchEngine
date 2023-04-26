@@ -187,8 +187,13 @@ public class MorphologyServiceImpl {
                 }
                 String word = new String(textArray).substring(i, nextSpaceIndex);
                 String oldWord = word;
-                if (Arrays.asList(englishWords).contains(word)) {
-                    word = englishMorphology.getNormalForms(word).get(0);
+                if (!word.equals("") && Arrays.asList(englishWords).contains(word)) {
+                    try {
+                        word = englishMorphology.getNormalForms(word).get(0);
+                    } catch (Exception e) {
+                        System.out.println("Слово ошибка - " + word);
+                        System.out.println(e.getMessage());
+                    }
                     String finalWord = word;
                     if (lemmaList.stream().anyMatch(lemma -> lemma.getLemma().equals(finalWord))) {
                         copy = copy.substring(0, i + div) + "<b>" + oldWord + "</b>" + copy.substring(Math.min(i + div + oldWord.length(), textArray.length));
