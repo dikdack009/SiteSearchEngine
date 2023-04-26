@@ -169,7 +169,7 @@ public class MorphologyServiceImpl {
         String[] englishWords = text.replaceAll("[^[a-zA-Z\\-]]", "^")
                 .toLowerCase().split("\\^");
         char[] textArray = text.replaceAll("[^[a-zA-Z\\-]]", "^").toLowerCase().toCharArray();
-
+        int div = 0;
         for (int i = 0; i < textArray.length; ++i){
             if (textArray[i] != ' ') {
                 int nextSpaceIndex = new String(textArray).indexOf('^', i);
@@ -182,19 +182,26 @@ public class MorphologyServiceImpl {
                         copy = getString(copy, newWordIndex, lemmaList, i, word, oldWord);
                     }
                 }
+                if (i != 0 && textArray[i - 1] != '^') {
+                    i--;
+                }
                 String word = new String(textArray).substring(i, nextSpaceIndex);
                 String oldWord = word;
-                if (Arrays.asList(englishWords).contains(word) && !word.equals("")) {
+                if (Arrays.asList(englishWords).contains(word)) {
                     word = englishMorphology.getNormalForms(word).get(0);
-                }
-                String finalWord = word;
-                System.out.println(finalWord);
-                if (lemmaList.stream().anyMatch(lemma -> lemma.getLemma().equals(finalWord))) {
-                    copy = copy.substring(0, i) + "<b>" + oldWord + "</b>" + copy.substring(i + oldWord.length());
-                    if (newWordIndex.containsKey(word)) {
-                        newWordIndex.get(word).add(i);
-                    } else {
-                        newWordIndex.put(word, new ArrayList<>(List.of(i)));
+                    Pair<String, Boolean> pair = check(englishMorphology, word);
+                    if (!pair.getValue()) {
+                        word = pair.getKey();
+                        String finalWord = word;
+                        if (lemmaList.stream().anyMatch(lemma -> lemma.getLemma().equals(finalWord))) {
+                            copy = copy.substring(0, i + div) + "<b>" + oldWord + "</b>" + copy.substring(i + div + oldWord.length());
+                            if (newWordIndex.containsKey(word)) {
+                                newWordIndex.get(word).add(i);
+                            } else {
+                                newWordIndex.put(word, new ArrayList<>(List.of(i)));
+                            }
+                            div += 7;
+                        }
                     }
                 }
                 i = nextSpaceIndex + 1 ;
