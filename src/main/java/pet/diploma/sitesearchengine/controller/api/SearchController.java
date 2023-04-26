@@ -48,7 +48,7 @@ public class SearchController {
             result = new SearchSystem(query, sites.getSites(), offset, limit, crawlingService, userId).request();
             rootLogger.info(email + ":\tНашли фразу <" + query + "> за " + (double)(System.currentTimeMillis() - mm) / 1000 + " сек.");
             if (result.getStatusCode() != HttpStatus.OK) {
-                rootLogger.info(email + ":\tОшибка поиска фразы <" + query + "> Ошибка: "
+                rootLogger.error(email + ":\tОшибка поиска фразы <" + query + "> Ошибка: "
                         + Objects.requireNonNull(result.getBody()).getError());
             }
         } catch (Exception exception) {

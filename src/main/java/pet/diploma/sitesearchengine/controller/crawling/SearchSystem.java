@@ -42,7 +42,7 @@ public class SearchSystem {
     }
 
     public ResponseEntity<SearchResponse> request() throws IOException, SQLException, InterruptedException {
-        if (query.isEmpty()){
+        if (query.isEmpty()) {
             error = "Задан пустой поисковый запрос";
             return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.BAD_REQUEST);
         }
@@ -88,8 +88,8 @@ public class SearchSystem {
                 }
             }
             else {
-                error = "Слово " + re + " не найдено";
-                return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.OK);
+                error = "Слово \"" + re + "\" не найдено";
+                return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.BAD_REQUEST);
             }
         }
         if (requestLemmas.isEmpty()){
