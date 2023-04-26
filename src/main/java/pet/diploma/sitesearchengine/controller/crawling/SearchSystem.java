@@ -146,19 +146,16 @@ public class SearchSystem {
     public String getSnippetFirstStep(List<Lemma> lemmaList, String content) throws IOException {
         long m = System.currentTimeMillis();
         List<Integer> indexes = new ArrayList<>();
-        String normalText = new MorphologyServiceImpl().getNormalText(content).toLowerCase();
+        Pair<String, Map<String, List<Integer>>> pair = new MorphologyServiceImpl().getNormalText(content, lemmaList);
+        String normalText = pair.getKey();
         for (Lemma lemma : lemmaList) {
-            int spaces = searchSpacesBefore(normalText, lemma.getLemma());
-            Pair<Integer, Integer> pair = searchSpacesAfter(content, spaces);
-            int i = pair.getValue();
-
-            String newContent = content.replaceAll("\\pP", "-").replaceAll("[^[a-zA-Zа-яА-Я0-9]]", "-").toLowerCase();
-            int tmp = newContent.indexOf("-", i + 1);
-            content = content.substring(0, i + 1) + "<b>" + content.substring(i + 1, tmp) + "</b>" + content.substring(tmp);
-            indexes.add(pair.getKey());
+            String l = lemma.getLemma();
+            System.out.println(lemma.getLemma() + " - " + pair.getValue().get(l));
+            int i = pair.getValue().get(l).get(0);
+            indexes.add(i);
         }
         System.out.println("Время части сниппета " + (double)(System.currentTimeMillis() - m) / 1000 + " сек.");
-        return getSnippetSecondStep(indexes, content);
+        return getSnippetSecondStep(indexes, normalText);
     }
 
     public String getSnippetSecondStep(List<Integer> indexes, String content) {
@@ -166,63 +163,16 @@ public class SearchSystem {
         Collections.sort(indexes);
         for (int j = 0; j < indexes.size(); ++j) {
             int indexOfContent = indexes.get(j);
-            if (j != indexes.size() - 1 && Math.abs(indexOfContent - indexes.get(j + 1)) < 70) {
-                snippet.append(content, indexOfContent + 1, Math.min(indexOfContent + 200, content.length()));
+            if (j != indexes.size() - 1 && Math.abs(indexOfContent - indexes.get(j + 1)) < 150) {
+                snippet.append(content, Math.max((indexOfContent - 50), 0), Math.min(indexOfContent + 200, content.length()));
                 j += 1;
             }
             else {
-                snippet.append(content, indexOfContent + 1, Math.min(indexOfContent + 180, content.length()));
+                snippet.append(content, Math.max((indexOfContent - 50), 0), Math.min(indexOfContent + 180, content.length()));
             }
             snippet.append("...");
         }
-        return snippet.toString();
-    }
-
-    private int searchSpacesBefore(String text, String word) {
-        text = text.replaceAll("\\pP", " ");
-        String newText = text.replaceAll("[^[a-zA-Zа-яА-Я0-9\\-]]", " ").toLowerCase();
-        char[] textArray = newText.toCharArray();
-        int tmp = newText.indexOf(" " + word + " ");
-        int count = 0;
-        int i = 0;
-        int newCount = 0;
-        for (i = 0; i < textArray.length; ++i) {
-            if (textArray[i] == ' ') {
-                newCount++;
-            }
-        }
-        i = 0;
-        for ( ; i <= tmp; ++i ) {
-            if (textArray[i] == ' ') {
-                count++;
-            }
-        }
-        return count;
-    }
-
-    private Pair<Integer, Integer> searchSpacesAfter(String text, int count) {
-        text = text.replaceAll("\\pP", " ");
-        String newText = text.replaceAll("[^[a-zA-Zа-яА-Я0-9\\-/]]", " ").toLowerCase();
-        char[] textArray = newText.toCharArray();
-        int i, spaceId = 0, newCount = 0;
-        for (i = 0; i < textArray.length; ++i) {
-            if (textArray[i] == ' ') {
-                newCount++;
-            }
-        }
-        newCount = 0;
-        for (i = 0; i < textArray.length; ++i) {
-            if(textArray[i] == ' ') {
-                newCount++;
-            }
-            if (newCount == count - 14){
-                spaceId = i;
-            }
-            if (newCount == count) {
-                break;
-            }
-        }
-        return new Pair<>(spaceId, !Character.isLetterOrDigit(text.toCharArray()[i + 1]) ? ++i : i);
+        return snippet.toString().replaceAll("\n", " ");
     }
 
     private Map<Page, Double> getPages(List<Lemma> lemmaList) throws SQLException {

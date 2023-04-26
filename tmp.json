@@ -1,21 +1,14 @@
 {
   "result": true,
-  "statistics": {
-    "total": {
-      "sites": 1,
-      "pages": 333,
-      "lemmas": 77882,
-      "indexing": false
-    },
-    "detailed": [
-      {
-        "url": "https://pythonworld.ru",
-        "name": "pythonworld",
-        "status": "INDEXED",
-        "statusTime": 1682420575000,
-        "pages": 333,
-        "lemmas": 77882
-      }
-    ]
-  }
+  "count": 1,
+  "data": [
+    {
+      "site": "https://pythonworld.ru",
+      "siteName": "pythonworld",
+      "uri": "/tipy-dannyx-v-python/stroki-funkcii-i-metody-strok.html",
+      "title": "Строки. Функции и методы строк | Python 3 для начинающих и чайников",
+      "snippet": "... среза: [x:y]. x – начало среза, а y – окончание; <b>символ</b> с номером y в срез не входит. по умолчанию <b>первый</b> индекс равен 0, а второй - длине строки. >>> s = \"spameggs\" >>> s[3:5] \"me\" >>> s[2:-2] \"ameg\" >>> s[:6] \"spameg\" >>> s[1:] \"pame...троки из списка с разделителем s ord(<b>символ</b>) <b>символ</b> в его код ascii chr(число) код ascii в <b>символ</b> s.capitalize() <b>переводит</b> <b>первый</b> <b>символ</b> строки в верхний регистр, а все остальные в нижний ...",
+      "relevance": 1.0
+    }
+  ]
 }
