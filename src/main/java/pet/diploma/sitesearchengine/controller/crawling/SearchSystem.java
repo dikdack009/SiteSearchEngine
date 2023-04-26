@@ -143,7 +143,7 @@ public class SearchSystem {
         return new ResponseEntity<>(new SearchResponse(true, pageDoubleMap.size(), searchResults, null), HttpStatus.OK);
     }
 
-    public synchronized String getSnippetFirstStep(List<Lemma> lemmaList, String content) throws IOException {
+    public String getSnippetFirstStep(List<Lemma> lemmaList, String content) throws IOException {
         long m = System.currentTimeMillis();
         List<Integer> indexes = new ArrayList<>();
         String normalText = new MorphologyServiceImpl().getNormalText(content).toLowerCase();
