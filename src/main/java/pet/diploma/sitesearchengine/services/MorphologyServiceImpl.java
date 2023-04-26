@@ -135,13 +135,13 @@ public class MorphologyServiceImpl {
                         word = pair.getKey();
                         String finalWord = word;
                         if (lemmaList.stream().anyMatch(lemma -> lemma.getLemma().equals(finalWord))) {
-                            copy = copy.substring(0, i + div) + "<b>" + oldWord + "</b>" + copy.substring(i + div + oldWord.length());
+                            copy = copy.substring(0, i + div) + "<b>" + oldWord + "</b>" + copy.substring( Math.min(i + div + oldWord.length(), textArray.length));
                             if (newWordIndex.containsKey(word)) {
                                 newWordIndex.get(word).add(i);
                             } else {
                                 newWordIndex.put(word, new ArrayList<>(List.of(i)));
                             }
-                            div += 7;
+                            div += 7 + Math.max(oldWord.length(), word.length()) - Math.min(oldWord.length(), word.length());
                         }
                     }
                 }
@@ -189,19 +189,15 @@ public class MorphologyServiceImpl {
                 String oldWord = word;
                 if (Arrays.asList(englishWords).contains(word)) {
                     word = englishMorphology.getNormalForms(word).get(0);
-                    Pair<String, Boolean> pair = check(englishMorphology, word);
-                    if (!pair.getValue()) {
-                        word = pair.getKey();
-                        String finalWord = word;
-                        if (lemmaList.stream().anyMatch(lemma -> lemma.getLemma().equals(finalWord))) {
-                            copy = copy.substring(0, i + div) + "<b>" + oldWord + "</b>" + copy.substring(i + div + oldWord.length());
-                            if (newWordIndex.containsKey(word)) {
-                                newWordIndex.get(word).add(i);
-                            } else {
-                                newWordIndex.put(word, new ArrayList<>(List.of(i)));
-                            }
-                            div += 7;
+                    String finalWord = word;
+                    if (lemmaList.stream().anyMatch(lemma -> lemma.getLemma().equals(finalWord))) {
+                        copy = copy.substring(0, i + div) + "<b>" + oldWord + "</b>" + copy.substring(Math.min(i + div + oldWord.length(), textArray.length));
+                        if (newWordIndex.containsKey(word)) {
+                            newWordIndex.get(word).add(i);
+                        } else {
+                            newWordIndex.put(word, new ArrayList<>(List.of(i)));
                         }
+                        div += 7 + Math.max(oldWord.length(), word.length()) - Math.min(oldWord.length(), word.length());
                     }
                 }
                 i = nextSpaceIndex + 1 ;
