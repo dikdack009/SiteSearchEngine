@@ -59,6 +59,7 @@ public class SearchSystem {
             l.forEach(lemma -> lemma.setId(id));
             lemmaList.addAll(l);
         });
+        System.out.println(lemmaList);
         if (lemmaList.isEmpty()) {
             error = "Нет результатов";
             return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.NOT_FOUND);
@@ -151,6 +152,9 @@ public class SearchSystem {
         for (Lemma lemma : lemmaList) {
             String l = lemma.getLemma();
             System.out.println(lemma.getLemma() + " - " + pair.getValue().get(l));
+            if (pair.getValue().get(l) == null) {
+                System.out.println(content);
+            }
             int i = pair.getValue().get(l).get(0);
             indexes.add(i);
         }
