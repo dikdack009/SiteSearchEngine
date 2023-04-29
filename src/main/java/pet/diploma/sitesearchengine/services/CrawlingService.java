@@ -60,7 +60,6 @@ public class CrawlingService {
                 lemma = id > 0 ? lemmaRepository.getLemmaByLemmaAndSiteIdAndIsDeleted(swapKeyboard(l), id, 0)
                         : lemmaRepository.getLemmaByLemmaAndIsDeleted(swapKeyboard(l), 0);
             }
-            System.out.println(lemma);
             if (lemma != null) {
                 lemmaList.add(lemma);
             }
@@ -77,7 +76,6 @@ public class CrawlingService {
         if (word.matches("[a-zA-Z]+")) {
             for (char i : word.toCharArray()) {
                 int engIndex = eng.indexOf(i);
-                System.out.println(i + " - " + rusArr[engIndex]);
                 translit.append(rusArr[engIndex]);
             }
         }
@@ -87,7 +85,6 @@ public class CrawlingService {
                 translit.append(engArr[rusIndex]);
             }
         }
-        System.out.println("Translit = <" + translit + ">");
         return translit.toString();
     }
 

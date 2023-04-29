@@ -57,7 +57,6 @@ public class SearchSystem {
             l.forEach(lemma -> lemma.setId(id));
             lemmaList.addAll(l);
         });
-        System.out.println(lemmaList);
         if (lemmaList.isEmpty()) {
             error = "Нет результатов";
             return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.NOT_FOUND);
@@ -102,7 +101,6 @@ public class SearchSystem {
         if (word.matches("[a-zA-Z]+")) {
             for (char i : word.toCharArray()) {
                 int engIndex = eng.indexOf(i);
-                System.out.println(i + " - " + rusArr[engIndex]);
                 translit.append(rusArr[engIndex]);
             }
         }
@@ -112,7 +110,6 @@ public class SearchSystem {
                 translit.append(engArr[rusIndex]);
             }
         }
-        System.out.println("Translit = <" + translit + ">");
         return translit.toString();
     }
 
