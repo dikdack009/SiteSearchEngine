@@ -58,7 +58,7 @@ public class MorphologyServiceImpl {
             }
         });
     }
-
+// TODO: заглавные буквы добавить
     public void getRussianFormsList(Map<String, Integer> normalFormsMap, String[] russianWords) throws IOException {
         LuceneMorphology russianMorphology = new RussianLuceneMorphology();
         Arrays.stream(russianWords).forEach(word -> {

@@ -70,6 +70,7 @@ public class LinksGenerationSystem extends RecursiveAction {
             }
             allLinksMap.put(path, page);
         } catch (Exception e) {
+            System.out.println(e.getMessage());
             return;
         }
 
