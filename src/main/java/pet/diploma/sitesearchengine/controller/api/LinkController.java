@@ -1,6 +1,5 @@
 package pet.diploma.sitesearchengine.controller.api;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -13,9 +12,6 @@ import pet.diploma.sitesearchengine.services.UserService;
 import pet.diploma.sitesearchengine.model.Link;
 import pet.diploma.sitesearchengine.model.response.IndexingResponse;
 import pet.diploma.sitesearchengine.model.response.LinksResponse;
-
-import java.io.IOException;
-import java.util.*;
 
 @RestController
 public class LinkController {
@@ -50,7 +46,6 @@ public class LinkController {
 
     @PostMapping(path="/api/updateLinks", produces = MediaType.APPLICATION_JSON_UTF8_VALUE )
     public ResponseEntity<LinksResponse> updateLinks(@RequestBody LinkRequest data) {
-        System.out.println(data);
         int userId = getUserId();
         crawlingService.updateLinks(data.getData(), userId);
         return new ResponseEntity<>(new LinksResponse(true, null, null),  HttpStatus.OK);

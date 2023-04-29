@@ -19,6 +19,7 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class SearchSystem {
@@ -30,6 +31,7 @@ public class SearchSystem {
     @Getter
     private String error;
     private final CrawlingService crawlingService;
+    private final MorphologyServiceImpl morphologyService;
 
     public SearchSystem(String query, Set<String> links, Integer offset, Integer limit, CrawlingService crawlingService, int userId) {
         this.query = query;
@@ -39,6 +41,7 @@ public class SearchSystem {
         this.linkIdList = new HashSet<>();
         links.forEach(l -> linkIdList.add(crawlingService.getSiteByUrl(l.trim(), userId).getId()));
         this.error = null;
+        morphologyService = new MorphologyServiceImpl();
     }
 
     public ResponseEntity<SearchResponse> request() throws IOException, SQLException, InterruptedException {
@@ -46,12 +49,7 @@ public class SearchSystem {
             error = "Задан пустой поисковый запрос";
             return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.NOT_FOUND);
         }
-
-        long m = System.currentTimeMillis();
-        Set<String> requestNormalForms = new MorphologyServiceImpl().getNormalFormsList(query).keySet();
-        List<Lemma> requestLemmas = new ArrayList<>();
-        List<Lemma> optionalLemmas = new ArrayList<>();
-
+        Set<String> requestNormalForms = morphologyService.getNormalFormsList(query).keySet();
         List<Lemma> lemmaList = new ArrayList<>();
 
         linkIdList.forEach(id -> {
@@ -64,43 +62,81 @@ public class SearchSystem {
             error = "Нет результатов";
             return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.NOT_FOUND);
         }
-
         AtomicReference<Double> quantityPages = new AtomicReference<>((double) 0);
         linkIdList.forEach(id -> quantityPages.updateAndGet(v -> v + crawlingService.countPages(id)));
-
-        if (quantityPages.get() == 0) {
+        Pair<List<Lemma>, List<Lemma>> p = getLemmas(requestNormalForms, lemmaList, quantityPages.get());
+        if (error != null) {
+            return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.NOT_FOUND);
+        }
+        if (p.getKey().isEmpty()){
             error = "Нет результатов";
             return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.NOT_FOUND);
         }
-        for(String re : requestNormalForms) {
-            if (lemmaList.stream().anyMatch(lemma -> lemma.getLemma().equals(re))) {
-                AtomicReference<Lemma> currentLemma = new AtomicReference<>(null);
-                lemmaList.forEach(lemma -> {
-                    if (lemma.getLemma().equals(re)) {
-                        currentLemma.set(lemma);
-                    }
-                });
-                Lemma currentLemmaFromDB = currentLemma.get();
-                if (currentLemmaFromDB.getFrequency() / quantityPages.get() <= 1) {
-                    requestLemmas.add(currentLemmaFromDB);
+        p.getKey().sort(Comparator.comparingInt(Lemma::getFrequency));
+        return getSearchResults(p.getKey(), p.getValue());
+    }
+
+    private Pair<List<Lemma>, List<Lemma>> getLemmas(Set<String> requestNormalForms, List<Lemma> lemmaList, double countPages) {
+        List<Lemma> requestLemmas = new ArrayList<>();
+        List<Lemma> optionalLemmas = new ArrayList<>();
+        for(String word : requestNormalForms) {
+            if (countPages == 0) {
+                error = "Нет результатов";
+                break;
+            }
+            if (checkAndAddLemma(lemmaList, word, countPages, requestLemmas, optionalLemmas)) {
+                if (checkAndAddLemma(lemmaList, swapKeyboard(word), countPages, requestLemmas, optionalLemmas)) {
+                    error = "Слово \"" + word + "\" не найдено";
+                    break;
                 }
-                else {
-                    optionalLemmas.add(currentLemmaFromDB);
+            }
+        }
+        return new Pair<>(requestLemmas, optionalLemmas);
+    }
+    private String swapKeyboard(String word) {
+        StringBuilder translit = new StringBuilder();
+        String eng = "qwertyuiop[]asdfghjkl;'zxcvbnm,. ";
+        String rus = "йцукенгшщзхъфывапролджэячсмитьбю ";
+        char[] engArr = eng.toCharArray();
+        char[] rusArr = rus.toCharArray();
+        if (word.matches("[a-zA-Z]+")) {
+            for (char i : word.toCharArray()) {
+                int engIndex = eng.indexOf(i);
+                System.out.println(i + " - " + rusArr[engIndex]);
+                translit.append(rusArr[engIndex]);
+            }
+        }
+        else if (word.matches("[а-яА-ЯЁё]+")) {
+            for (char i : word.toCharArray()) {
+                int rusIndex = rus.indexOf(i);
+                translit.append(engArr[rusIndex]);
+            }
+        }
+        System.out.println("Translit = <" + translit + ">");
+        return translit.toString();
+    }
+
+    private boolean checkAndAddLemma(List<Lemma> lemmaList, String word, double countPages, List<Lemma> requestLemmas, List<Lemma> optionalLemmas) {
+        if (lemmaList.stream().anyMatch(lemma -> lemma.getLemma().equals(word))) {
+            AtomicReference<Lemma> currentLemma = new AtomicReference<>(null);
+            lemmaList.forEach(lemma -> {
+                if (lemma.getLemma().equals(word)) {
+                    currentLemma.set(lemma);
                 }
+            });
+            Lemma currentLemmaFromDB = currentLemma.get();
+            if (currentLemmaFromDB.getFrequency() / countPages <= 1) {
+                requestLemmas.add(currentLemmaFromDB);
             }
             else {
-                error = "Слово \"" + re + "\" не найдено";
-                return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.NOT_FOUND);
+                optionalLemmas.add(currentLemmaFromDB);
             }
+            return false;
         }
-        if (requestLemmas.isEmpty()){
-            error = "Нет результатов";
-            return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.NOT_FOUND);
-        }
-        requestLemmas.sort(Comparator.comparingInt(Lemma::getFrequency));
-        System.out.println("Время получения лемм из БД: " + (double)(System.currentTimeMillis() - m) / 1000 + " sec.");
-        return getSearchResults(requestLemmas, optionalLemmas);
+        return true;
     }
+
+
 
     public static <K, V extends Comparable<? super V>> Map<K, V> sortByValue( Map<K, V> map ) {
         Map<K,V> result = new LinkedHashMap<>();
@@ -112,20 +148,12 @@ public class SearchSystem {
     private ResponseEntity<SearchResponse> getSearchResults(@NotNull List<Lemma>requestLemmas, List<Lemma> optionalLemmas) throws SQLException, InterruptedException {
         Map<Page, Double> pageDoubleMap = getPages(requestLemmas);
         pageDoubleMap = sortByValue(pageDoubleMap);
-        Optional<Double> optionalDouble = pageDoubleMap.values().stream().max(Comparator.comparingDouble(o -> o));
-
-        Double max = null;
-        if (optionalDouble.isPresent()){
-            max = optionalDouble.get();
-        }
-
+        Double max = sortByValue(pageDoubleMap).values().stream().limit(1).collect(Collectors.toList()).get(0);
         List<Data> searchResults = new ArrayList<>();
-        System.out.println("Размер - " + pageDoubleMap.size());
         ExecutorService es = Executors.newFixedThreadPool(300);
         List<SearchThread> tasks = new ArrayList<>();
         requestLemmas.addAll(optionalLemmas);
-        List<Page> subPageList = new ArrayList<>(pageDoubleMap.keySet())
-                .subList(offset, Math.min(offset + limit, pageDoubleMap.size()));
+        List<Page> subPageList = new ArrayList<>(pageDoubleMap.keySet()).subList(offset, Math.min(offset + limit, pageDoubleMap.size()));
         for (Page page : subPageList) {
             SearchThread searchThread = new SearchThread(page, pageDoubleMap.get(page), this, max, requestLemmas);
             tasks.add(searchThread);
@@ -145,20 +173,14 @@ public class SearchSystem {
     }
 
     public String getSnippetFirstStep(List<Lemma> lemmaList, String content) throws IOException {
-        long m = System.currentTimeMillis();
         List<Integer> indexes = new ArrayList<>();
         Pair<String, Map<String, List<Integer>>> pair = new MorphologyServiceImpl().getNormalText(content, lemmaList);
         String normalText = pair.getKey();
         for (Lemma lemma : lemmaList) {
             String l = lemma.getLemma();
-            System.out.println(lemma.getLemma() + " - " + pair.getValue().get(l));
-            if (pair.getValue().get(l) == null) {
-                System.out.println(content);
-            }
             int i = pair.getValue().get(l).get(0);
             indexes.add(i);
         }
-        System.out.println("Время части сниппета " + (double)(System.currentTimeMillis() - m) / 1000 + " сек.");
         return getSnippetSecondStep(indexes, normalText);
     }
 
@@ -167,20 +189,20 @@ public class SearchSystem {
         Collections.sort(indexes);
         for (int j = 0; j < indexes.size(); ++j) {
             int indexOfContent = indexes.get(j);
-            if (j != indexes.size() - 1 && Math.abs(indexOfContent - indexes.get(j + 1)) < 150) {
-                snippet.append(content, Math.max((indexOfContent - 50), 0), Math.min(indexOfContent + 200, content.length()));
-                j += 1;
+            if (indexOfContent - 50 < 0) {
+                snippet.append(content, 0, indexOfContent + 150 + indexOfContent);
+            } else {
+                snippet.append(content, indexOfContent - 50, Math.min(indexOfContent + 100, content.length()));
             }
-            else {
-                snippet.append(content, Math.max((indexOfContent - 50), 0), Math.min(indexOfContent + 180, content.length()));
+            if (j != indexes.size() - 1 && Math.abs(indexOfContent - indexes.get(j + 1)) < 80) {
+                j += 1;
             }
             snippet.append("...");
         }
-        return snippet.toString().replaceAll("\n", " ");
+        return snippet.toString().replaceAll("\n", " ").trim();
     }
 
     private Map<Page, Double> getPages(List<Lemma> lemmaList) throws SQLException {
-        long m = System.currentTimeMillis();
         List<Page> pageList = new ArrayList<>();
         linkIdList.forEach(id -> {
             try {
@@ -189,12 +211,10 @@ public class SearchSystem {
                 throw new RuntimeException(e);
             }
         });
-        System.out.println("Время получения странниц по запросу: " + (double) (System.currentTimeMillis() - m) / 1000 + " sec.");
         Map<Page, Double> absRelPage = new HashMap<>();
         for (Page page : pageList) {
             absRelPage.put(page, DBConnection.getPageRank(lemmaList, page.getId()));
         }
-        System.out.println("Время получения мапы странниц по запросу: " + (double) (System.currentTimeMillis() - m) / 1000 + " sec.");
         return absRelPage;
     }
 }

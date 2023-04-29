@@ -56,11 +56,39 @@ public class CrawlingService {
         lemmas.forEach(l -> {
             Lemma lemma = id > 0 ? lemmaRepository.getLemmaByLemmaAndSiteIdAndIsDeleted(l, id, 0)
                     : lemmaRepository.getLemmaByLemmaAndIsDeleted(l, 0);
+            if (lemma == null) {
+                lemma = id > 0 ? lemmaRepository.getLemmaByLemmaAndSiteIdAndIsDeleted(swapKeyboard(l), id, 0)
+                        : lemmaRepository.getLemmaByLemmaAndIsDeleted(swapKeyboard(l), 0);
+            }
+            System.out.println(lemma);
             if (lemma != null) {
                 lemmaList.add(lemma);
             }
         });
         return lemmaList;
+    }
+
+    private String swapKeyboard(String word) {
+        StringBuilder translit = new StringBuilder();
+        String eng = "qwertyuiop[]asdfghjkl;'zxcvbnm,. ";
+        String rus = "йцукенгшщзхъфывапролджэячсмитьбю ";
+        char[] engArr = eng.toCharArray();
+        char[] rusArr = rus.toCharArray();
+        if (word.matches("[a-zA-Z]+")) {
+            for (char i : word.toCharArray()) {
+                int engIndex = eng.indexOf(i);
+                System.out.println(i + " - " + rusArr[engIndex]);
+                translit.append(rusArr[engIndex]);
+            }
+        }
+        else if (word.matches("[а-яА-ЯЁё]+")) {
+            for (char i : word.toCharArray()) {
+                int rusIndex = rus.indexOf(i);
+                translit.append(engArr[rusIndex]);
+            }
+        }
+        System.out.println("Translit = <" + translit + ">");
+        return translit.toString();
     }
 
     @Transactional
