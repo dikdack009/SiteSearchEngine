@@ -114,7 +114,8 @@ public class MorphologyServiceImpl {
                 if (nextSpaceIndex == -1) {
                     String word = new String(tmpArr).substring(i);
                     String oldWord = word;
-                    if (Arrays.asList(russianWords).contains(word.toLowerCase())) {
+                    word = word.toLowerCase();
+                    if (Arrays.asList(russianWords).contains(word)) {
                         Pair<String, Boolean> pair = check(russianMorphology, word);
                         if (!pair.getValue()) {
                             word = pair.getKey();
@@ -128,6 +129,7 @@ public class MorphologyServiceImpl {
                 }
                 String word = new String(tmpArr).substring(i, nextSpaceIndex);
                 String oldWord = word;
+                word = word.toLowerCase();
                 if (Arrays.asList(russianWords).contains(word.toLowerCase())) {
                     Pair<String, Boolean> pair = check(russianMorphology, word);
                     if (!pair.getValue()) {
@@ -178,7 +180,8 @@ public class MorphologyServiceImpl {
                 if (nextSpaceIndex == -1) {
                     String word = new String(tmpArr).substring(i);
                     String oldWord = word;
-                    if (Arrays.asList(englishWords).contains(word.toLowerCase())) {
+                    word = word.toLowerCase();
+                    if (Arrays.asList(englishWords).contains(word)) {
                         word = englishMorphology.getNormalForms(word).get(0);
                         copy = getString(copy, newWordIndex, lemmaList, i, div, word, oldWord);
                     }
@@ -188,7 +191,8 @@ public class MorphologyServiceImpl {
                 }
                 String word = new String(tmpArr).substring(i, nextSpaceIndex);
                 String oldWord = word;
-                if (!word.equals("") && Arrays.asList(englishWords).contains(word.toLowerCase())) {
+                word = word.toLowerCase();
+                if (!word.equals("") && Arrays.asList(englishWords).contains(word)) {
                     word = englishMorphology.getNormalForms(word).get(0);
                     String finalWord = word;
                     if (lemmaList.stream().anyMatch(lemma -> lemma.getLemma().equals(finalWord))) {

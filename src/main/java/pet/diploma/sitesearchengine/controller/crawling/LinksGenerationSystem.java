@@ -70,7 +70,7 @@ public class LinksGenerationSystem extends RecursiveAction {
             }
             allLinksMap.put(path, page);
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            System.out.println(url + " - " + e.getMessage());
             return;
         }
 
@@ -88,7 +88,7 @@ public class LinksGenerationSystem extends RecursiveAction {
                 .referrer("https://www.google.com")
                 .ignoreContentType(true)
                 .ignoreHttpErrors(true)
-                .timeout(3000);
+                .timeout(10000);
     }
 
     private boolean isCorrected(String url) {
