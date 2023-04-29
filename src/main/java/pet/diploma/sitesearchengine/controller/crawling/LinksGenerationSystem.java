@@ -86,7 +86,8 @@ public class LinksGenerationSystem extends RecursiveAction {
                 .userAgent("DuckSearchBot")
                 .referrer("https://www.google.com")
                 .ignoreContentType(true)
-                .ignoreHttpErrors(true);
+                .ignoreHttpErrors(true)
+                .timeout(3000);
     }
 
     private boolean isCorrected(String url) {

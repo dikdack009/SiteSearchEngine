@@ -66,7 +66,7 @@ public class IndexingController {
             response.set(new IndexingResponse(false, "Индексация уже запущена"));
             return new ResponseEntity<>(response.get(), HttpStatus.BAD_REQUEST);
         }
-        ExecutorService es = Executors.newFixedThreadPool(100);
+        ExecutorService es = Executors.newFixedThreadPool(80);
         List<IndexingThread> tasks = new ArrayList<>();
 
         for (String url : sites.keySet()) {

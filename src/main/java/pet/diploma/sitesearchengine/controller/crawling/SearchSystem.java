@@ -122,7 +122,7 @@ public class SearchSystem {
                 }
             });
             Lemma currentLemmaFromDB = currentLemma.get();
-            if (currentLemmaFromDB.getFrequency() / countPages <= 1) {
+            if (currentLemmaFromDB.getFrequency() / countPages <= 0.75) {
                 requestLemmas.add(currentLemmaFromDB);
             }
             else {

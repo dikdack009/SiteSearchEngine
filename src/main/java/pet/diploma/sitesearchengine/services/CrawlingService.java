@@ -123,7 +123,6 @@ public class CrawlingService {
         page.setIsDeleted(0);
         pageRepository.save(page);
     }
-//TODO: отловить и проверить почему некоторые недобавляются 4 байта
     @Transactional
     public boolean saveLink(Link link) {
         if (linkRepository.getLinkByLinkAndUserId(link.getLink(), link.getUserId()) == null) {
