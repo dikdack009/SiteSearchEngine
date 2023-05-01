@@ -2,6 +2,7 @@ package pet.diploma.sitesearchengine.controller.crawling;
 
 import javafx.util.Pair;
 import lombok.Getter;
+import org.apache.logging.log4j.LogManager;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -45,13 +46,13 @@ public class SearchSystem {
     }
 
     public ResponseEntity<SearchResponse> request() throws IOException, SQLException, InterruptedException {
+        long m = System.currentTimeMillis();
         if (query.isEmpty()) {
             error = "Задан пустой поисковый запрос";
             return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.NOT_FOUND);
         }
         Set<String> requestNormalForms = morphologyService.getNormalFormsList(query).keySet();
         List<Lemma> lemmaList = new ArrayList<>();
-        System.out.println(requestNormalForms);
         linkIdList.forEach(id -> {
             List<Lemma> l = crawlingService.getLemmaList(requestNormalForms, id);
             l.forEach(lemma -> lemma.setId(id));
@@ -63,7 +64,6 @@ public class SearchSystem {
         }
         AtomicReference<Double> quantityPages = new AtomicReference<>((double) 0);
         linkIdList.forEach(id -> quantityPages.updateAndGet(v -> v + crawlingService.countPages(id)));
-        System.out.println(lemmaList);
         Pair<List<Lemma>, List<Lemma>> p = getLemmas(requestNormalForms, lemmaList, quantityPages.get());
         if (error != null) {
             return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.NOT_FOUND);
@@ -73,6 +73,7 @@ public class SearchSystem {
             return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.NOT_FOUND);
         }
         p.getKey().sort(Comparator.comparingInt(Lemma::getFrequency));
+        LogManager.getLogger("search").info("Анализ входных параметров за " + (double)(System.currentTimeMillis() - m)/1000 + " сек.");
         return getSearchResults(p.getKey(), p.getValue());
     }
 
@@ -87,7 +88,6 @@ public class SearchSystem {
             if (checkAndAddLemma(lemmaList, word, countPages, requestLemmas, optionalLemmas)) {
                 if (checkAndAddLemma(lemmaList, swapKeyboard(word), countPages, requestLemmas, optionalLemmas)) {
                     error = "Слово \"" + word + "\" не найдено";
-                    System.out.println(error);
                     break;
                 }
             }
@@ -212,6 +212,7 @@ public class SearchSystem {
     }
 
     private Map<Page, Double> getPages(List<Lemma> lemmaList) throws SQLException {
+        long m = System.currentTimeMillis();
         List<Page> pageList = new ArrayList<>();
         linkIdList.forEach(id -> {
             try {
@@ -224,6 +225,7 @@ public class SearchSystem {
         for (Page page : pageList) {
             absRelPage.put(page, DBConnection.getPageRank(lemmaList, page.getId()));
         }
+        LogManager.getLogger("search").info("Получение странниц по запросу " + (double)(System.currentTimeMillis() - m)/1000 + " сек.");
         return absRelPage;
     }
 }

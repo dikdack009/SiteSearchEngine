@@ -26,8 +26,7 @@ public class LinksGenerationSystem extends RecursiveAction {
     private String error;
     private final int userId;
 
-    public LinksGenerationSystem(String rootUrl, String url,
-                                 CopyOnWriteArraySet<String> allLinks, Map<String, Page> allLinksMap, Config config, int userId) {
+    public LinksGenerationSystem(String rootUrl, String url, CopyOnWriteArraySet<String> allLinks, Map<String, Page> allLinksMap, Config config, int userId) {
         this.rootUrl = rootUrl;
         this.url = url;
         this.allLinks = allLinks;

@@ -69,6 +69,7 @@ public class DBConnection {
     }
 
     public static List<Page> getPagesFromRequest(List<Lemma> lemmaSet, int siteId) throws SQLException {
+        System.out.println(lemmaSet);
         StringBuilder result = new StringBuilder("SELECT * FROM page where ('");
         for (Lemma lemma : lemmaSet) {
             result.append(lemma.getLemma()).append("') IN (SELECT lemma FROM `index` AS i where page.id = i.page_id and i.is_deleted = 0 and i.lemma = '")
@@ -76,10 +77,10 @@ public class DBConnection {
         }
         result.delete(result.length() - 9, result.length() - 1);
         if (siteId > 0){
-            result.append(") and site_id = ").append(siteId);
-        } else {
-            result.append(")");
+            result.append("and site_id = ").append(siteId);
         }
+        result.append(")");
+        System.out.println(result);
         ResultSet rs = null;
         try {
             rs = getConnection().createStatement().executeQuery(result.toString());
