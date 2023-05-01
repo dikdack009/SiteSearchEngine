@@ -45,7 +45,7 @@ public class LinksGenerationSystem extends RecursiveAction {
         Set<LinksGenerationSystem> taskList = new HashSet<>();
         List<String> list = new ArrayList<>();
         try {
-            sleep(200);
+            sleep(300);
             Connection connection = connectPath(url);
             int statusCode = connection.execute().statusCode();
             int idPathBegin = rootUrl.length();
@@ -85,10 +85,9 @@ public class LinksGenerationSystem extends RecursiveAction {
     private Connection connectPath(String path) {
         return Jsoup.connect(path)
                 .userAgent("DuckSearchBot")
-                .referrer("https://www.google.com")
+                .referrer("https://ya.ru")
                 .ignoreContentType(true)
-                .ignoreHttpErrors(true)
-                .timeout(10000);
+                .ignoreHttpErrors(true);
     }
 
     private boolean isCorrected(String url) {

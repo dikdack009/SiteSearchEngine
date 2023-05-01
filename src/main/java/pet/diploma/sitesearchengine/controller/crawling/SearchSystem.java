@@ -51,7 +51,7 @@ public class SearchSystem {
         }
         Set<String> requestNormalForms = morphologyService.getNormalFormsList(query).keySet();
         List<Lemma> lemmaList = new ArrayList<>();
-
+        System.out.println(requestNormalForms);
         linkIdList.forEach(id -> {
             List<Lemma> l = crawlingService.getLemmaList(requestNormalForms, id);
             l.forEach(lemma -> lemma.setId(id));
@@ -63,6 +63,7 @@ public class SearchSystem {
         }
         AtomicReference<Double> quantityPages = new AtomicReference<>((double) 0);
         linkIdList.forEach(id -> quantityPages.updateAndGet(v -> v + crawlingService.countPages(id)));
+        System.out.println(lemmaList);
         Pair<List<Lemma>, List<Lemma>> p = getLemmas(requestNormalForms, lemmaList, quantityPages.get());
         if (error != null) {
             return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.NOT_FOUND);
@@ -86,6 +87,7 @@ public class SearchSystem {
             if (checkAndAddLemma(lemmaList, word, countPages, requestLemmas, optionalLemmas)) {
                 if (checkAndAddLemma(lemmaList, swapKeyboard(word), countPages, requestLemmas, optionalLemmas)) {
                     error = "Слово \"" + word + "\" не найдено";
+                    System.out.println(error);
                     break;
                 }
             }
@@ -122,7 +124,7 @@ public class SearchSystem {
                 }
             });
             Lemma currentLemmaFromDB = currentLemma.get();
-            if (currentLemmaFromDB.getFrequency() / countPages <= 0.75) {
+            if (currentLemmaFromDB.getFrequency() / countPages <= 0.6) {
                 requestLemmas.add(currentLemmaFromDB);
             }
             else {
@@ -185,18 +187,28 @@ public class SearchSystem {
         StringBuilder snippet = new StringBuilder("...");
         Collections.sort(indexes);
         for (int j = 0; j < indexes.size(); ++j) {
+            String subSnippet;
             int indexOfContent = indexes.get(j);
             if (indexOfContent - 50 < 0) {
-                snippet.append(content, 0, indexOfContent + 150 + indexOfContent);
-            } else {
-                snippet.append(content, indexOfContent - 50, Math.min(indexOfContent + 100, content.length()));
+                subSnippet = content.substring(0, indexOfContent + 200);
             }
-            if (j != indexes.size() - 1 && Math.abs(indexOfContent - indexes.get(j + 1)) < 80) {
+            else {
+                subSnippet = content.substring(indexOfContent - 50, Math.min(indexOfContent + 100, content.length()));
+            }
+            if (count(subSnippet, "<b>") != count(subSnippet, "</b>")) {
+                subSnippet += "</b>";
+            }
+            snippet.append(subSnippet);
+            if (j != indexes.size() - 1 && Math.abs(indexOfContent - indexes.get(j + 1)) < 150) {
                 j += 1;
             }
             snippet.append("...");
         }
         return snippet.toString().replaceAll("\n", " ").trim();
+    }
+
+    private int count(String str, String target) {
+        return (str.length() - str.replace(target, "").length()) / target.length();
     }
 
     private Map<Page, Double> getPages(List<Lemma> lemmaList) throws SQLException {

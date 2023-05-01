@@ -17,7 +17,9 @@ public class MorphologyServiceImpl {
         Map<String, Integer> normalFormsMap = new TreeMap<>();
 
         String[] russianWords = text.replaceAll("[^[а-яА-ЯёЁ]]", "^").toLowerCase().split("\\^");
+        System.out.println(Arrays.toString(russianWords));
         String[] englishWords = text.replaceAll("[^[a-zA-Z]]", "^").toLowerCase().split("\\^");
+        System.out.println(Arrays.toString(englishWords));
         Pattern pattern = Pattern.compile("\\b*(?:[-+0-9]\\d*|0)?(?:\\.\\d+)?\\b*");
         Matcher matcher = pattern.matcher(text);
         while (matcher.find()) {

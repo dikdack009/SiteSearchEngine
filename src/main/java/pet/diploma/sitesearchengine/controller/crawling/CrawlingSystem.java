@@ -178,7 +178,7 @@ public class CrawlingSystem {
     }
 
     private void updateIndexDB(Builder builder, Field field, Map<String, Integer> tagLemmas, int id, int siteId) throws SQLException {
-        if (builder.getIndexBuilder().length() > 1000000) {
+        if (builder.getIndexBuilder().length() > 100000) {
             DBConnection.insertAllIndexes(builder.getIndexBuilder().toString());
             builder.setIndexBuilder(new StringBuilder());
         }
@@ -190,7 +190,7 @@ public class CrawlingSystem {
     }
 
     private void updateLemmaDB(Builder builder, Set<String> normalFormsSet, int siteId) throws SQLException {
-        if (builder.getLemmaBuilder().length() > 1000000) {
+        if (builder.getLemmaBuilder().length() > 100000) {
             DBConnection.insertAllLemmas(builder.getLemmaBuilder().toString());
             builder.setLemmaBuilder(new StringBuilder());
         }
