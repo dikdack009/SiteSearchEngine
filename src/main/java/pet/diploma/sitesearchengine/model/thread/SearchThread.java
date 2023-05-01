@@ -1,5 +1,6 @@
 package pet.diploma.sitesearchengine.model.thread;
 
+import org.apache.logging.log4j.LogManager;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import pet.diploma.sitesearchengine.model.Site;
@@ -33,8 +34,9 @@ public class SearchThread implements Callable<Data> {
         String title = d.select("title").text();
         String contentWithoutTags = title + " " + d.select("body").text();
         Site site = DBConnection.getSiteById(page.getSite().getId());
-        return new Data(site.getUrl(), site.getName(), page.getPath(), title,
-                searchSystem.getSnippetFirstStep(requestLemmas, contentWithoutTags),
-                value/max);
+        long m = System.currentTimeMillis();
+        String snippet = searchSystem.getSnippetFirstStep(requestLemmas, contentWithoutTags);
+        LogManager.getLogger("search").info("Время получения сниппета: " + (double)(System.currentTimeMillis() - m) / 1000 + " сек.");
+        return new Data(site.getUrl(), site.getName(), page.getPath(), title, snippet, value/max);
     }
 }

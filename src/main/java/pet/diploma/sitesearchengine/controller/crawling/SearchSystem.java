@@ -204,7 +204,7 @@ public class SearchSystem {
             }
             snippet.append("...");
         }
-        return snippet.toString().replaceAll("\n", " ").trim();
+        return snippet.toString().trim();
     }
 
     private int count(String str, String target) {
@@ -225,7 +225,7 @@ public class SearchSystem {
         for (Page page : pageList) {
             absRelPage.put(page, DBConnection.getPageRank(lemmaList, page.getId()));
         }
-        LogManager.getLogger("search").info("Получение странниц по запросу " + (double)(System.currentTimeMillis() - m)/1000 + " сек.");
+        LogManager.getLogger("search").info("Получение странниц по запросу " + (double)(System.currentTimeMillis() - m) / 1000 + " сек.");
         return absRelPage;
     }
 }

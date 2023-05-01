@@ -103,10 +103,11 @@ public class MorphologyServiceImpl {
     public String russianReplace(String text, Map<String, List<Integer>> newWordIndex, List<Lemma> lemmaList) throws IOException {
         String copy = text;
         LuceneMorphology russianMorphology = new RussianLuceneMorphology();
-        String lowerCase = text.replaceAll("[^[а-яА-ЯёЁ]]", "^").toLowerCase();
+        String replaceText = text.replaceAll("[^[а-яА-ЯёЁ]]", "^");
+        String lowerCase = replaceText.toLowerCase();
         String[] russianWords = lowerCase.split("\\^");
         char[] textArray = lowerCase.toCharArray();
-        char[] tmpArr = text.replaceAll("[^[а-яА-ЯёЁ]]", "^").toCharArray();
+        char[] tmpArr = replaceText.toCharArray();
         int div = 0;
         for (int i = 0; i < textArray.length; ++i){
             if (textArray[i] != '^') {
