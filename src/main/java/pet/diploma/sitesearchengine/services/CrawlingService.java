@@ -255,4 +255,14 @@ public class CrawlingService {
     public int countLemmasByIsDeletedAndSite(Site site) {
         return lemmaRepository.countAllByIsDeletedAndSite(0, site);
     }
+
+    @Transactional(readOnly = true)
+    public Site getSiteById(int id) {
+        return siteRepository.getSitesById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public Page getPageById(int id) {
+        return pageRepository.getPageById(id);
+    }
 }

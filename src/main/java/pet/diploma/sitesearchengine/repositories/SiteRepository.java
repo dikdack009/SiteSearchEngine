@@ -33,4 +33,5 @@ public interface SiteRepository extends JpaRepository<Site,Integer> {
     void deleteByIsDeleted();
 
     List<Site> getSitesByUserIdAndIsDeleted(int userId, Integer isDeleted);
+    Site getSitesById(Integer id);
 }

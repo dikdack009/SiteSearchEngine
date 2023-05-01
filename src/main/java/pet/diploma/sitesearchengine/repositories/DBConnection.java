@@ -37,20 +37,12 @@ public class DBConnection {
         insertAllIndexes(builder.getIndexBuilder().toString());
     }
 
-    public static List<Page> getPagesFromResultSet(ResultSet rs) throws SQLException {
-        List<Page> pageList = new ArrayList<>();
-        Site site = new Site();
+    public static List<Integer> getPagesFromResultSet(ResultSet rs) throws SQLException {
+        List<Integer> pageIdList = new ArrayList<>();
         while (rs.next()) {
-            site.setId(rs.getInt("site_id"));
-            Page page = new Page(rs.getInt("id"),
-                    rs.getString("path"),
-                    rs.getInt("code"),
-                    rs.getString("content"),
-                    site,
-                    rs.getInt("is_deleted"));
-            pageList.add(page);
+            pageIdList.add(rs.getInt("id"));
         }
-        return pageList;
+        return pageIdList;
     }
 
     public static double getPageRank(List<Lemma> lemmaList, int pageId) throws SQLException {
@@ -68,18 +60,20 @@ public class DBConnection {
         return rank;
     }
 
-    public static List<Page> getPagesFromRequest(List<Lemma> lemmaSet, int siteId) throws SQLException {
+    public static List<Integer> getPagesFromRequest(List<Lemma> lemmaSet, Set<Integer> idList) throws SQLException {
         System.out.println(lemmaSet);
-        StringBuilder result = new StringBuilder("SELECT * FROM page where ('");
+        StringBuilder result = new StringBuilder("SELECT p.id FROM page as p where p.id");
         for (Lemma lemma : lemmaSet) {
-            result.append(lemma.getLemma()).append("') IN (SELECT lemma FROM `index` AS i where page.id = i.page_id and i.is_deleted = 0 and i.lemma = '")
-                    .append(lemma.getLemma()).append("') and ('");
+            result.append(" IN (SELECT page_id FROM `index` AS i where i.is_deleted = 0 and i.lemma = '")
+                    .append(lemma.getLemma()).append("') and p.id ");
         }
-        result.delete(result.length() - 9, result.length() - 1);
-        if (siteId > 0){
-            result.append("and site_id = ").append(siteId);
+        result.delete(result.length() - 11, result.length() - 1);
+        result.append(" and (");
+        StringJoiner s = new StringJoiner(" or ");
+        for (Integer siteId : idList){
+            s.add("i.site_id = " + siteId);
         }
-        result.append(")");
+        result.append(s).append("))");
         System.out.println(result);
         ResultSet rs = null;
         try {
@@ -102,26 +96,5 @@ public class DBConnection {
                 "VALUES " + indexes +
                 " AS new ON DUPLICATE KEY UPDATE `index`.`rank`=`index`.`rank` + new.`rank`";
         getConnection().createStatement().execute(sql);
-    }
-
-
-    public static Site getSiteById(int id) throws SQLException {
-        ResultSet rs = null;
-        try {
-            rs = getConnection().createStatement().executeQuery("SELECT * FROM site WHERE id = " + id);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        Site site = new Site();
-        while (true) {
-            assert rs != null;
-            if (!rs.next()) break;
-            String url = rs.getString("url");
-            String name = rs.getString("name");
-            site.setUrl(url);
-            site.setName(name);
-
-        }
-        return site;
     }
 }

@@ -135,8 +135,6 @@ public class SearchSystem {
         return true;
     }
 
-
-
     public static <K, V extends Comparable<? super V>> Map<K, V> sortByValue( Map<K, V> map ) {
         Map<K,V> result = new LinkedHashMap<>();
         Stream<Map.Entry<K,V>> st = map.entrySet().stream();
@@ -145,16 +143,16 @@ public class SearchSystem {
     }
 
     private ResponseEntity<SearchResponse> getSearchResults(@NotNull List<Lemma>requestLemmas, List<Lemma> optionalLemmas) throws SQLException, InterruptedException {
-        Map<Page, Double> pageDoubleMap = getPages(requestLemmas);
+        Map<Integer, Double> pageDoubleMap = getPages(requestLemmas);
         pageDoubleMap = sortByValue(pageDoubleMap);
         Double max = sortByValue(pageDoubleMap).values().stream().limit(1).collect(Collectors.toList()).get(0);
         List<Data> searchResults = new ArrayList<>();
         ExecutorService es = Executors.newFixedThreadPool(300);
         List<SearchThread> tasks = new ArrayList<>();
         requestLemmas.addAll(optionalLemmas);
-        List<Page> subPageList = new ArrayList<>(pageDoubleMap.keySet()).subList(offset, Math.min(offset + limit, pageDoubleMap.size()));
-        for (Page page : subPageList) {
-            SearchThread searchThread = new SearchThread(page, pageDoubleMap.get(page), this, max, requestLemmas);
+        List<Integer> subPageList = new ArrayList<>(pageDoubleMap.keySet()).subList(offset, Math.min(offset + limit, pageDoubleMap.size()));
+        for (Integer pageId : subPageList) {
+            SearchThread searchThread = new SearchThread(pageId, pageDoubleMap.get(pageId), this, max, requestLemmas ,crawlingService);
             tasks.add(searchThread);
         }
         List<Future<Data>> futures = es.invokeAll(tasks);
@@ -211,21 +209,16 @@ public class SearchSystem {
         return (str.length() - str.replace(target, "").length()) / target.length();
     }
 
-    private Map<Page, Double> getPages(List<Lemma> lemmaList) throws SQLException {
+    private Map<Integer, Double> getPages(List<Lemma> lemmaList) throws SQLException {
         long m = System.currentTimeMillis();
-        List<Page> pageList = new ArrayList<>();
-        linkIdList.forEach(id -> {
-            try {
-                pageList.addAll(DBConnection.getPagesFromRequest(lemmaList, id));
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        Map<Page, Double> absRelPage = new HashMap<>();
-        for (Page page : pageList) {
-            absRelPage.put(page, DBConnection.getPageRank(lemmaList, page.getId()));
-        }
+        List<Integer> pageList = new ArrayList<>(DBConnection.getPagesFromRequest(lemmaList, linkIdList));
         LogManager.getLogger("search").info("Получение странниц по запросу " + (double)(System.currentTimeMillis() - m) / 1000 + " сек.");
+        m = System.currentTimeMillis();
+        Map<Integer, Double> absRelPage = new HashMap<>();
+        for (Integer pageId : pageList) {
+            absRelPage.put(pageId, DBConnection.getPageRank(lemmaList, pageId));
+        }
+        LogManager.getLogger("search").info("Получение рангов странниц по запросу " + (double)(System.currentTimeMillis() - m) / 1000 + " сек.");
         return absRelPage;
     }
 }
