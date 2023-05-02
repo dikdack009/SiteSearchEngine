@@ -13,7 +13,6 @@ import pet.diploma.sitesearchengine.repositories.DBConnection;
 import pet.diploma.sitesearchengine.services.CrawlingService;
 import pet.diploma.sitesearchengine.services.MorphologyServiceImpl;
 import pet.diploma.sitesearchengine.model.Lemma;
-import pet.diploma.sitesearchengine.model.Page;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -51,13 +50,15 @@ public class SearchSystem {
             error = "Задан пустой поисковый запрос";
             return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.NOT_FOUND);
         }
-        Set<String> requestNormalForms = morphologyService.getNormalFormsList(query).keySet();
+        Set<String> requestNormalForms = morphologyService.getNormalFormsList(query);
+        LogManager.getLogger("search").info("Анализ лемм за " + (double)(System.currentTimeMillis() - m)/1000 + " сек.");
         List<Lemma> lemmaList = new ArrayList<>();
         linkIdList.forEach(id -> {
             List<Lemma> l = crawlingService.getLemmaList(requestNormalForms, id);
             l.forEach(lemma -> lemma.setId(id));
             lemmaList.addAll(l);
         });
+        LogManager.getLogger("search").info("Анализ запроса за " + (double)(System.currentTimeMillis() - m)/1000 + " сек.");
         if (lemmaList.isEmpty()) {
             error = "Нет результатов";
             return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.NOT_FOUND);
@@ -143,7 +144,12 @@ public class SearchSystem {
     }
 
     private ResponseEntity<SearchResponse> getSearchResults(@NotNull List<Lemma>requestLemmas, List<Lemma> optionalLemmas) throws SQLException, InterruptedException {
+        System.out.println(requestLemmas);
         Map<Integer, Double> pageDoubleMap = getPages(requestLemmas);
+        if (pageDoubleMap.isEmpty()) {
+            error = "Нет результатов";
+            return new ResponseEntity<>(new SearchResponse(false, null, null, error), HttpStatus.NOT_FOUND);
+        }
         pageDoubleMap = sortByValue(pageDoubleMap);
         Double max = sortByValue(pageDoubleMap).values().stream().limit(1).collect(Collectors.toList()).get(0);
         List<Data> searchResults = new ArrayList<>();
@@ -188,13 +194,13 @@ public class SearchSystem {
             String subSnippet;
             int indexOfContent = indexes.get(j);
             if (indexOfContent - 50 < 0) {
-                subSnippet = content.substring(0, indexOfContent + 200);
+                int end = content.indexOf(" ", indexOfContent + 200);
+                subSnippet = content.substring(0, Math.min(end, content.length()));
             }
             else {
-                subSnippet = content.substring(indexOfContent - 50, Math.min(indexOfContent + 100, content.length()));
-            }
-            if (count(subSnippet, "<b>") != count(subSnippet, "</b>")) {
-                subSnippet += "</b>";
+                int start = content.indexOf(" ", indexOfContent - 50);
+                int end = content.indexOf(" ", indexOfContent + 100);
+                subSnippet = content.substring(start, Math.min(end, content.length()));
             }
             snippet.append(subSnippet);
             if (j != indexes.size() - 1 && Math.abs(indexOfContent - indexes.get(j + 1)) < 150) {
@@ -203,10 +209,6 @@ public class SearchSystem {
             snippet.append("...");
         }
         return snippet.toString().trim();
-    }
-
-    private int count(String str, String target) {
-        return (str.length() - str.replace(target, "").length()) / target.length();
     }
 
     private Map<Integer, Double> getPages(List<Lemma> lemmaList) throws SQLException {

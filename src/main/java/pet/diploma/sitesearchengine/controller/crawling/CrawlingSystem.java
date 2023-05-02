@@ -161,7 +161,7 @@ public class CrawlingSystem {
             String tagContent = d.select(field.getName()).text();
             Map<String, Integer> tagNormalForms;
             try {
-                tagNormalForms = new MorphologyServiceImpl().getNormalFormsList(tagContent);
+                tagNormalForms = new MorphologyServiceImpl().getNormalFormsMap(tagContent);
                 allWords.addAll(tagNormalForms.keySet());
             } catch (IOException e) {
                 rootLogger.debug("Ошибка лемантизатора " + " - " + site.getUrl() + " - " + e.getMessage());

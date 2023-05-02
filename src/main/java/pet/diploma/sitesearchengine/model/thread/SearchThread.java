@@ -3,8 +3,6 @@ package pet.diploma.sitesearchengine.model.thread;
 import org.apache.logging.log4j.LogManager;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import pet.diploma.sitesearchengine.model.Site;
 import pet.diploma.sitesearchengine.model.response.Data;
 import pet.diploma.sitesearchengine.controller.crawling.SearchSystem;
@@ -34,7 +32,6 @@ public class SearchThread implements Callable<Data> {
 
     @Override
     public Data call() throws Exception {
-        System.out.println(pageId);
         Page page = crawlingService.getPageById(pageId);
         Document d = Jsoup.parse(page.getContent());
         String title = d.select("title").text();

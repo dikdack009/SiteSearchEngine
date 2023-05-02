@@ -1,6 +1,7 @@
 package pet.diploma.sitesearchengine.services;
 
 import javafx.util.Pair;
+import org.apache.logging.log4j.LogManager;
 import org.apache.lucene.morphology.LuceneMorphology;
 import org.apache.lucene.morphology.english.EnglishLuceneMorphology;
 import org.apache.lucene.morphology.russian.RussianLuceneMorphology;
@@ -13,11 +14,61 @@ import java.util.regex.Pattern;
 
 public class MorphologyServiceImpl {
 
-    public Map<String, Integer> getNormalFormsList(String text) throws IOException {
+    public Map<String, Integer> getNormalFormsMap(String text) throws IOException {
         Map<String, Integer> normalFormsMap = new TreeMap<>();
+        getNumbersFormsMap(normalFormsMap, text);
+        getRussianFormsMap(normalFormsMap, text);
+        getEnglishFormsMap(normalFormsMap, text);
+        return normalFormsMap;
+    }
 
-        String[] russianWords = text.replaceAll("[^[а-яА-ЯёЁ]]", "^").toLowerCase().split("\\^");
+    public Set<String> getNormalFormsList(String text) throws IOException {
+        long m = System.currentTimeMillis();
+        Set<String> result = new HashSet<>();
+        Pattern pattern = Pattern.compile("\\b*(?:[-+0-9]\\d*|0)?(?:\\.\\d+)?\\b*");
+        Matcher matcher = pattern.matcher(text);
+        while (matcher.find()) {
+            String number = matcher.group();
+            if (!number.trim().isEmpty() && !number.equals("-")) {
+                result.add(number);
+            }
+        }
+        LogManager.getLogger("search").info("Анализ цифр за " + (double)(System.currentTimeMillis() - m) / 1000 + " сек.");
+        m = System.currentTimeMillis();
         String[] englishWords = text.replaceAll("[^[a-zA-Z]]", "^").toLowerCase().split("\\^");
+        String[] russianWords = text.replaceAll("[^[а-яА-ЯёЁ]]", "^").toLowerCase().split("\\^");
+        LuceneMorphology englishMorphology = new EnglishLuceneMorphology();
+        Arrays.stream(englishWords).forEach(word -> {
+            if (!word.trim().isEmpty()) {
+                List<String> normalWordL = englishMorphology.getNormalForms(word);
+                for (String s : normalWordL) {
+                    if (!s.equals(word)) {
+                        word = s;
+                        break;
+                    }
+                }
+                String normalWord = englishMorphology.getNormalForms(word).size() <= 1
+                        ? word : englishMorphology.getNormalForms(word).get(0);
+               result.add(normalWord);
+            }
+        });
+        LogManager.getLogger("search").info("Анализ англ за " + (double)(System.currentTimeMillis() - m) / 1000 + " сек.");
+        m = System.currentTimeMillis();
+        LuceneMorphology russianMorphology = new RussianLuceneMorphology();
+        for (String word : russianWords) {
+            if (!word.trim().isEmpty()) {
+                Pair<String, Boolean> pair = check(russianMorphology, word);
+                Boolean check = pair.getValue();
+                if (!check) {
+                    result.add(pair.getKey());
+                }
+            }
+        }
+        LogManager.getLogger("search").info("Анализ рус за " + (double)(System.currentTimeMillis() - m) / 1000 + " сек.");
+        return result;
+    }
+
+    public void getNumbersFormsMap(Map<String, Integer> normalFormsMap, String text) {
         Pattern pattern = Pattern.compile("\\b*(?:[-+0-9]\\d*|0)?(?:\\.\\d+)?\\b*");
         Matcher matcher = pattern.matcher(text);
         while (matcher.find()) {
@@ -30,14 +81,9 @@ public class MorphologyServiceImpl {
                 }
             }
         }
-        getEnglishFormsList(normalFormsMap, englishWords);
-        getRussianFormsList(normalFormsMap, russianWords);
-        return normalFormsMap;
     }
-
-
-
-    public void getEnglishFormsList(Map<String, Integer> normalFormsMap, String[] englishWords) throws IOException {
+    public void getEnglishFormsMap(Map<String, Integer> normalFormsMap, String text) throws IOException {
+        String[] englishWords = text.replaceAll("[^[a-zA-Z]]", "^").toLowerCase().split("\\^");
         LuceneMorphology englishMorphology = new EnglishLuceneMorphology();
         Arrays.stream(englishWords).forEach(word -> {
             if (!word.trim().isEmpty()) {
@@ -59,7 +105,8 @@ public class MorphologyServiceImpl {
         });
     }
 
-    public void getRussianFormsList(Map<String, Integer> normalFormsMap, String[] russianWords) throws IOException {
+    public void getRussianFormsMap(Map<String, Integer> normalFormsMap, String text) throws IOException {
+        String[] russianWords = text.replaceAll("[^[а-яА-ЯёЁ]]", "^").toLowerCase().split("\\^");
         LuceneMorphology russianMorphology = new RussianLuceneMorphology();
         Arrays.stream(russianWords).forEach(word -> {
             if (!word.trim().isEmpty()) {
@@ -124,30 +171,31 @@ public class MorphologyServiceImpl {
                         }
                     }
                     break;
-                }
-                if (i != 0 && textArray[i - 1] != '^') {
-                    i--;
-                }
-                String word = new String(tmpArr).substring(i, nextSpaceIndex);
-                String oldWord = word;
-                word = word.toLowerCase();
-                if (Arrays.asList(russianWords).contains(word.toLowerCase())) {
-                    Pair<String, Boolean> pair = check(russianMorphology, word);
-                    if (!pair.getValue()) {
-                        word = pair.getKey();
-                        String finalWord = word;
-                        if (lemmaList.stream().anyMatch(lemma -> lemma.getLemma().equals(finalWord))) {
-                            copy = copy.substring(0, i + div) + "<b>" + oldWord + "</b>" + copy.substring(Math.min(i + div + oldWord.length(), textArray.length));
-                            if (newWordIndex.containsKey(word)) {
-                                newWordIndex.get(word).add(i);
-                            } else {
-                                newWordIndex.put(word, new ArrayList<>(List.of(i)));
+                } else {
+                    if (i != 0 && textArray[i - 1] != '^') {
+                        i--;
+                    }
+                    String word = new String(tmpArr).substring(i, nextSpaceIndex);
+                    String oldWord = word;
+                    word = word.toLowerCase();
+                    if (Arrays.asList(russianWords).contains(word.toLowerCase())) {
+                        Pair<String, Boolean> pair = check(russianMorphology, word);
+                        if (!pair.getValue()) {
+                            word = pair.getKey();
+                            String finalWord = word;
+                            if (lemmaList.stream().anyMatch(lemma -> lemma.getLemma().equals(finalWord))) {
+                                copy = copy.substring(0, i + div) + "<b>" + oldWord + "</b>" + copy.substring(Math.min(i + div + oldWord.length(), textArray.length));
+                                if (newWordIndex.containsKey(word)) {
+                                    newWordIndex.get(word).add(i);
+                                } else {
+                                    newWordIndex.put(word, new ArrayList<>(List.of(i)));
+                                }
+                                div += 7;
                             }
-                            div += 7;
                         }
                     }
+                    i = nextSpaceIndex + 1;
                 }
-                i = nextSpaceIndex + 1 ;
             }
         }
         return copy;
@@ -170,10 +218,11 @@ public class MorphologyServiceImpl {
     public String englishReplace(String text, Map<String, List<Integer>> newWordIndex, List<Lemma> lemmaList) throws IOException {
         String copy = text;
         LuceneMorphology englishMorphology = new EnglishLuceneMorphology();
-        String lowerCase = text.replaceAll("[^[a-zA-Z]]", "^").toLowerCase();
+        String replaceText = text.replaceAll("[^[a-zA-Z]]", "^");
+        String lowerCase = replaceText.toLowerCase();
         String[] englishWords = lowerCase.split("\\^");
         char[] textArray = lowerCase.toCharArray();
-        char[] tmpArr = text.replaceAll("[^[a-zA-Z]]", "^").toCharArray();
+        char[] tmpArr = replaceText.toCharArray();
         int div = 0;
         for (int i = 0; i < textArray.length; ++i){
             if (textArray[i] != '^') {
@@ -186,27 +235,28 @@ public class MorphologyServiceImpl {
                         word = englishMorphology.getNormalForms(word).get(0);
                         copy = getString(copy, newWordIndex, lemmaList, i, div, word, oldWord);
                     }
-                }
-                if (i != 0 && textArray[i - 1] != '^') {
-                    i--;
-                }
-                String word = new String(tmpArr).substring(i, nextSpaceIndex);
-                String oldWord = word;
-                word = word.toLowerCase();
-                if (!word.equals("") && Arrays.asList(englishWords).contains(word)) {
-                    word = englishMorphology.getNormalForms(word).get(0);
-                    String finalWord = word;
-                    if (lemmaList.stream().anyMatch(lemma -> lemma.getLemma().equals(finalWord))) {
-                        copy = copy.substring(0, i + div) + "<b>" + oldWord + "</b>" + copy.substring(Math.min(i + div + oldWord.length(), textArray.length));
-                        if (newWordIndex.containsKey(word)) {
-                            newWordIndex.get(word).add(i);
-                        } else {
-                            newWordIndex.put(word, new ArrayList<>(List.of(i)));
-                        }
-                        div += 7 ;
+                } else {
+                    if (i != 0 && textArray[i - 1] != '^') {
+                        i--;
                     }
+                    String word = new String(tmpArr).substring(i, nextSpaceIndex);
+                    String oldWord = word;
+                    word = word.toLowerCase();
+                    if (!word.equals("") && Arrays.asList(englishWords).contains(word)) {
+                        word = englishMorphology.getNormalForms(word).get(0);
+                        String finalWord = word;
+                        if (lemmaList.stream().anyMatch(lemma -> lemma.getLemma().equals(finalWord))) {
+                            copy = copy.substring(0, i + div) + "<b>" + oldWord + "</b>" + copy.substring(Math.min(i + div + oldWord.length(), textArray.length));
+                            if (newWordIndex.containsKey(word)) {
+                                newWordIndex.get(word).add(i);
+                            } else {
+                                newWordIndex.put(word, new ArrayList<>(List.of(i)));
+                            }
+                            div += 7;
+                        }
+                    }
+                    i = nextSpaceIndex + 1;
                 }
-                i = nextSpaceIndex + 1 ;
             }
         }
         return copy;
